@@ -214,14 +214,9 @@ namespace IngameScript
                 count++;
                 Vector2 position = drawing.viewport.Position + new Vector2(width * 3 * (count / limit), width * (-0.5f + count - (count / limit) * limit));
                 // Icon
-                Color color = MyProperty.GetColor("color", item.Name);
+                string colorDefault = MyProperty.Get("color", "default");
+                Color color = MyProperty.GetColor("color", item.Name, colorDefault);
                 string tag = item.Name;
-                if (model_list.ContainsKey(item.Name))
-                {
-                    Model model = model_list[item.Name];
-                    color = MyProperty.GetColor("color", item.Name);
-                    tag = model.Tag;
-                }
                 icon = new MySprite()
                 {
                     Type = SpriteType.TEXTURE,
@@ -241,8 +236,11 @@ namespace IngameScript
                     Position = position + new Vector2(width + 10, 20)
 
                 };
+                // Jauge quantity
                 drawing.AddSprite(icon);
-                double percent = Math.Min(item.Amount / 10000,1);
+                int limitDefault = MyProperty.GetInt("Limit", "default");
+                int limitBar = MyProperty.GetInt("Limit", item.Name, limitDefault);
+                double percent = Math.Min(item.Amount / limitBar, 1);
                 drawing.AddSprite(icon); icon = new MySprite()
                 {
                     Type = SpriteType.TEXTURE,

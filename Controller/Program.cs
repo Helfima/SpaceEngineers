@@ -43,10 +43,10 @@ namespace IngameScript
         private float targetRayon;
         private float deltaRayon = 2f;
         private float targetAngle;
-        private float deltaAngle = 10f;
+        private float deltaAngle = 10f;// 15° non optimal
 
         private float SPEED_MIN = 0.1f;
-        private float SPEED_MAX = 0.5f;
+        private float SPEED_MAX = 1f;
 
         private float ANGLE_RPM_MIN = 0.1f;
         private float ANGLE_RPM_MAX = 0.5f;
@@ -99,7 +99,7 @@ namespace IngameScript
         void RunContinuousLogic()
         {
             quantity = DrillCount();
-            if (quantity > lastQuantity) slowDown = true;
+            if (quantity > 100 && quantity > lastQuantity) slowDown = true;
             lastQuantity = quantity;
             Display();
             if (quantity > 10000) stateMachine = StateMachine.Waitting;
@@ -200,7 +200,7 @@ namespace IngameScript
                 case Phase.BrasIn:
                     pistonRayon.On();
                     pistonRayon.ForEach(delegate (IMyPistonBase block) {
-                        block.Velocity = -SPEED_MIN * 2;
+                        block.Velocity = -SPEED_MAX;
                     });
                     if (pistonRayon.IsPosition(targetRayon))
                     {
@@ -211,7 +211,7 @@ namespace IngameScript
                 case Phase.BrasOut:
                     pistonRayon.On();
                     pistonRayon.ForEach(delegate (IMyPistonBase block) {
-                        block.Velocity = SPEED_MIN * 2;
+                        block.Velocity = SPEED_MAX;
                     });
                     if (pistonRayon.IsPosition(targetRayon))
                     {
@@ -268,7 +268,7 @@ namespace IngameScript
                 case Phase.BrasIn:
                     pistonRayon.On();
                     pistonRayon.ForEach(delegate (IMyPistonBase block) {
-                        block.Velocity = -SPEED_MIN * 2;
+                        block.Velocity = -SPEED_MAX;
                     });
                     if (pistonRayon.IsPositionMin())
                     {

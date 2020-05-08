@@ -83,14 +83,39 @@ namespace IngameScript
                         foreach (IMyMotorStator block in List)
                         {
                             float value = block.Angle - float.Parse(Util.DegToRad(position).ToString());
+                            if (Math.Abs(value) > epsilon/100) isState = false;
+                        }
+                    }
+                }
+                return isState;
+            }
+
+            public bool IsPositionMax(float epsilon = 0.1f)
+            {
+                bool isState = true;
+                if (!IsEmpty)
+                {
+                    if (List is List<IMyPistonBase>)
+                    {
+                        foreach (IMyPistonBase block in List)
+                        {
+                            float value = block.CurrentPosition - block.MaxLimit;
                             if (Math.Abs(value) > epsilon) isState = false;
                         }
                     }
+                    if (List is List<IMyMotorStator>)
+                    {
+                        foreach (IMyMotorStator block in List)
+                        {
+                            float value = block.Angle - block.UpperLimitRad;
+                            if (Math.Abs(value) > epsilon/100) isState = false;
+                        }
+                    }
                 }
                 return isState;
             }
 
-            public bool IsPositionMax()
+            public bool IsPositionMin(float epsilon = 0.1f)
             {
                 bool isState = true;
                 if (!IsEmpty)
@@ -99,41 +124,41 @@ namespace IngameScript
                     {
                         foreach (IMyPistonBase block in List)
                         {
-                            if (block.CurrentPosition < block.MaxLimit) isState = false;
+                            float value = block.CurrentPosition - block.MinLimit;
+                            if (Math.Abs(value) > epsilon) isState = false;
                         }
                     }
                     if (List is List<IMyMotorStator>)
                     {
                         foreach (IMyMotorStator block in List)
                         {
-                            if (block.Angle < block.UpperLimitRad) isState = false;
+                            float value = block.Angle - block.LowerLimitRad;
+                            if (Math.Abs(value) > epsilon / 100) isState = false;
                         }
                     }
                 }
                 return isState;
             }
 
-            public bool IsPositionMin()
+            public void Velocity(float velocity)
             {
-                bool isState = true;
                 if (!IsEmpty)
                 {
                     if (List is List<IMyPistonBase>)
                     {
                         foreach (IMyPistonBase block in List)
                         {
-                            if (block.CurrentPosition > block.MinLimit) isState = false;
+                            block.Velocity = velocity;
                         }
                     }
                     if (List is List<IMyMotorStator>)
                     {
                         foreach (IMyMotorStator block in List)
                         {
-                            if (block.Angle > block.LowerLimitRad) isState = false;
+                            block.TargetVelocityRPM = velocity;
                         }
                     }
                 }
-                return isState;
             }
 
             public void ApplyAction(string action)

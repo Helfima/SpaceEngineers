@@ -32,13 +32,12 @@ namespace IngameScript
         private IMyTextSurface drawingSurface;
         private StateMachine machine_state = StateMachine.Stopped;
         private StateLat lat_state = StateLat.Stopped;
+        private StateLon lon_state = StateLon.Stopped;
 
-        private List<float> last_outputs = new List<float>();
-
-        private float lat_output = 0f;
-
-        float delta1 = 0f;
-        float delta2 = 0f;
+        private float last_power = 0f;
+        private float power = 0f;
+        private float max_power = 0f;
+        private float delta = 0f;
 
 
         public Program()
@@ -90,6 +89,10 @@ namespace IngameScript
 
                 switch (command)
                 {
+                    default:
+                        machine_state = StateMachine.TrakingLat;
+                        last_power = 0f;
+                        break;
                 }
             }
         }
@@ -104,22 +107,15 @@ namespace IngameScript
         {
             drawingSurface.WriteText($"Machine Status:{machine_state}", false);
             drawingSurface.WriteText($"\nlat_state:{lat_state}", true);
+            drawingSurface.WriteText($"\nlon_state:{lon_state}", true);
             if (lat_stators != null && !lat_stators.IsEmpty)
             {
                 drawingSurface.WriteText($"\nAngle Z:{Math.Round(Util.RadToDeg(lat_stators.First.Angle), 2)}", true);
             }
-            drawingSurface.WriteText($"\nLast_outputs:{last_outputs.Count}", true);
-            if (last_outputs != null && last_outputs.Count > 0)
-            {
-                drawingSurface.WriteText($"\nSolar Power:{Util.GetKiloFormat(last_outputs.Last()* 1e6)}W", true);
-                drawingSurface.WriteText($"\nDelta1:{delta1}", true);
-                drawingSurface.WriteText($"\nDelta2:{delta2}", true);
-            }
-
-            foreach(float last_output in last_outputs)
-            {
-                drawingSurface.WriteText($"\nlast_output:{last_output}", true);
-            }
+            drawingSurface.WriteText($"\nCurrent Power:{Util.GetKiloFormat(power * 1e6)}W", true);
+            drawingSurface.WriteText($"\nMax Power:{Util.GetKiloFormat(max_power * 1e6)}W", true);
+            drawingSurface.WriteText($"\nLast Power:{Util.GetKiloFormat(last_power * 1e6)}W", true);
+            drawingSurface.WriteText($"\nDelta:{delta}", true);
 
         }
 
@@ -127,88 +123,118 @@ namespace IngameScript
         {
             if (solar_panels != null && !solar_panels.IsEmpty)
             {
-                float power = 0f;
-                foreach (IMySolarPanel solar_panel in solar_panels.List)
-                {
-                    power += solar_panel.MaxOutput;
-                }
-                last_outputs.Add(power);
-                if (last_outputs.Count > 4)
-                {
-                    last_outputs.RemoveAt(0);
-                }
-                if (last_outputs.Count > 3)
-                {
-                    delta1 = last_outputs[1] - last_outputs[0];
-                    delta2 = last_outputs[3] - last_outputs[2];
-                }
+                power = 0f;
+                max_power = 0f;
+                solar_panels.ForEach(delegate (IMySolarPanel block){
+                    power += block.CurrentOutput;
+                    max_power += block.MaxOutput;
+                });
+                
             }
         }
 
-        void ClearLat()
-        {
-            last_outputs.Clear();
-            delta1 = 0f;
-            delta2 = 0f;
-        }
         void Running()
         {
-            IMyMotorStator lat_stator = lat_stators.First;
+            delta = max_power - last_power;
             switch (machine_state)
             {
                 case StateMachine.Stopped:
-                    lat_stator.ApplyAction("OnOff_Off");
-                    lat_stator.RotorLock = true;
+                    lat_stators.Off();
+                    lat_stators.Lock();
+                    lon_stators.Off();
+                    lon_stators.Lock();
 
-                    if (Math.Abs(lat_output - last_outputs.Last()) > MyProperty.Lat_Delta)
+                    if (Math.Abs(delta) > MyProperty.Lat_Delta)
                     {
-                        machine_state = StateMachine.Traking;
+                        machine_state = StateMachine.TrakingLat;
+                        last_power = 0;
                     }
                     break;
-                case StateMachine.Traking:
-
-                    if (delta1 < 0 && delta2 < 0)
+                case StateMachine.TrakingLat:
+                    if (Math.Abs(delta) < MyProperty.Lat_Delta)
                     {
-                        lat_state = lat_state == StateLat.Forward ? lat_state = StateLat.Backward : lat_state = StateLat.Forward;
-                        ClearLat();
-                    } else if (delta1 > 0 && delta2 < 0)
-                    {
-                        machine_state = StateMachine.Stopped;
-                        lat_output = last_outputs.Last();
-                        ClearLat();
-                    }
-                    lat_stator.ApplyAction("OnOff_On");
-                    lat_stator.RotorLock = false;
-                    if (lat_state == StateLat.Forward)
-                    {
-                        lat_stator.TargetVelocityRPM = MyProperty.Lat_Speed;
+                        machine_state = StateMachine.TrakingLon;
                     }
                     else
                     {
-                        lat_stator.TargetVelocityRPM = -MyProperty.Lat_Speed;
+
+                        if(delta < 0)
+                        {
+                            lat_state = lat_state == StateLat.Forward ? StateLat.Backward : StateLat.Forward;
+                        }
+
+                        lat_stators.ForEach(delegate (IMyMotorStator block) {
+                            if (lat_state == StateLat.Forward)
+                            {
+                                block.TargetVelocityRPM = MyProperty.Lat_Speed;
+                            }
+                            else
+                            {
+                                block.TargetVelocityRPM = -MyProperty.Lat_Speed;
+                            }
+                        });
+                        lat_stators.On();
+                        lat_stators.Unlock();
+                    
+                    }
+                    break;
+                case StateMachine.TrakingLon:
+                    if (Math.Abs(delta) < MyProperty.Lat_Delta)
+                    {
+                        machine_state = StateMachine.Stopped;
+                    }
+                    else
+                    {
+
+                        if (delta < 0)
+                        {
+                            lon_state = lon_state == StateLon.Forward ? StateLon.Backward : StateLon.Forward;
+                        }
+
+                        lon_stators.ForEach(delegate (IMyMotorStator block) {
+                            if (lon_state == StateLon.Forward)
+                            {
+                                block.TargetVelocityRPM = MyProperty.Lat_Speed;
+                            }
+                            else
+                            {
+                                block.TargetVelocityRPM = -MyProperty.Lat_Speed;
+                            }
+                        });
+                        lon_stators.On();
+                        lon_stators.Unlock();
+
                     }
                     break;
                 default:
-                    if(last_outputs.Last() == 0f)
+                    if(Math.Abs(delta) < MyProperty.Lat_Delta)
                     {
                         machine_state = StateMachine.Stopped;
                     } else
                     {
-                        machine_state = StateMachine.Traking;
+                        machine_state = StateMachine.TrakingLat;
                     }
                     break;
             }
-
+            last_power = max_power;
         }
 
         public enum StateMachine
         {
             Stopped,
-            Traking,
+            TrakingLat,
+            TrakingLon,
             Running,
             Waitting
         }
         public enum StateLat
+        {
+            Stopped,
+            Forward,
+            Backward
+        }
+
+        public enum StateLon
         {
             Stopped,
             Forward,

@@ -31,6 +31,8 @@ namespace IngameScript
             public string Search_Lcd_Ingot;
             public string Search_Lcd_Component;
             public string Search_Lcd_Ammo;
+            public string limit_default;
+            public string color_default;
 
             public KProperty(Program program)
             {
@@ -46,6 +48,8 @@ namespace IngameScript
                 Search_Lcd_Ingot = MyIni.Get("Search", "LcdIngot").ToString("INGOT");
                 Search_Lcd_Component = MyIni.Get("Search", "LcdComponent").ToString("COMPONENT");
                 Search_Lcd_Ammo = MyIni.Get("Search", "LcdAmmo").ToString("AMMO");
+                limit_default = MyIni.Get("Limit", "default").ToString("10000");
+                color_default = MyIni.Get("Color", "default").ToString("128,128,128,255");
                 if (program.Me.CustomData.Equals(""))
                 {
                     Save();
@@ -62,9 +66,10 @@ namespace IngameScript
                 return MyIni.Get(section, key).ToInt32(default_value);
             }
 
-            public Color GetColor(string section, string key)
+            public Color GetColor(string section, string key, string default_value = null)
             {
-                string colorValue = MyIni.Get(section, key).ToString("128,128,128,255");
+                if (default_value == null) default_value = color_default;
+                string colorValue = MyIni.Get(section, key).ToString(default_value);
                 Color color = Color.Gray;
                 // Find matches.
                 //program.drawingSurface.WriteText($"{section}/{key}={colorValue}", true);
@@ -85,8 +90,8 @@ namespace IngameScript
                 MyIni.Set("Search", "LcdIngot", Search_Lcd_Ingot);
                 MyIni.Set("Search", "LcdComponent", Search_Lcd_Component);
                 MyIni.Set("Search", "LcdAmmo", Search_Lcd_Ammo);
-                MyIni.Set("Limit", "default", 10000);
-                MyIni.Set("Color", "default", "128,128,128,255");
+                MyIni.Set("Limit", "default", limit_default);
+                MyIni.Set("Color", "default", color_default);
                 program.Me.CustomData = MyIni.ToString();
             }
         }
