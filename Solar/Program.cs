@@ -191,15 +191,17 @@ namespace IngameScript
                             lon_state = lon_state == StateLon.Forward ? StateLon.Backward : StateLon.Forward;
                         }
 
+                        float factor = 1f;
                         lon_stators.ForEach(delegate (IMyMotorStator block) {
                             if (lon_state == StateLon.Forward)
                             {
-                                block.TargetVelocityRPM = MyProperty.Lat_Speed;
+                                block.TargetVelocityRPM = MyProperty.Lat_Speed * factor;
                             }
                             else
                             {
-                                block.TargetVelocityRPM = -MyProperty.Lat_Speed;
+                                block.TargetVelocityRPM = -MyProperty.Lat_Speed * factor;
                             }
+                            factor *= -1f;
                         });
                         lon_stators.On();
                         lon_stators.Unlock();

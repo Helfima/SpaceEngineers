@@ -27,10 +27,6 @@ namespace IngameScript
             protected MyIni MyIni = new MyIni();
             protected Program program;
 
-            public string Search_Lcd_Ore;
-            public string Search_Lcd_Ingot;
-            public string Search_Lcd_Component;
-            public string Search_Lcd_Ammo;
             public string limit_default;
             public string color_default;
 
@@ -44,10 +40,6 @@ namespace IngameScript
                 MyIniParseResult result;
                 if (!MyIni.TryParse(program.Me.CustomData, out result))
                     throw new Exception(result.ToString());
-                Search_Lcd_Ore = MyIni.Get("Search", "LcdOre").ToString("ORE");
-                Search_Lcd_Ingot = MyIni.Get("Search", "LcdIngot").ToString("INGOT");
-                Search_Lcd_Component = MyIni.Get("Search", "LcdComponent").ToString("COMPONENT");
-                Search_Lcd_Ammo = MyIni.Get("Search", "LcdAmmo").ToString("AMMO");
                 limit_default = MyIni.Get("Limit", "default").ToString("10000");
                 color_default = MyIni.Get("Color", "default").ToString("128,128,128,255");
                 if (program.Me.CustomData.Equals(""))
@@ -86,10 +78,6 @@ namespace IngameScript
                 MyIniParseResult result;
                 if (!MyIni.TryParse(program.Me.CustomData, out result))
                     throw new Exception(result.ToString());
-                MyIni.Set("Search", "LcdOre", Search_Lcd_Ore);
-                MyIni.Set("Search", "LcdIngot", Search_Lcd_Ingot);
-                MyIni.Set("Search", "LcdComponent", Search_Lcd_Component);
-                MyIni.Set("Search", "LcdAmmo", Search_Lcd_Ammo);
                 MyIni.Set("Limit", "default", limit_default);
                 MyIni.Set("Color", "default", color_default);
                 program.Me.CustomData = MyIni.ToString();

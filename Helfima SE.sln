@@ -13,11 +13,22 @@ Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "Common", "Common\Common.shp
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LCDInventory", "LCDInventory\LCDInventory.csproj", "{32A0B0D2-FF96-4FD8-ACD2-CDEEB4465E7A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Basic", "Basic\Basic.csproj", "{5B8C3018-EAAA-41DE-8D51-C1614DD64C58}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{D69D9810-99D0-4C7C-BE41-C5670199D8A3}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hercule", "Hercule\Hercule.csproj", "{66E99C32-C5B0-4278-BC49-1FC95B422C6B}"
+EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
 		Common\Common.projitems*{32a0b0d2-ff96-4fd8-acd2-cdeeb4465e7a}*SharedItemsImports = 4
 		Common\Common.projitems*{49439b24-cd30-403a-92fb-1a3f265b2bc8}*SharedItemsImports = 4
+		Common\Common.projitems*{5b8c3018-eaaa-41de-8d51-c1614dd64c58}*SharedItemsImports = 4
 		Common\Common.projitems*{61eba249-19f3-48b6-a25b-a4cee90168ba}*SharedItemsImports = 13
+		Common\Common.projitems*{66e99c32-c5b0-4278-bc49-1fc95b422c6b}*SharedItemsImports = 4
 		Common\Common.projitems*{6fcc4f7b-9ff7-4914-8eab-c54091e8b404}*SharedItemsImports = 4
 		Common\Common.projitems*{e7cea91e-a7a9-4b70-bb0c-bdbe992edc44}*SharedItemsImports = 4
 	EndGlobalSection
@@ -33,6 +44,10 @@ Global
 		{6FCC4F7B-9FF7-4914-8EAB-C54091E8B404}.Debug|x64.Build.0 = Debug|x64
 		{32A0B0D2-FF96-4FD8-ACD2-CDEEB4465E7A}.Debug|x64.ActiveCfg = Debug|x64
 		{32A0B0D2-FF96-4FD8-ACD2-CDEEB4465E7A}.Debug|x64.Build.0 = Debug|x64
+		{5B8C3018-EAAA-41DE-8D51-C1614DD64C58}.Debug|x64.ActiveCfg = Debug|x64
+		{5B8C3018-EAAA-41DE-8D51-C1614DD64C58}.Debug|x64.Build.0 = Debug|x64
+		{66E99C32-C5B0-4278-BC49-1FC95B422C6B}.Debug|x64.ActiveCfg = Debug|x64
+		{66E99C32-C5B0-4278-BC49-1FC95B422C6B}.Debug|x64.Build.0 = Debug|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

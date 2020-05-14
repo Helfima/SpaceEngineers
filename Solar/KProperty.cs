@@ -40,7 +40,7 @@ namespace IngameScript
                 MyIniParseResult result;
                 if (!MyIni.TryParse(program.Me.CustomData, out result))
                     throw new Exception(result.ToString());
-                Name = MyIni.Get("Common", "Name").ToString("Solar Rotor Z");
+                Name = MyIni.Get("Common", "Name").ToString("RotorSolar");
                 Lat_Speed = MyIni.Get("Latitude", "Speed").ToSingle(0.5f);
                 Lat_Delta = MyIni.Get("Latitude", "Delta").ToSingle(0.01f);
             }

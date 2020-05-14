@@ -30,7 +30,7 @@ namespace IngameScript
                 List = new List<T>();
             }
 
-            public static BlockSystem<T> SearchBlocks(Program program, Func<T, bool> collect = null, bool recursive = false)
+            public static BlockSystem<T> SearchBlocks(Program program, Func<T, bool> collect = null)
             {
                 List<T> list = new List<T>();
                 program.GridTerminalSystem.GetBlocksOfType<T>(list, collect);
@@ -50,6 +50,19 @@ namespace IngameScript
             {
                 return BlockSystem<T>.SearchBlocks(program, block => ((IMyTerminalBlock)block).CustomName.Equals(name));
             }
+            public static BlockSystem<T> SearchByGroup(Program program, string name)
+            {
+                List<T> list = new List<T>();
+                IMyBlockGroup group = program.GridTerminalSystem.GetBlockGroupWithName(name);
+                group.GetBlocksOfType<T>(list);
+                program.Echo(String.Format("List <{0}> count: {1}", typeof(T).Name, list.Count));
+
+                return new BlockSystem<T>()
+                {
+                    program = program,
+                    List = list
+                };
+            }
             public static BlockSystem<T> SearchByGrid(Program program, IMyCubeGrid cubeGrid)
             {
                 
@@ -57,12 +70,73 @@ namespace IngameScript
 
             }
 
+            public static BlockSystem<T> SearchByMode(Program program, string mode, string search)
+            {
+                switch (mode)
+                {
+                    case "tag":
+                        return BlockSystem<T>.SearchByTag(program, search);
+                    case "name":
+                        return BlockSystem<T>.SearchByName(program, search);
+                    case "group":
+                        return BlockSystem<T>.SearchByGroup(program, search);
+                }
+                return null;
+            }
+
+            public static void ApplyAction(BlockSystem<T> blockSystem, string action, float value = 0f)
+            {
+                switch (action)
+                {
+                    case "on":
+                        blockSystem.On();
+                        break;
+                    case "off":
+                        blockSystem.Off();
+                        break;
+                    case "lock":
+                        blockSystem.Lock();
+                        break;
+                    case "unlock":
+                        blockSystem.Unlock();
+                        break;
+                    case "reverse":
+                        blockSystem.ApplyAction("Reverse");
+                        break;
+                    case "velocity":
+                        blockSystem.Velocity(value);
+                        break;
+                }
+            }
             public void ForEach(Action<T> action)
             {
                 if (!IsEmpty)
                 {
                     List.ForEach(action);
                 }
+            }
+
+            public object GetProperty(string name)
+            {
+                if (!IsEmpty)
+                {
+                    if (List is List<IMyTerminalBlock>)
+                    {
+                        IMyTerminalBlock block = (IMyTerminalBlock)List[0];
+                        ITerminalProperty property = block.GetProperty(name);
+                        program.drawingSurface.WriteText($"\nProperty type {name}={property.TypeName}", true);
+                        switch (property.TypeName)
+                        {
+                            case "Single":
+                                return block.GetValueFloat(name);
+                            case "Boolean":
+                                return block.GetValueBool(name);
+                            default:
+                                return "null";
+                        }
+                    }
+                }
+                return null;
             }
 
             public bool IsPosition(float position, float epsilon = 0.1f)
@@ -83,7 +157,7 @@ namespace IngameScript
                         foreach (IMyMotorStator block in List)
                         {
                             float value = block.Angle - float.Parse(Util.DegToRad(position).ToString());
-                            if (Math.Abs(value) > epsilon/100) isState = false;
+                            if (Math.Abs(value) > epsilon) isState = false;
                         }
                     }
                 }

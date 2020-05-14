@@ -32,9 +32,9 @@ namespace IngameScript
             private MySpriteDrawFrame frame;
             public RectangleF viewport;
 
-            public Drawing(Lcd lcd)
+            public Drawing(IMyTextPanel lcd)
             {
-                surfaceProvider = lcd.panel_list.First();
+                surfaceProvider = lcd;
                 Initialize();
             }
 

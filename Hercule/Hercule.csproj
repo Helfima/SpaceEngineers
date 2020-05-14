@@ -4,10 +4,10 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{E7CEA91E-A7A9-4B70-BB0C-BDBE992EDC44}</ProjectGuid>
+    <ProjectGuid>{66E99C32-C5B0-4278-BC49-1FC95B422C6B}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <RootNamespace>IngameScript</RootNamespace>
-    <AssemblyName>TestLCD</AssemblyName>
+    <AssemblyName>Hercule</AssemblyName>
     <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
@@ -38,9 +38,6 @@
   <Import Project="MDK/MDK.options.props" />
   <Import Project="MDK/MDK.paths.props" Condition="exists('MDK/MDK.paths.props')" />
   <ItemGroup>
-    <Compile Include="ControllerInventory.cs" />
-    <Compile Include="ControllerCargo.cs" />
-    <Compile Include="ControllerRefinery.cs" />
     <Compile Include="MDK\Bootstrapper.cs" />
     <AdditionalFiles Include="MDK\MDK.options.props">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
@@ -48,17 +45,10 @@
     <AdditionalFiles Include="MDK\MDK.paths.props">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </AdditionalFiles>
-    <Compile Include="Model.cs" />
     <Compile Include="Program.cs" />
     <AdditionalFiles Include="Instructions.readme" />
     <AdditionalFiles Include="thumb.png" />
     <AdditionalFiles Include="MDK\whitelist.cache" />
-    <Compile Include="Property.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="..\.editorconfig">
-      <Link>.editorconfig</Link>
-    </None>
   </ItemGroup>
   <Import Project="..\Common\Common.projitems" Label="Shared" />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

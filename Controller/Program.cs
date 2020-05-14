@@ -43,10 +43,10 @@ namespace IngameScript
         private float targetRayon;
         private float deltaRayon = 2f;
         private float targetAngle;
-        private float deltaAngle = 10f;// 15° non optimal
+        private float deltaAngle = 10f; // 15° non optimal
 
-        private float SPEED_MIN = 0.1f;
-        private float SPEED_MAX = 1f;
+        private float SPEED_MIN = 0.15f;
+        private float SPEED_MAX = 1f; // 1m/s
 
         private float ANGLE_RPM_MIN = 0.1f;
         private float ANGLE_RPM_MAX = 0.5f;
@@ -99,7 +99,7 @@ namespace IngameScript
         void RunContinuousLogic()
         {
             quantity = DrillCount();
-            if (quantity > 100 && quantity > lastQuantity) slowDown = true;
+            if (quantity > 10 && quantity > lastQuantity) slowDown = true;
             lastQuantity = quantity;
             Display();
             if (quantity > 10000) stateMachine = StateMachine.Waitting;
@@ -134,7 +134,7 @@ namespace IngameScript
 
         private void Running()
         {
-            
+            int factor = pistonDown.List.Count + pistonUp.List.Count;
             if (stators.IsEmpty) Prepare();
 
             switch (phase)
@@ -145,12 +145,12 @@ namespace IngameScript
                 case Phase.PistonDown:
                     drills.On();
                     pistonDown.ForEach(delegate (IMyPistonBase block) {
-                        if (slowDown) block.Velocity = SPEED_MIN;
-                        else block.Velocity = SPEED_MAX;
+                        if (slowDown) block.Velocity = SPEED_MIN / factor;
+                        else block.Velocity = SPEED_MAX / factor;
                     });
                     pistonUp.ForEach(delegate (IMyPistonBase block) {
-                        if (slowDown) block.Velocity = -SPEED_MIN;
-                        else block.Velocity = -SPEED_MAX;
+                        if (slowDown) block.Velocity = -SPEED_MIN / factor;
+                        else block.Velocity = -SPEED_MAX / factor;
                     });
                     pistonDown.On();
                     pistonUp.On();
