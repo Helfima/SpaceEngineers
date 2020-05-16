@@ -30,11 +30,12 @@ namespace IngameScript
                 List = new List<T>();
             }
 
-            public static BlockSystem<T> SearchBlocks(Program program, Func<T, bool> collect = null)
+            public static BlockSystem<T> SearchBlocks(Program program, Func<T, bool> collect = null, string info = null)
             {
                 List<T> list = new List<T>();
                 program.GridTerminalSystem.GetBlocksOfType<T>(list, collect);
-                program.Echo(String.Format("List <{0}> count: {1}", typeof(T).Name, list.Count));
+                if(info == null) program.Echo(String.Format("List <{0}> count: {1}", typeof(T).Name, list.Count));
+                else program.Echo(String.Format("List <{0}> count: {1}", info, list.Count));
 
                 return new BlockSystem<T>()
                 {
@@ -44,18 +45,18 @@ namespace IngameScript
             }
             public static BlockSystem<T> SearchByTag(Program program, string tag)
             {
-                return BlockSystem<T>.SearchBlocks(program, block => ((IMyTerminalBlock)block).CustomName.Contains(tag));
+                return BlockSystem<T>.SearchBlocks(program, block => ((IMyTerminalBlock)block).CustomName.Contains(tag), tag);
             }
             public static BlockSystem<T> SearchByName(Program program, string name)
             {
-                return BlockSystem<T>.SearchBlocks(program, block => ((IMyTerminalBlock)block).CustomName.Equals(name));
+                return BlockSystem<T>.SearchBlocks(program, block => ((IMyTerminalBlock)block).CustomName.Equals(name), name);
             }
             public static BlockSystem<T> SearchByGroup(Program program, string name)
             {
                 List<T> list = new List<T>();
                 IMyBlockGroup group = program.GridTerminalSystem.GetBlockGroupWithName(name);
                 group.GetBlocksOfType<T>(list);
-                program.Echo(String.Format("List <{0}> count: {1}", typeof(T).Name, list.Count));
+                program.Echo(String.Format("List <{0}> count: {1}", name, list.Count));
 
                 return new BlockSystem<T>()
                 {

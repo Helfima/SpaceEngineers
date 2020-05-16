@@ -149,7 +149,21 @@ namespace IngameScript
                     string inventoryFilter = MyIni.Get("Inventory", "filter").ToString("none");
                     int inventoryHeight = MyIni.Get("Inventory", "height").ToInt32(300);
 
+                    if (lcd.CustomData.Equals("prepare"))
+                    {
+                        MyIni.Set("Item", "ore", itemOre);
+                        MyIni.Set("Item", "ingot", itemIngot);
+                        MyIni.Set("Item", "component", itemComponent);
+                        MyIni.Set("Item", "ammo", itemAmmo);
+
+                        MyIni.Set("Inventory", "on", inventory);
+                        MyIni.Set("Inventory", "filter", inventoryFilter);
+                        MyIni.Set("Inventory", "height", inventoryHeight);
+                        lcd.CustomData = MyIni.ToString();
+                    }
+
                     Drawing drawing = new Drawing(lcd);
+                    lcd.ScriptBackgroundColor = Color.Black;
                     Vector2 position = drawing.viewport.Position;
 
                     List<IMyTerminalBlock> blocks = new List<IMyTerminalBlock>();
