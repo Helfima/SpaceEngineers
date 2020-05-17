@@ -24,6 +24,7 @@ namespace IngameScript
         const UpdateType CommandUpdate = UpdateType.Trigger | UpdateType.Terminal;
         MyCommandLine commandLine = new MyCommandLine();
         private IMyTextSurface drawingSurface;
+        KProperty MyProperty;
 
         private ModeMachine Mode = ModeMachine.Stop;
         private List<ActionMachine> Sequence;
@@ -31,12 +32,9 @@ namespace IngameScript
         private int Cycle = 0;
         private int projector_count = 0;
         private int blueprint_count = 0;
-        private float epsilonAngle = 0.01f;
         private float current_position = 0f;
         private float last_position = 0f;
         private float velocity = 0f;
-        private float rpm = 1.2f;
-        private float velocity_tool = 4f;
 
         private BlockSystem<IMyMotorStator> stators_pince_fixe_1 = null;
         private BlockSystem<IMyMotorStator> stators_pince_fixe_2 = null;
@@ -76,6 +74,8 @@ namespace IngameScript
 
         private void Init()
         {
+            MyProperty = new KProperty(this);
+            MyProperty.Load();
             Stage = 0;
             stators_pince_fixe_1 = BlockSystem<IMyMotorStator>.SearchByName(this, "Rotor Pince Fixe 1");
             stators_pince_fixe_2 = BlockSystem<IMyMotorStator>.SearchByName(this, "Rotor Pince Fixe 2");
@@ -101,8 +101,6 @@ namespace IngameScript
             welder = BlockSystem<IMyShipWelder>.SearchByGroup(this, "Welder");
 
             projector = BlockSystem<IMyProjector>.SearchByName(this, "Projector Drill");
-
-            projector.List[0].ProjectionOffset = new Vector3I(1, 1 + 3 * blueprint_count, 0);
 
             light = BlockSystem<IMyLightingBlock>.SearchByGroup(this, "Rotating Light");
 
@@ -353,6 +351,8 @@ namespace IngameScript
                 drawingSurface.WriteText($"\nMachine Action:{Sequence[Stage]}", true);
             }
             drawingSurface.WriteText($"\nMachine Stage:{Stage}", true);
+            float deep = MyProperty.elevator_position_max * blueprint_count;
+            drawingSurface.WriteText($"\nMachine Deep:{deep}", true);
         }
 
         private void Staging(ActionMachine action)
@@ -371,12 +371,13 @@ namespace IngameScript
                     drawingSurface.WriteText($"\nPince Fixe 2: Unlock", true);
                     merger_pince_fixe.Off();
                     drawingSurface.WriteText($"\nMerge Pince Fixe: Off", true);
-                    stators_pince_fixe_1.Velocity(rpm);
-                    stators_pince_fixe_2.Velocity(-rpm);
+                    stators_pince_fixe_1.Velocity(MyProperty.locker_velocity);
+                    stators_pince_fixe_2.Velocity(-MyProperty.locker_velocity);
+                    projector.Off();
                     Stage++;
                     break;
                 case ActionMachine.WaitOpenPinceFixe:
-                    if (stators_pince_fixe_1.IsPosition(15f, epsilonAngle) && stators_pince_fixe_2.IsPosition(345f, epsilonAngle))
+                    if (stators_pince_fixe_1.IsPosition(15f, MyProperty.locker_epsilon) && stators_pince_fixe_2.IsPosition(345f, MyProperty.locker_epsilon))
                     {
                         stators_pince_fixe_1.Lock();
                         stators_pince_fixe_2.Lock();
@@ -397,15 +398,16 @@ namespace IngameScript
                     drawingSurface.WriteText($"\nPince Fixe 2: Unlock", true);
                     merger_pince_fixe.On();
                     drawingSurface.WriteText($"\nMerge Pince Fixe: On", true);
-                    stators_pince_fixe_1.Velocity(-rpm);
-                    stators_pince_fixe_2.Velocity(rpm);
+                    stators_pince_fixe_1.Velocity(-MyProperty.locker_velocity);
+                    stators_pince_fixe_2.Velocity(MyProperty.locker_velocity);
                     Stage++;
                     break;
                 case ActionMachine.WaitClosePinceFixe:
-                    if (stators_pince_fixe_1.IsPosition(0f, epsilonAngle) && stators_pince_fixe_2.IsPosition(360f, epsilonAngle))
+                    if (stators_pince_fixe_1.IsPosition(0f, MyProperty.locker_epsilon) && stators_pince_fixe_2.IsPosition(360f, MyProperty.locker_epsilon))
                     {
                         stators_pince_fixe_1.Lock();
                         stators_pince_fixe_2.Lock();
+                        projector.On();
                         Stage++;
                     }
                     drawingSurface.WriteText($"\nPince Fixe 1: Angle={Util.RadToDeg(stators_pince_fixe_1.List[0].Angle)}", true);
@@ -423,19 +425,19 @@ namespace IngameScript
                     drawingSurface.WriteText($"\nPince Mobile 2: Unlock", true);
                     merger_pince_mobile.Off();
                     drawingSurface.WriteText($"\nMerge Pince Mobile: Off", true);
-                    stators_pince_mobile_1.Velocity(-rpm);
-                    stators_pince_mobile_2.Velocity(rpm);
+                    stators_pince_mobile_1.Velocity(-MyProperty.locker_velocity);
+                    stators_pince_mobile_2.Velocity(MyProperty.locker_velocity);
                     connector_drill.ForEach(delegate (IMyShipConnector block)
                     {
                         block.Disconnect();
                     });
                     drawingSurface.WriteText($"\nConnector Drill: Disconnect", true);
-                    piston_connector_drill.Velocity(-rpm);
+                    piston_connector_drill.Velocity(-MyProperty.locker_velocity);
                     Stage++;
                     break;
                 case ActionMachine.WaitOpenPinceMobile:
-                    if (stators_pince_mobile_1.IsPosition(345f, epsilonAngle)
-                        && stators_pince_mobile_2.IsPosition(15f, epsilonAngle)
+                    if (stators_pince_mobile_1.IsPosition(345f, MyProperty.locker_epsilon)
+                        && stators_pince_mobile_2.IsPosition(15f, MyProperty.locker_epsilon)
                         && piston_connector_drill.IsPosition(0f))
                     {
                         stators_pince_mobile_1.Lock();
@@ -458,15 +460,15 @@ namespace IngameScript
                     drawingSurface.WriteText($"\nPince Mobile 2: Unlock", true);
                     merger_pince_mobile.On();
                     drawingSurface.WriteText($"\nMerge Mobile Fixe: On", true);
-                    stators_pince_mobile_1.Velocity(rpm);
-                    stators_pince_mobile_2.Velocity(-rpm);
-                    piston_connector_drill.Velocity(rpm);
+                    stators_pince_mobile_1.Velocity(MyProperty.locker_velocity);
+                    stators_pince_mobile_2.Velocity(-MyProperty.locker_velocity);
+                    piston_connector_drill.Velocity(MyProperty.locker_velocity);
                     Stage++;
                     break;
                 case ActionMachine.WaitClosePinceMobile:
-                    if (stators_pince_mobile_1.IsPosition(360f, epsilonAngle)
-                        && stators_pince_mobile_2.IsPosition(0f, epsilonAngle)
-                        && piston_connector_drill.IsPosition(2.35f))
+                    if (stators_pince_mobile_1.IsPosition(360f, MyProperty.locker_epsilon)
+                        && stators_pince_mobile_2.IsPosition(0f, MyProperty.locker_epsilon)
+                        && piston_connector_drill.IsPosition(MyProperty.locker_position_max))
                     {
                         stators_pince_mobile_1.Lock();
                         stators_pince_mobile_2.Lock();
@@ -477,20 +479,19 @@ namespace IngameScript
                         drawingSurface.WriteText($"\nConnector Drill: Connected", true);
                         Stage++;
                     };
-                    drawingSurface.WriteText($"\nPince Mobile 1: Angle={Util.RadToDeg(stators_pince_mobile_1.List[0].Angle)}|{stators_pince_mobile_1.IsPosition(360f, epsilonAngle)}", true);
-                    drawingSurface.WriteText($"\nPince Mobile 2: Angle={Util.RadToDeg(stators_pince_mobile_2.List[0].Angle)}|{stators_pince_mobile_2.IsPosition(0f, epsilonAngle)}", true);
-                    drawingSurface.WriteText($"\nPiston Connector Drill: Position={piston_connector_drill.List[0].CurrentPosition}|{piston_connector_drill.IsPosition(2.35f)}", true);
+                    drawingSurface.WriteText($"\nPince Mobile 1: Angle={Util.RadToDeg(stators_pince_mobile_1.List[0].Angle)}", true);
+                    drawingSurface.WriteText($"\nPince Mobile 2: Angle={Util.RadToDeg(stators_pince_mobile_2.List[0].Angle)}", true);
+                    drawingSurface.WriteText($"\nPiston Connector Drill: Position={piston_connector_drill.List[0].CurrentPosition}", true);
                     break;
                 case ActionMachine.Down:
                     piston_levage.On();
                     drawingSurface.WriteText($"\nPiston Levage: On", true);
-                    velocity = -0.2f;
-                    if(Mode == ModeMachine.Up) velocity = -0.5f;
+                    velocity = -MyProperty.elevator_velocity_min;
+                    if(Mode == ModeMachine.Up) velocity = -MyProperty.elevator_velocity_max;
                     piston_levage.Velocity(velocity);
                     if (Mode == ModeMachine.Up)
                     {
                         blueprint_count -= 1;
-                        projector.List[0].ProjectionOffset = new Vector3I(1, 1 + 3 * blueprint_count, 0);
                     }
                     Stage++;
                     break;
@@ -504,11 +505,11 @@ namespace IngameScript
                         });
                         projector_count = projector.List[0].RemainingBlocks;
                         drawingSurface.WriteText($"\nProjector Count={projector_count}", true);
-                        if (piston_levage.IsPosition(5.2f))
+                        if (piston_levage.IsPosition(MyProperty.elevator_position_3))
                         {
                             piston_levage.Velocity(0f);
                         }
-                        if (projector_count == 5)
+                        if (projector_count == MyProperty.tool_count_5)
                         {
                             Stage++;
                         }
@@ -528,7 +529,7 @@ namespace IngameScript
                         });
                         projector_count = projector.List[0].RemainingBlocks;
                         drawingSurface.WriteText($"\nProjector Count={projector_count}", true);
-                        if (projector_count == 7)
+                        if (projector_count == MyProperty.tool_count_4)
                         {
                             Stage++;
                         }
@@ -548,7 +549,7 @@ namespace IngameScript
                         });
                         projector_count = projector.List[0].RemainingBlocks;
                         drawingSurface.WriteText($"\nProjector Count={projector_count}", true);
-                        if (projector_count == 8)
+                        if (projector_count == MyProperty.tool_count_3)
                         {
                             Stage++;
                             piston_levage.Velocity(velocity);
@@ -568,11 +569,11 @@ namespace IngameScript
                         });
                         projector_count = projector.List[0].RemainingBlocks;
                         drawingSurface.WriteText($"\nProjector Count={projector_count}", true);
-                        if (piston_levage.IsPosition(2.6f))
+                        if (piston_levage.IsPosition(MyProperty.elevator_position_2))
                         {
                             piston_levage.Velocity(0f);
                         }
-                        if (projector_count == 9)
+                        if (projector_count == MyProperty.tool_count_2)
                         {
                             Stage++;
                             piston_levage.Velocity(velocity);
@@ -592,11 +593,11 @@ namespace IngameScript
                         });
                         projector_count = projector.List[0].RemainingBlocks;
                         drawingSurface.WriteText($"\nProjector Count={projector_count}", true);
-                        if (piston_levage.IsPosition(0.5f))
+                        if (piston_levage.IsPosition(MyProperty.elevator_position_1))
                         {
                             piston_levage.Velocity(0f);
                         }
-                        if (projector_count == 10)
+                        if (projector_count == MyProperty.tool_count_1)
                         {
                             Stage++;
                             piston_levage.Velocity(velocity);
@@ -641,7 +642,7 @@ namespace IngameScript
                 case ActionMachine.Up:
                     piston_levage.On();
                     drawingSurface.WriteText($"\nPiston Levage: On", true);
-                    velocity = 1f;
+                    velocity = MyProperty.elevator_velocity_max;
                     piston_levage.Velocity(velocity);
                     Stage++;
                     break;
@@ -654,11 +655,11 @@ namespace IngameScript
                         });
                         projector_count = projector.List[0].RemainingBlocks;
                         drawingSurface.WriteText($"\nProjector Count={projector_count}", true);
-                        if (piston_levage.List[0].CurrentPosition > 0.5f)
+                        if (piston_levage.List[0].CurrentPosition > MyProperty.elevator_position_1)
                         {
                             piston_levage.Velocity(0f);
                         }
-                        if (projector_count == 9)
+                        if (projector_count == MyProperty.tool_count_2)
                         {
                             Stage++;
                             piston_levage.Velocity(velocity);
@@ -678,11 +679,11 @@ namespace IngameScript
                         });
                         projector_count = projector.List[0].RemainingBlocks;
                         drawingSurface.WriteText($"\nProjector Count={projector_count}", true);
-                        if (piston_levage.List[0].CurrentPosition > 2.6f)
+                        if (piston_levage.List[0].CurrentPosition > MyProperty.elevator_position_2)
                         {
                             piston_levage.Velocity(0f);
                         }
-                        if (projector_count == 8)
+                        if (projector_count == MyProperty.tool_count_3)
                         {
                             Stage++;
                             piston_levage.Velocity(velocity);
@@ -702,7 +703,7 @@ namespace IngameScript
                         });
                         projector_count = projector.List[0].RemainingBlocks;
                         drawingSurface.WriteText($"\nProjector Count={projector_count}", true);
-                        if (piston_levage.List[0].CurrentPosition > 5.2f)
+                        if (piston_levage.List[0].CurrentPosition > MyProperty.elevator_position_3)
                         {
                             piston_levage.Velocity(0f);
                         }
@@ -724,14 +725,14 @@ namespace IngameScript
                         drawingSurface.WriteText($"\nPiston Position={block.CurrentPosition}", true);
                         current_position = block.CurrentPosition;
                     });
-                    if (piston_levage.IsPosition(7.6f))
+                    if (piston_levage.IsPosition(MyProperty.elevator_position_max))
                     {
                         Stage++;
-                        if(Mode == ModeMachine.Down)
+                        if (Mode == ModeMachine.Down)
                         {
                             blueprint_count += 1;
-                            projector.List[0].ProjectionOffset = new Vector3I(1, 1 + 3 * blueprint_count, 0);
                         }
+
                     }
                     else
                     {
@@ -756,7 +757,7 @@ namespace IngameScript
                 case ActionMachine.OpenGrinder:
                     piston_grinder.On();
                     drawingSurface.WriteText($"\nPiston Grinder: On", true);
-                    velocity = velocity_tool;
+                    velocity = MyProperty.tool_velocity;
                     piston_grinder.Velocity(velocity);
                     Stage++;
                     break;
@@ -765,7 +766,7 @@ namespace IngameScript
                     {
                         drawingSurface.WriteText($"\nPiston Grinder Position={block.CurrentPosition}", true);
                     });
-                    if (piston_grinder.IsPosition(10f))
+                    if (piston_grinder.IsPosition(MyProperty.tool_position_max))
                     {
                         Stage++;
                     }
@@ -776,7 +777,7 @@ namespace IngameScript
                     grinder_middle2.Off();
                     piston_grinder.On();
                     drawingSurface.WriteText($"\nPiston Grinder: On", true);
-                    velocity = velocity_tool;
+                    velocity = MyProperty.tool_velocity;
                     piston_grinder.Velocity(-velocity);
                     Stage++;
                     break;
@@ -793,7 +794,7 @@ namespace IngameScript
                 case ActionMachine.OpenWelder:
                     piston_welder.On();
                     drawingSurface.WriteText($"\nPiston Welder: On", true);
-                    velocity = velocity_tool;
+                    velocity = MyProperty.tool_velocity;
                     piston_welder.Velocity(velocity);
                     Stage++;
                     break;
@@ -802,7 +803,7 @@ namespace IngameScript
                     {
                         drawingSurface.WriteText($"\nPiston Welder Position={block.CurrentPosition}", true);
                     });
-                    if (piston_welder.IsPosition(10f))
+                    if (piston_welder.IsPosition(MyProperty.tool_position_max))
                     {
                         welder.On();
                         Stage++;
@@ -812,7 +813,7 @@ namespace IngameScript
                     welder.Off();
                     piston_welder.On();
                     drawingSurface.WriteText($"\nPiston Welder: On", true);
-                    velocity = velocity_tool;
+                    velocity = MyProperty.tool_velocity;
                     piston_welder.Velocity(-velocity);
                     Stage++;
                     break;
@@ -832,6 +833,7 @@ namespace IngameScript
                     Stage = 0;
                     break;
                 case ActionMachine.Start:
+                    MyProperty.Load();
                     light.On();
                     drill.On();
                     Stage++;
