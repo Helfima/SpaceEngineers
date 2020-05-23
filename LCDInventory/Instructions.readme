@@ -1,5 +1,9 @@
 ﻿R e a d m e
 -----------
 
-In this file you can include any instructions or other comments you want to have injected onto the 
-top of your final script. You can safely delete this file if you do not want any such comments.
+LCD Inventory By Helfima
+1) Place Programmable block
+2) Place LCD Panel
+3) Edit LCD Custom Data and write prepare
+4) Add Script into Programmable block
+5) Return edit LCD Custom Data and set what you want

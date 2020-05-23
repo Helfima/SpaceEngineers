@@ -32,8 +32,6 @@ namespace IngameScript
         
         private Dictionary<string, Item> item_list = new Dictionary<string, Item>();
         
-        private Dictionary<string, Model> model_list = new Dictionary<string, Model>();
-
         private MySprite icon;
         public Program()
         {
@@ -47,26 +45,8 @@ namespace IngameScript
 
         private void Init()
         {
-            inventories = BlockSystem<IMyTerminalBlock>.SearchBlocks(this, block => block.HasInventory);
-            lcds = BlockSystem<IMyTextPanel>.SearchBlocks(this);
-
-            model_list = new Dictionary<string, Model>();
-            addModel(new Model { Name = "Ice", Color = Color.LightBlue });
-            addModel(new Model { Name = "Stone", Color = Color.Brown });
-            addModel(new Model { Name = "Iron", Tag = "Fe", Color = Color.Orange });
-            addModel(new Model { Name = "Nickel", Tag = "Ni", Color = Color.Gray });
-            addModel(new Model { Name = "Cobalt", Tag = "Co", Color = Color.Blue });
-            addModel(new Model { Name = "Magnesium", Tag = "Ma", Color = Color.Gray });
-            addModel(new Model { Name = "Silicon", Tag = "Si", Color = Color.Gray });
-            addModel(new Model { Name = "Silver", Tag = "Ag" , Color = Color.LightGray});
-            addModel(new Model { Name = "Gold", Tag = "Au", Color = Color.Gold });
-            addModel(new Model { Name = "Platinum", Tag = "Pl", Color = Color.Gray });
-            addModel(new Model { Name = "Uranium", Tag = "Ur", Color = Color.GreenYellow});
-        }
-
-        private void addModel(Model model)
-        {
-            model_list.Add(model.Name, model);
+            inventories = BlockSystem<IMyTerminalBlock>.SearchBlocks(this, block => (block.HasInventory && block.CubeGrid == Me.CubeGrid));
+            lcds = BlockSystem<IMyTextPanel>.SearchBlocks(this, block => (block.CubeGrid == Me.CubeGrid));
         }
 
         public void Save()
@@ -100,6 +80,20 @@ namespace IngameScript
                     case "reset":
                         Init();
                         break;
+                    case "test":
+                        IMyTextPanel lcd = (IMyTextPanel)GridTerminalSystem.GetBlockWithName(commandLine.Argument(1));
+                        lcd.ScriptBackgroundColor = Color.Black;
+                        Drawing drawing = new Drawing(lcd);
+                        drawing.Test(drawingSurface);
+                        drawing.Dispose();
+                        break;
+                    case "getname":
+                        int index = 0;
+                        int.TryParse(commandLine.Argument(1), out index);
+                        var names = new List<string>();
+                        drawingSurface.GetSprites(names);
+                        Echo($"Sprite {index} name={names[index]}");
+                        break;
                 }
             }
         }
@@ -112,25 +106,13 @@ namespace IngameScript
 
         private void Display()
         {
-            drawingSurface.WriteText($"Inventory list size:{inventories.List.Count}\n", false);
+            drawingSurface.WriteText($"LCD list size:{lcds.List.Count}\n", false);
+            drawingSurface.WriteText($"Inventory list size:{inventories.List.Count}\n", true);
             drawingSurface.WriteText($"Ore list size:{item_list.Where(entry => entry.Value.Type == Item.TYPE_ORE).ToList().Count}\n", true);
             drawingSurface.WriteText($"Ingot list size:{item_list.Where(entry => entry.Value.Type == Item.TYPE_INGOT).ToList().Count}\n", true);
             drawingSurface.WriteText($"Component list size:{item_list.Where(entry => entry.Value.Type == Item.TYPE_COMPONENT).ToList().Count}\n", true);
             drawingSurface.WriteText($"Ammo list size:{item_list.Where(entry => entry.Value.Type == Item.TYPE_AMMO).ToList().Count}\n", true);
         }
-
-        /*
-        private void displaytext(lcd lcd, string type)
-        {
-            if (lcd.isempty) return;
-            stringbuilder message = new stringbuilder();
-            foreach (keyvaluepair<string, item> entry in item_list.where(entry => entry.value.type == type))
-            {
-                item item = entry.value;
-                message.append(string.format("{0,6}:{1}\n", util.getkiloformat(item.amount), item.name));
-            }
-            lcd.print(message, false);
-        }*/
 
         private void DisplayLcd()
         {
@@ -140,25 +122,44 @@ namespace IngameScript
                     MyIniParseResult result;
                     MyIni MyIni = new MyIni();
                     MyIni.TryParse(lcd.CustomData, out result);
-                    bool itemOre = MyIni.Get("Item", "ore").ToBoolean(false);
-                    bool itemIngot = MyIni.Get("Item", "ingot").ToBoolean(false);
-                    bool itemComponent = MyIni.Get("Item", "component").ToBoolean(false);
-                    bool itemAmmo = MyIni.Get("Item", "ammo").ToBoolean(false);
-
-                    bool inventory = MyIni.Get("Inventory", "on").ToBoolean(false);
+                    bool inventoryGauge = MyIni.Get("Inventory", "gauge").ToBoolean(true);
                     string inventoryFilter = MyIni.Get("Inventory", "filter").ToString("none");
-                    int inventoryHeight = MyIni.Get("Inventory", "height").ToInt32(300);
+
+                    bool gauge = MyIni.Get("Gauge", "on").ToBoolean(true);
+                    bool gaugeFullscreen = MyIni.Get("Gauge", "fullscreen").ToBoolean(true);
+                    bool gaugeHorizontal = MyIni.Get("Gauge", "horizontal").ToBoolean(true);
+                    float gaugeWidth = MyIni.Get("Gauge", "width").ToSingle(80f);
+                    float gaugeHeight = MyIni.Get("Gauge", "height").ToSingle(40f);
+
+                    bool itemOre = MyIni.Get("Item", "ore").ToBoolean(true);
+                    bool itemIngot = MyIni.Get("Item", "ingot").ToBoolean(true);
+                    bool itemComponent = MyIni.Get("Item", "component").ToBoolean(true);
+                    bool itemAmmo = MyIni.Get("Item", "ammo").ToBoolean(true);
+
+                    bool drills = MyIni.Get("Drills", "on").ToBoolean(false);
+                    bool drills_flip_x = MyIni.Get("Drills", "flip_x").ToBoolean(false);
+                    bool drills_flip_y = MyIni.Get("Drills", "flip_y").ToBoolean(false);
 
                     if (lcd.CustomData.Equals("prepare"))
                     {
+                        drawingSurface.WriteText($"Prepare:{lcd.CustomName}\n", true);
+                        MyIni.Set("Inventory", "gauge", inventoryGauge);
+                        MyIni.Set("Inventory", "filter", inventoryFilter);
+
+                        MyIni.Set("Gauge", "on", gauge);
+                        MyIni.Set("Gauge", "fullscreen", gaugeFullscreen);
+                        MyIni.Set("Gauge", "horizontal", gaugeHorizontal);
+                        MyIni.Set("Gauge", "width", gaugeWidth);
+                        MyIni.Set("Gauge", "height", gaugeHeight);
+
                         MyIni.Set("Item", "ore", itemOre);
                         MyIni.Set("Item", "ingot", itemIngot);
                         MyIni.Set("Item", "component", itemComponent);
                         MyIni.Set("Item", "ammo", itemAmmo);
 
-                        MyIni.Set("Inventory", "on", inventory);
-                        MyIni.Set("Inventory", "filter", inventoryFilter);
-                        MyIni.Set("Inventory", "height", inventoryHeight);
+                        MyIni.Set("Drills", "on", drills);
+                        MyIni.Set("Drills", "flip_x", drills_flip_x);
+                        MyIni.Set("Drills", "flip_y", drills_flip_y);
                         lcd.CustomData = MyIni.ToString();
                     }
 
@@ -167,7 +168,7 @@ namespace IngameScript
                     Vector2 position = drawing.viewport.Position;
 
                     List<IMyTerminalBlock> blocks = new List<IMyTerminalBlock>();
-                    if (inventory)
+                    if (inventoryGauge)
                     {
                         string mode = "none";
                         string search = "";
@@ -189,11 +190,11 @@ namespace IngameScript
                         //drawingSurface.WriteText($"\nsearch:{search}", true);
                         switch (mode)
                         {
-                            case "group":
-                                blocks = inventories.List.Where(inv => inv.CustomName.Equals(search)).ToList();
+                            case "contains":
+                                blocks = inventories.List.Where(inv => inv.CustomName.ToLower().Contains(search.ToLower())).ToList();
                                 break;
-                            case "name":
-                                blocks = inventories.List.Where(inv => inv.CustomName.Equals(search)).ToList();
+                            case "equals":
+                                blocks = inventories.List.Where(inv => inv.CustomName.ToLower().Equals(search.ToLower())).ToList();
                                 break;
                             default:
                                 blocks = inventories.List;
@@ -214,12 +215,54 @@ namespace IngameScript
                             }
                         });
                         //drawingSurface.WriteText($"\nVolume:{volumes}/{maxVolumes}", true);
-                        float width = 80f;
-                        DisplayVolume(drawing, volumes, maxVolumes, position, width, inventoryHeight);
-                        position += new Vector2(width + 20, 0);
-                    }
-                    
+                        StyleGauge style = new StyleGauge() {
+                            Orientation = gaugeHorizontal ? SpriteOrientation.Horizontal : SpriteOrientation.Vertical,
+                            Fullscreen = gaugeFullscreen,
+                            Width = gaugeWidth,
+                            Height = gaugeHeight
+                        };
+                        drawing.DrawGauge(position, volumes, maxVolumes, style);
+                        if(gaugeHorizontal) position += new Vector2(0, gaugeHeight + 20);
+                        else position += new Vector2(gaugeWidth + 20, 0);
 
+                    }
+
+                    if (drills)
+                    {
+                        float width = 50f;
+                        float padding = 4f;
+                        float x_min = 0f;
+                        float x_max = 0f;
+                        float y_min = 0f;
+                        float y_max = 0f;
+                        bool first = true;
+                        blocks = inventories.List.Where(inv => inv is IMyShipDrill).ToList();
+                        blocks.ForEach(delegate (IMyTerminalBlock block)
+                        {
+                            IMyShipDrill drill = (IMyShipDrill)block;
+                            if (first || drill.Position.X < x_min) x_min = drill.Position.X;
+                            if (first || drill.Position.X > x_max) x_max = drill.Position.X;
+                            if (first || drill.Position.Z < y_min) y_min = drill.Position.Z;
+                            if (first || drill.Position.Z < y_max) y_max = drill.Position.Z;
+                            first = false;
+                        });
+                        //drawingSurface.WriteText($"X min:{x_min} Y min:{y_min}\n", false);
+                        blocks.ForEach(delegate (IMyTerminalBlock block)
+                        {
+                            IMyShipDrill drill = (IMyShipDrill)block;
+                            IMyInventory block_inventory = block.GetInventory(0);
+                            long volume = block_inventory.CurrentVolume.RawValue;
+                            long maxVolume = block_inventory.MaxVolume.RawValue;
+                            float x = drill.Position.X - x_min;
+                            float y = drill.Position.Z - y_min;
+                            //drawingSurface.WriteText($"X:{x} Y:{y}\n", true);
+                            if (drills_flip_x) x = x_max - x_min - x;
+                            if (drills_flip_y) y = y_max - y_min - y;
+                            //drawingSurface.WriteText($"Volume [{x},{y}]:{volume}/{maxVolume}\n", true);
+                            Vector2 position_relative = new Vector2(x * (width + padding), y * (width + padding));
+                            DrawDrill(drawing, volume, maxVolume, position + position_relative, width, width);
+                        });
+                    }
                     List<string> types = new List<string>();
                     if (itemOre) types.Add(Item.TYPE_ORE);
                     if (itemIngot) types.Add(Item.TYPE_INGOT);
@@ -232,139 +275,68 @@ namespace IngameScript
             });
         }
 
-        private void DisplayVolume(Drawing drawing, long volumes, long maxVolumes, Vector2 position, float width = 80f, int height = 300)
+        private void DrawDrill(Drawing drawing, long volume, long maxVolume, Vector2 position, float width = 80f, float height = 80f)
         {
             // Jauge
+            Color color = Color.Gray;
             icon = new MySprite()
             {
                 Type = SpriteType.TEXTURE,
                 Data = "SquareSimple",
                 Size = new Vector2(width, height),
-                Color = Color.Gray,
-                Position = position + new Vector2(10 , height/2 + 30)
-
+                Color = color,
+                Position = position + new Vector2(10, height / 2 + 30)
             };
             // Jauge quantity
             drawing.AddSprite(icon);
             // attention un long est un entier et la division l'ai aussi
-            float ratio = (volumes*1000 / maxVolumes);
+            float ratio = (volume * 1000 / maxVolume);
             float percent = ratio / 1000;
-            drawingSurface.WriteText($"\nVolumes:{volumes}/{maxVolumes}", true);
-            drawingSurface.WriteText($"\nPercent:{percent:P1}", true);
-            Color color = Color.Green;
+            color = Color.Green;
             if (percent > 0.5) color = Color.Yellow;
             if (percent > 0.75) color = Color.Red;
-
+            float max = 0;
+            if(volume > 0) max = 2;
             drawing.AddSprite(icon); icon = new MySprite()
             {
                 Type = SpriteType.TEXTURE,
                 Data = "SquareSimple",
-                Size = new Vector2(width-4 , height * percent),
+                Size = new Vector2(width - 4, Math.Max(max, height * percent)),
                 Color = color,
-                Position = position + new Vector2(10+2, height / 2 + 30 + ((height-4) * (1-percent))/2 -2)
+                Position = position + new Vector2(10 + 2, height / 2 + 30 + ((height - 4) * (1 - percent)) / 2 - 2)
             };
             drawing.AddSprite(icon);
-            // Tag
-            icon = new MySprite()
-            {
-                Type = SpriteType.TEXT,
-                Data = $"{percent:P1}",
-                Size = new Vector2(width, width),
-                Color = Color.DimGray,
-                Position = position + new Vector2(10, 0),
-                RotationOrScale = 0.7f,
-                FontId = "Monospace",
-                Alignment = TextAlignment.LEFT
-
-            };
-            drawing.AddSprite(icon);
-            
         }
+        
         private void DisplayByType(Drawing drawing, Vector2 position, List<string> types)
         {
             int count = -1;
-            float width = 80f;
-            int limit = 6;
+            float height = 80f;
+            float width = 3 * height;
+            int limit = 5;
+            string colorDefault = MyProperty.Get("color", "default");
+            int limitDefault = MyProperty.GetInt("Limit", "default");
+
             foreach (string type in types)
             {
                 foreach (KeyValuePair<string, Item> entry in item_list.OrderByDescending(entry => entry.Value.Amount).Where(entry => entry.Value.Type == type))
                 {
                     Item item = entry.Value;
                     count++;
-                    Vector2 position2 = position + new Vector2(width * 3 * (count / limit), width * (0.5f + count - (count / limit) * limit));
+                    Vector2 position2 = position + new Vector2(width * (count / limit), height * (count - (count / limit) * limit));
                     // Icon
-                    DisplayIcon(drawing, item, position2, width);
+                    Color color = MyProperty.GetColor("color", item.Name, colorDefault);
+                    int limitBar = MyProperty.GetInt("Limit", item.Name, limitDefault);
+                    //DisplayIcon(drawing, item, position2, width);
+                    StyleIcon style = new StyleIcon()
+                    {
+                        path = item.Icon,
+                        Width = width,
+                        Height = height
+                    };
+                    drawing.DrawGaugeIcon(position2, item.Name, item.Amount, limitBar, style);
                 }
             }
-        }
-
-        private void DisplayIcon(Drawing drawing, Item item, Vector2 position, float width = 80f)
-        {
-            // Icon
-            string colorDefault = MyProperty.Get("color", "default");
-            Color color = MyProperty.GetColor("color", item.Name, colorDefault);
-            string tag = item.Name;
-            icon = new MySprite()
-            {
-                Type = SpriteType.TEXTURE,
-                Data = item.Icon,
-                Size = new Vector2(width, width),
-                Color = color,
-                Position = position
-
-            };
-            // Jauge
-            drawing.AddSprite(icon); icon = new MySprite()
-            {
-                Type = SpriteType.TEXTURE,
-                Data = "SquareSimple",
-                Size = new Vector2(width, 15),
-                Color = Color.Gray,
-                Position = position + new Vector2(width + 10, 20)
-
-            };
-            // Jauge quantity
-            drawing.AddSprite(icon);
-            int limitDefault = MyProperty.GetInt("Limit", "default");
-            int limitBar = MyProperty.GetInt("Limit", item.Name, limitDefault);
-            double percent = Math.Min(item.Amount / limitBar, 1);
-            drawing.AddSprite(icon); icon = new MySprite()
-            {
-                Type = SpriteType.TEXTURE,
-                Data = "SquareSimple",
-                Size = new Vector2((width - 4) * float.Parse(percent.ToString()), 15 - 2),
-                Color = Color.Red,
-                Position = position + new Vector2(width + 10 + 2, 20 + 2)
-
-            };
-            drawing.AddSprite(icon);
-            // Tag
-            icon = new MySprite()
-            {
-                Type = SpriteType.TEXT,
-                Data = tag,
-                Size = new Vector2(width, width),
-                Color = Color.DimGray,
-                Position = position + new Vector2(5, -width / 2),
-                RotationOrScale = 0.5f,
-                FontId = "Monospace",
-                Alignment = TextAlignment.LEFT
-
-            };
-            drawing.AddSprite(icon);
-            // Quantity
-            icon = new MySprite()
-            {
-                Type = SpriteType.TEXT,
-                Data = Util.GetKiloFormat(item.Amount),
-                Size = new Vector2(width, width),
-                Color = Color.LightGray,
-                Position = position + new Vector2(width + 10, 10 - width / 2),
-                RotationOrScale = 1f,
-                FontId = "Monospace"
-
-            };
-            drawing.AddSprite(icon);
         }
 
         private void InventoryCount()
@@ -406,41 +378,6 @@ namespace IngameScript
                 }
             }
         }
-
-        private class Model
-        {
-            private string name;
-            private string tag;
-            private Color color;
-
-            public string Name
-            {
-                get{return name;}
-                set{name = value;}
-            }
-
-            public string Tag
-            {
-                get{
-                    if (tag != null) return tag;
-                    return name;
-                }
-                set{
-                    tag = value;
-                }
-            }
-            public Color Color
-            {
-                get{
-                    if (color != null) return color;
-                    return Color.Gray;
-                }
-                set{
-                    color = value;
-                }
-            }
-        }
-
         private class Item : IComparable<Item>
         {
             public const string TYPE_ORE = "MyObjectBuilder_Ore";

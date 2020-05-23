@@ -160,6 +160,8 @@ namespace IngameScript
                         Sequence.Add(ActionMachine.OpenPinceMobile);
                         Sequence.Add(ActionMachine.WaitOpenPinceMobile);
                         Sequence.Add(ActionMachine.Stop);
+
+                        Sequence.Add(ActionMachine.Terminated);
                         break;
                     case "openfixe":
                         Stage = 0;
@@ -170,6 +172,8 @@ namespace IngameScript
                         Sequence.Add(ActionMachine.OpenPinceFixe);
                         Sequence.Add(ActionMachine.WaitOpenPinceFixe);
                         Sequence.Add(ActionMachine.Stop);
+
+                        Sequence.Add(ActionMachine.Terminated);
                         break;
                     case "openmobile":
                         Stage = 0;
@@ -180,6 +184,8 @@ namespace IngameScript
                         Sequence.Add(ActionMachine.OpenPinceMobile);
                         Sequence.Add(ActionMachine.WaitOpenPinceMobile);
                         Sequence.Add(ActionMachine.Stop);
+
+                        Sequence.Add(ActionMachine.Terminated);
                         break;
                     case "close":
                         Stage = 0;
@@ -192,6 +198,8 @@ namespace IngameScript
                         Sequence.Add(ActionMachine.ClosePinceMobile);
                         Sequence.Add(ActionMachine.WaitClosePinceMobile);
                         Sequence.Add(ActionMachine.Stop);
+
+                        Sequence.Add(ActionMachine.Terminated);
                         break;
                     case "closefixe":
                         Stage = 0;
@@ -202,6 +210,8 @@ namespace IngameScript
                         Sequence.Add(ActionMachine.ClosePinceFixe);
                         Sequence.Add(ActionMachine.WaitClosePinceFixe);
                         Sequence.Add(ActionMachine.Stop);
+
+                        Sequence.Add(ActionMachine.Terminated);
                         break;
                     case "closemobile":
                         Stage = 0;
@@ -212,6 +222,8 @@ namespace IngameScript
                         Sequence.Add(ActionMachine.ClosePinceMobile);
                         Sequence.Add(ActionMachine.WaitClosePinceMobile);
                         Sequence.Add(ActionMachine.Stop);
+
+                        Sequence.Add(ActionMachine.Terminated);
                         break;
                     case "opengrinder":
                         Stage = 0;
@@ -222,6 +234,8 @@ namespace IngameScript
                         Sequence.Add(ActionMachine.OpenGrinder);
                         Sequence.Add(ActionMachine.WaitOpenGrinder);
                         Sequence.Add(ActionMachine.Stop);
+
+                        Sequence.Add(ActionMachine.Terminated);
                         break;
                     case "closegrinder":
                         Stage = 0;
@@ -232,6 +246,8 @@ namespace IngameScript
                         Sequence.Add(ActionMachine.CloseGrinder);
                         Sequence.Add(ActionMachine.WaitCloseGrinder);
                         Sequence.Add(ActionMachine.Stop);
+
+                        Sequence.Add(ActionMachine.Terminated);
                         break;
                     case "openwelder":
                         Stage = 0;
@@ -242,6 +258,8 @@ namespace IngameScript
                         Sequence.Add(ActionMachine.OpenWelder);
                         Sequence.Add(ActionMachine.WaitOpenWelder);
                         Sequence.Add(ActionMachine.Stop);
+
+                        Sequence.Add(ActionMachine.Terminated);
                         break;
                     case "closewelder":
                         Stage = 0;
@@ -252,6 +270,8 @@ namespace IngameScript
                         Sequence.Add(ActionMachine.CloseWelder);
                         Sequence.Add(ActionMachine.WaitCloseWelder);
                         Sequence.Add(ActionMachine.Stop);
+
+                        Sequence.Add(ActionMachine.Terminated);
                         break;
                     case "down":
                         Stage = 0;
@@ -337,7 +357,7 @@ namespace IngameScript
         void RunContinuousLogic()
         {
             Display();
-            if(Mode != ModeMachine.Stop && Cycle != 0)
+            if(Mode != ModeMachine.Stop && Cycle > 0)
             {
                 Staging(Sequence[Stage]);
             }
@@ -487,7 +507,7 @@ namespace IngameScript
                     piston_levage.On();
                     drawingSurface.WriteText($"\nPiston Levage: On", true);
                     velocity = -MyProperty.elevator_velocity_min;
-                    if(Mode == ModeMachine.Up) velocity = -MyProperty.elevator_velocity_max;
+                    if(Mode == ModeMachine.Up) velocity = -MyProperty.elevator_velocity_medium;
                     piston_levage.Velocity(velocity);
                     if (Mode == ModeMachine.Up)
                     {
@@ -499,13 +519,14 @@ namespace IngameScript
                     if (Mode == ModeMachine.Up)
                     {
                         grinder.On();
+                        drawingSurface.WriteText($"\nTarget Position={MyProperty.elevator_position_3}", true);
                         piston_levage.List.ForEach(delegate (IMyPistonBase block)
                         {
                             drawingSurface.WriteText($"\nPiston Position={block.CurrentPosition}", true);
                         });
                         projector_count = projector.List[0].RemainingBlocks;
                         drawingSurface.WriteText($"\nProjector Count={projector_count}", true);
-                        if (piston_levage.IsPosition(MyProperty.elevator_position_3))
+                        if (piston_levage.IsLessPosition(MyProperty.elevator_position_3))
                         {
                             piston_levage.Velocity(0f);
                         }
@@ -523,6 +544,7 @@ namespace IngameScript
                     if (Mode == ModeMachine.Up)
                     {
                         grinder_middle2.On();
+                        drawingSurface.WriteText($"\nTarget Position={MyProperty.elevator_position_3}", true);
                         piston_levage.List.ForEach(delegate (IMyPistonBase block)
                         {
                             drawingSurface.WriteText($"\nPiston Position={block.CurrentPosition}", true);
@@ -543,6 +565,7 @@ namespace IngameScript
                     if (Mode == ModeMachine.Up)
                     {
                         grinder_middle1.On();
+                        drawingSurface.WriteText($"\nTarget Position={MyProperty.elevator_position_3}", true);
                         piston_levage.List.ForEach(delegate (IMyPistonBase block)
                         {
                             drawingSurface.WriteText($"\nPiston Position={block.CurrentPosition}", true);
@@ -563,13 +586,14 @@ namespace IngameScript
                 case ActionMachine.WaitDownGrinder4:
                     if (Mode == ModeMachine.Up)
                     {
+                        drawingSurface.WriteText($"\nTarget Position={MyProperty.elevator_position_2}", true);
                         piston_levage.List.ForEach(delegate (IMyPistonBase block)
                         {
                             drawingSurface.WriteText($"\nPiston Position={block.CurrentPosition}", true);
                         });
                         projector_count = projector.List[0].RemainingBlocks;
                         drawingSurface.WriteText($"\nProjector Count={projector_count}", true);
-                        if (piston_levage.IsPosition(MyProperty.elevator_position_2))
+                        if (piston_levage.IsLessPosition(MyProperty.elevator_position_2))
                         {
                             piston_levage.Velocity(0f);
                         }
@@ -587,13 +611,14 @@ namespace IngameScript
                 case ActionMachine.WaitDownGrinder5:
                     if (Mode == ModeMachine.Up)
                     {
+                        drawingSurface.WriteText($"\nTarget Position={MyProperty.elevator_position_1}", true);
                         piston_levage.List.ForEach(delegate (IMyPistonBase block)
                         {
                             drawingSurface.WriteText($"\nPiston Position={block.CurrentPosition}", true);
                         });
                         projector_count = projector.List[0].RemainingBlocks;
                         drawingSurface.WriteText($"\nProjector Count={projector_count}", true);
-                        if (piston_levage.IsPosition(MyProperty.elevator_position_1))
+                        if (piston_levage.IsLessPosition(MyProperty.elevator_position_1))
                         {
                             piston_levage.Velocity(0f);
                         }
@@ -649,13 +674,14 @@ namespace IngameScript
                 case ActionMachine.WaitUpWelder1:
                     if (Mode == ModeMachine.Down)
                     {
+                        drawingSurface.WriteText($"\nTarget Position={MyProperty.elevator_position_1}", true);
                         piston_levage.List.ForEach(delegate (IMyPistonBase block)
                         {
                             drawingSurface.WriteText($"\nPiston Position={block.CurrentPosition}", true);
                         });
                         projector_count = projector.List[0].RemainingBlocks;
                         drawingSurface.WriteText($"\nProjector Count={projector_count}", true);
-                        if (piston_levage.List[0].CurrentPosition > MyProperty.elevator_position_1)
+                        if (piston_levage.IsMorePosition(MyProperty.elevator_position_1))
                         {
                             piston_levage.Velocity(0f);
                         }
@@ -673,13 +699,14 @@ namespace IngameScript
                 case ActionMachine.WaitUpWelder2:
                     if (Mode == ModeMachine.Down)
                     {
+                        drawingSurface.WriteText($"\nTarget Position={MyProperty.elevator_position_2}", true);
                         piston_levage.List.ForEach(delegate (IMyPistonBase block)
                         {
                             drawingSurface.WriteText($"\nPiston Position={block.CurrentPosition}", true);
                         });
                         projector_count = projector.List[0].RemainingBlocks;
                         drawingSurface.WriteText($"\nProjector Count={projector_count}", true);
-                        if (piston_levage.List[0].CurrentPosition > MyProperty.elevator_position_2)
+                        if (piston_levage.IsMorePosition(MyProperty.elevator_position_2))
                         {
                             piston_levage.Velocity(0f);
                         }
@@ -697,13 +724,14 @@ namespace IngameScript
                 case ActionMachine.WaitUpWelder3:
                     if (Mode == ModeMachine.Down)
                     {
+                        drawingSurface.WriteText($"\nTarget Position={MyProperty.elevator_position_3}", true);
                         piston_levage.List.ForEach(delegate (IMyPistonBase block)
                         {
                             drawingSurface.WriteText($"\nPiston Position={block.CurrentPosition}", true);
                         });
                         projector_count = projector.List[0].RemainingBlocks;
                         drawingSurface.WriteText($"\nProjector Count={projector_count}", true);
-                        if (piston_levage.List[0].CurrentPosition > MyProperty.elevator_position_3)
+                        if (piston_levage.IsMorePosition(MyProperty.elevator_position_3))
                         {
                             piston_levage.Velocity(0f);
                         }

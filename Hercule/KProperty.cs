@@ -34,6 +34,7 @@ namespace IngameScript
             public float elevator_position_2;
             public float elevator_position_3;
             public float elevator_velocity_max;
+            public float elevator_velocity_medium;
             public float elevator_velocity_min;
 
             public float locker_epsilon;
@@ -62,6 +63,7 @@ namespace IngameScript
                 elevator_position_2 = MyIni.Get("Elevator", "position_2").ToSingle(2.6f);
                 elevator_position_3 = MyIni.Get("Elevator", "position_3").ToSingle(5.2f);
                 elevator_velocity_max = MyIni.Get("Elevator", "velocity_max").ToSingle(1f);
+                elevator_velocity_medium = MyIni.Get("Elevator", "velocity_medium").ToSingle(0.5f);
                 elevator_velocity_min = MyIni.Get("Elevator", "velocity_min").ToSingle(0.2f);
 
                 locker_epsilon = MyIni.Get("Locker", "epsilon").ToSingle(0.01f);
@@ -116,6 +118,7 @@ namespace IngameScript
                 MyIni.Set("Elevator", "position_2", elevator_position_2);
                 MyIni.Set("Elevator", "position_3", elevator_position_3);
                 MyIni.Set("Elevator", "velocity_max", elevator_velocity_max);
+                MyIni.Set("Elevator", "velocity_medium", elevator_velocity_medium);
                 MyIni.Set("Elevator", "velocity_min", elevator_velocity_min);
 
                 MyIni.Set("Locker", "epsilon", locker_epsilon);

@@ -33,7 +33,11 @@ namespace IngameScript
             public static BlockSystem<T> SearchBlocks(Program program, Func<T, bool> collect = null, string info = null)
             {
                 List<T> list = new List<T>();
-                program.GridTerminalSystem.GetBlocksOfType<T>(list, collect);
+                try
+                {
+                    program.GridTerminalSystem.GetBlocksOfType<T>(list, collect);
+                }
+                catch { }
                 if(info == null) program.Echo(String.Format("List <{0}> count: {1}", typeof(T).Name, list.Count));
                 else program.Echo(String.Format("List <{0}> count: {1}", info, list.Count));
 
@@ -42,7 +46,7 @@ namespace IngameScript
                     program = program,
                     List = list
                 };
-            }
+                }
             public static BlockSystem<T> SearchByTag(Program program, string tag)
             {
                 return BlockSystem<T>.SearchBlocks(program, block => ((IMyTerminalBlock)block).CustomName.Contains(tag), tag);
@@ -54,8 +58,13 @@ namespace IngameScript
             public static BlockSystem<T> SearchByGroup(Program program, string name)
             {
                 List<T> list = new List<T>();
-                IMyBlockGroup group = program.GridTerminalSystem.GetBlockGroupWithName(name);
-                group.GetBlocksOfType<T>(list);
+                IMyBlockGroup group = null;
+                try
+                {
+                    group = program.GridTerminalSystem.GetBlockGroupWithName(name);
+                }
+                catch { }
+                if (group != null) group.GetBlocksOfType<T>(list);
                 program.Echo(String.Format("List <{0}> count: {1}", name, list.Count));
 
                 return new BlockSystem<T>()
@@ -66,9 +75,12 @@ namespace IngameScript
             }
             public static BlockSystem<T> SearchByGrid(Program program, IMyCubeGrid cubeGrid)
             {
-                
                 return BlockSystem<T>.SearchBlocks(program, block => ((IMyTerminalBlock)block).CubeGrid == cubeGrid);
+            }
 
+            public static BlockSystem<T> SearchByFilter(Program program, BlockFilter<T> filter)
+            {
+                return BlockSystem<T>.SearchBlocks(program, filter.Visitor());
             }
 
             public static BlockSystem<T> SearchByMode(Program program, string mode, string search)
@@ -159,6 +171,52 @@ namespace IngameScript
                         {
                             float value = block.Angle - float.Parse(Util.DegToRad(position).ToString());
                             if (Math.Abs(value) > epsilon) isState = false;
+                        }
+                    }
+                }
+                return isState;
+            }
+
+            public bool IsMorePosition(float position)
+            {
+                bool isState = true;
+                if (!IsEmpty)
+                {
+                    if (List is List<IMyPistonBase>)
+                    {
+                        foreach (IMyPistonBase block in List)
+                        {
+                            if (block.CurrentPosition < position) isState = false;
+                        }
+                    }
+                    if (List is List<IMyMotorStator>)
+                    {
+                        foreach (IMyMotorStator block in List)
+                        {
+                            if (block.Angle < float.Parse(Util.DegToRad(position).ToString())) isState = false;
+                        }
+                    }
+                }
+                return isState;
+            }
+
+            public bool IsLessPosition(float position)
+            {
+                bool isState = true;
+                if (!IsEmpty)
+                {
+                    if (List is List<IMyPistonBase>)
+                    {
+                        foreach (IMyPistonBase block in List)
+                        {
+                            if (block.CurrentPosition > position) isState = false;
+                        }
+                    }
+                    if (List is List<IMyMotorStator>)
+                    {
+                        foreach (IMyMotorStator block in List)
+                        {
+                            if (block.Angle > float.Parse(Util.DegToRad(position).ToString())) isState = false;
                         }
                     }
                 }
@@ -302,6 +360,22 @@ namespace IngameScript
                     }
                     return null;
                 }
+            }
+        }
+
+        public class BlockFilter<T> where T : class
+        {
+            public string value;
+            public IMyCubeGrid CubeGrid;
+
+            public Func<T, bool> Visitor()
+            {
+                return delegate(T block) {
+                    bool state = true;
+                    if (value != null) if(!((IMyTerminalBlock)block).CustomName.Contains(value)) state = false;
+                    if (CubeGrid != null) if (((IMyTerminalBlock)block).CubeGrid != CubeGrid) state = false;
+                    return state;
+                };
             }
         }
     }
