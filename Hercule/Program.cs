@@ -28,6 +28,7 @@ namespace IngameScript
 
         private ModeMachine Mode = ModeMachine.Stop;
         private List<ActionMachine> Sequence;
+        private List<int> SequenceBlocks;
         private int Stage = 0;
         private int Cycle = 0;
         private int projector_count = 0;
@@ -36,34 +37,32 @@ namespace IngameScript
         private float last_position = 0f;
         private float velocity = 0f;
 
-        private BlockSystem<IMyMotorStator> stators_pince_fixe_1 = null;
-        private BlockSystem<IMyMotorStator> stators_pince_fixe_2 = null;
-        private BlockSystem<IMyShipMergeBlock> merger_pince_fixe = null;
+        private BlockSystem<IMyMotorStator> bottom_stators_1 = null;
+        private BlockSystem<IMyMotorStator> bottom_stators_2 = null;
+        private BlockSystem<IMyShipMergeBlock> bottom_mergers = null;
 
-        private BlockSystem<IMyMotorStator> stators_pince_mobile_1 = null;
-        private BlockSystem<IMyMotorStator> stators_pince_mobile_2 = null;
-        private BlockSystem<IMyShipMergeBlock> merger_pince_mobile = null;
+        private BlockSystem<IMyMotorStator> top_stators_1 = null;
+        private BlockSystem<IMyMotorStator> top_stators_2 = null;
+        private BlockSystem<IMyShipMergeBlock> top_mergers = null;
 
-        private BlockSystem<IMyShipConnector> connector_drill = null;
+        private BlockSystem<IMyShipConnector> connector = null;
+        private BlockSystem<IMyMotorStator> connector_stator = null;
 
-        private BlockSystem<IMyPistonBase> piston_connector_drill = null;
+        private BlockSystem<IMyPistonBase> levage_pistons = null;
 
-        private BlockSystem<IMyMotorStator> stators_levage = null;
-        private BlockSystem<IMyPistonBase> piston_levage = null;
+        private BlockSystem<IMyMotorStator> grinder_stator = null;
+        private BlockSystem<IMyShipGrinder> grinders = null;
 
-        private BlockSystem<IMyPistonBase> piston_grinder = null;
-        private BlockSystem<IMyShipGrinder> grinder = null;
-        private BlockSystem<IMyShipGrinder> grinder_middle1 = null;
-        private BlockSystem<IMyShipGrinder> grinder_middle2 = null;
-
-        private BlockSystem<IMyPistonBase> piston_welder = null;
-        private BlockSystem<IMyShipWelder> welder = null;
+        private BlockSystem<IMyMotorStator> welder_stator = null;
+        private BlockSystem<IMyShipWelder> welders = null;
 
         private BlockSystem<IMyProjector> projector = null;
 
         private BlockSystem<IMyLightingBlock> light = null;
-        private BlockSystem<IMyShipDrill> drill = null;
+        private BlockSystem<IMyShipDrill> drills = null;
 
+        private BlockSystem<IMyTextPanel> projection_lcds = null;
+        private BlockSystem<IMyTextPanel> check_lcds = null;
         public Program()
         {
             Runtime.UpdateFrequency = UpdateFrequency.Update100;
@@ -77,34 +76,40 @@ namespace IngameScript
             MyProperty = new KProperty(this);
             MyProperty.Load();
             Stage = 0;
-            stators_pince_fixe_1 = BlockSystem<IMyMotorStator>.SearchByName(this, "Rotor Pince Fixe 1");
-            stators_pince_fixe_2 = BlockSystem<IMyMotorStator>.SearchByName(this, "Rotor Pince Fixe 2");
-            merger_pince_fixe = BlockSystem<IMyShipMergeBlock>.SearchByGroup(this, "Merge Pince Fixe");
+            bottom_stators_1 = BlockSystem<IMyMotorStator>.SearchByName(this, "Bottom Stator 1");
+            bottom_stators_2 = BlockSystem<IMyMotorStator>.SearchByName(this, "Bottom Stator 2");
+            bottom_mergers = BlockSystem<IMyShipMergeBlock>.SearchByGroup(this, "Bottom Mergers");
 
-            stators_pince_mobile_1 = BlockSystem<IMyMotorStator>.SearchByName(this, "Rotor Pince Mobile 1");
-            stators_pince_mobile_2 = BlockSystem<IMyMotorStator>.SearchByName(this, "Rotor Pince Mobile 2");
-            merger_pince_mobile = BlockSystem<IMyShipMergeBlock>.SearchByGroup(this, "Merge Pince Mobile");
+            top_stators_1 = BlockSystem<IMyMotorStator>.SearchByName(this, "Top Stator 1");
+            top_stators_2 = BlockSystem<IMyMotorStator>.SearchByName(this, "Top Stator 2");
+            top_mergers = BlockSystem<IMyShipMergeBlock>.SearchByGroup(this, "Top Mergers");
 
-            connector_drill = BlockSystem<IMyShipConnector>.SearchByName(this, "Connector Drill");
-            
-            piston_connector_drill = BlockSystem<IMyPistonBase>.SearchByName(this, "Piston Connector Drill");
+            connector = BlockSystem<IMyShipConnector>.SearchByName(this, "Connector Drill");
+            connector_stator = BlockSystem<IMyMotorStator>.SearchByName(this, "Connector Stator");
 
-            piston_levage = BlockSystem<IMyPistonBase>.SearchByGroup(this, "Piston Levage");
-            stators_levage = BlockSystem<IMyMotorStator>.SearchByGroup(this, "Advanced Rotor Levage");
+            levage_pistons = BlockSystem<IMyPistonBase>.SearchByGroup(this, "Levage Pistons");
+            levage_pistons.ForEach(delegate (IMyPistonBase block) {
+                block.MinLimit = MyProperty.elevator_position_min;
+                block.MaxLimit = MyProperty.elevator_position_max;
+            });
 
-            piston_grinder = BlockSystem<IMyPistonBase>.SearchByName(this, "Piston Grinder");
-            grinder = BlockSystem<IMyShipGrinder>.SearchByGroup(this, "Grinder");
-            grinder_middle1 = BlockSystem<IMyShipGrinder>.SearchByName(this, "Grinder Middle 1");
-            grinder_middle2 = BlockSystem<IMyShipGrinder>.SearchByGroup(this, "Grinder Middle 2");
+            grinder_stator = BlockSystem<IMyMotorStator>.SearchByName(this, "Grinder Stator");
+            grinders = BlockSystem<IMyShipGrinder>.SearchByGroup(this, "Grinders");
 
-            piston_welder = BlockSystem<IMyPistonBase>.SearchByName(this, "Piston Welder");
-            welder = BlockSystem<IMyShipWelder>.SearchByGroup(this, "Welder");
+            welder_stator = BlockSystem<IMyMotorStator>.SearchByName(this, "Welder Stator");
+            welders = BlockSystem<IMyShipWelder>.SearchByGroup(this, "Welders");
 
             projector = BlockSystem<IMyProjector>.SearchByName(this, "Projector Drill");
 
             light = BlockSystem<IMyLightingBlock>.SearchByGroup(this, "Rotating Light");
 
-            drill = BlockSystem<IMyShipDrill>.SearchByGroup(this, "Drills");
+            drills = BlockSystem<IMyShipDrill>.SearchByGroup(this, "Drills");
+
+            projection_lcds = BlockSystem<IMyTextPanel>.SearchByName(this, "Projection LCD");
+
+            check_lcds = BlockSystem<IMyTextPanel>.SearchByName(this, "Check LCD");
+
+            SequenceBlocks = new List<int>() { };
 
         }
 
@@ -146,129 +151,108 @@ namespace IngameScript
                     case "init":
                         Init();
                         break;
+                    case "check":
+                        CheckMergers();
+                        break;
                     case "stop":
                         Mode = ModeMachine.Stop;
                         break;
-                    case "open":
+                    case "lock":
                         Stage = 0;
-                        Mode = ModeMachine.Open;
+                        Mode = ModeMachine.Lock;
                         Sequence = new List<ActionMachine>();
                         Sequence.Add(ActionMachine.Start);
 
-                        Sequence.Add(ActionMachine.OpenPinceFixe);
-                        Sequence.Add(ActionMachine.WaitOpenPinceFixe);
-                        Sequence.Add(ActionMachine.OpenPinceMobile);
-                        Sequence.Add(ActionMachine.WaitOpenPinceMobile);
+                        Sequence.Add(ActionMachine.LockBottom);
+                        Sequence.Add(ActionMachine.LockTop);
                         Sequence.Add(ActionMachine.Stop);
 
                         Sequence.Add(ActionMachine.Terminated);
                         break;
-                    case "openfixe":
+                    case "lockbottom":
                         Stage = 0;
-                        Mode = ModeMachine.OpenFixe;
+                        Mode = ModeMachine.LockBottom;
                         Sequence = new List<ActionMachine>();
                         Sequence.Add(ActionMachine.Start);
 
-                        Sequence.Add(ActionMachine.OpenPinceFixe);
-                        Sequence.Add(ActionMachine.WaitOpenPinceFixe);
+                        Sequence.Add(ActionMachine.LockBottom);
                         Sequence.Add(ActionMachine.Stop);
 
                         Sequence.Add(ActionMachine.Terminated);
                         break;
-                    case "openmobile":
+                    case "unlockbottom":
                         Stage = 0;
-                        Mode = ModeMachine.OpenMobile;
+                        Mode = ModeMachine.UnlockBottom;
                         Sequence = new List<ActionMachine>();
                         Sequence.Add(ActionMachine.Start);
 
-                        Sequence.Add(ActionMachine.OpenPinceMobile);
-                        Sequence.Add(ActionMachine.WaitOpenPinceMobile);
+                        Sequence.Add(ActionMachine.UnlockBottom);
                         Sequence.Add(ActionMachine.Stop);
 
                         Sequence.Add(ActionMachine.Terminated);
                         break;
-                    case "close":
+                    case "locktop":
                         Stage = 0;
-                        Mode = ModeMachine.Close;
+                        Mode = ModeMachine.LockTop;
                         Sequence = new List<ActionMachine>();
                         Sequence.Add(ActionMachine.Start);
 
-                        Sequence.Add(ActionMachine.ClosePinceFixe);
-                        Sequence.Add(ActionMachine.WaitClosePinceFixe);
-                        Sequence.Add(ActionMachine.ClosePinceMobile);
-                        Sequence.Add(ActionMachine.WaitClosePinceMobile);
+                        Sequence.Add(ActionMachine.LockTop);
                         Sequence.Add(ActionMachine.Stop);
 
                         Sequence.Add(ActionMachine.Terminated);
                         break;
-                    case "closefixe":
+                    case "unlocktop":
                         Stage = 0;
-                        Mode = ModeMachine.CloseFixe;
+                        Mode = ModeMachine.UnlockTop;
                         Sequence = new List<ActionMachine>();
                         Sequence.Add(ActionMachine.Start);
 
-                        Sequence.Add(ActionMachine.ClosePinceFixe);
-                        Sequence.Add(ActionMachine.WaitClosePinceFixe);
+                        Sequence.Add(ActionMachine.UnlockTop);
                         Sequence.Add(ActionMachine.Stop);
 
                         Sequence.Add(ActionMachine.Terminated);
                         break;
-                    case "closemobile":
+                    case "lockconnector":
                         Stage = 0;
-                        Mode = ModeMachine.CloseMobile;
+                        Mode = ModeMachine.LockTop;
                         Sequence = new List<ActionMachine>();
                         Sequence.Add(ActionMachine.Start);
 
-                        Sequence.Add(ActionMachine.ClosePinceMobile);
-                        Sequence.Add(ActionMachine.WaitClosePinceMobile);
+                        Sequence.Add(ActionMachine.LockConnector);
                         Sequence.Add(ActionMachine.Stop);
 
                         Sequence.Add(ActionMachine.Terminated);
                         break;
-                    case "opengrinder":
+                    case "unlockconnector":
                         Stage = 0;
-                        Mode = ModeMachine.OpenGrinder;
+                        Mode = ModeMachine.UnlockTop;
                         Sequence = new List<ActionMachine>();
                         Sequence.Add(ActionMachine.Start);
 
-                        Sequence.Add(ActionMachine.OpenGrinder);
-                        Sequence.Add(ActionMachine.WaitOpenGrinder);
+                        Sequence.Add(ActionMachine.UnlockConnector);
                         Sequence.Add(ActionMachine.Stop);
 
                         Sequence.Add(ActionMachine.Terminated);
                         break;
-                    case "closegrinder":
+                    case "startwelder":
                         Stage = 0;
-                        Mode = ModeMachine.CloseGrinder;
+                        Mode = ModeMachine.LockTop;
                         Sequence = new List<ActionMachine>();
                         Sequence.Add(ActionMachine.Start);
 
-                        Sequence.Add(ActionMachine.CloseGrinder);
-                        Sequence.Add(ActionMachine.WaitCloseGrinder);
+                        Sequence.Add(ActionMachine.StartWelder);
                         Sequence.Add(ActionMachine.Stop);
 
                         Sequence.Add(ActionMachine.Terminated);
                         break;
-                    case "openwelder":
+                    case "stopwelder":
                         Stage = 0;
-                        Mode = ModeMachine.OpenWelder;
+                        Mode = ModeMachine.UnlockTop;
                         Sequence = new List<ActionMachine>();
                         Sequence.Add(ActionMachine.Start);
 
-                        Sequence.Add(ActionMachine.OpenWelder);
-                        Sequence.Add(ActionMachine.WaitOpenWelder);
-                        Sequence.Add(ActionMachine.Stop);
-
-                        Sequence.Add(ActionMachine.Terminated);
-                        break;
-                    case "closewelder":
-                        Stage = 0;
-                        Mode = ModeMachine.CloseWelder;
-                        Sequence = new List<ActionMachine>();
-                        Sequence.Add(ActionMachine.Start);
-
-                        Sequence.Add(ActionMachine.CloseWelder);
-                        Sequence.Add(ActionMachine.WaitCloseWelder);
+                        Sequence.Add(ActionMachine.StopWelder);
                         Sequence.Add(ActionMachine.Stop);
 
                         Sequence.Add(ActionMachine.Terminated);
@@ -279,32 +263,17 @@ namespace IngameScript
                         Sequence = new List<ActionMachine>();
                         Sequence.Add(ActionMachine.Start);
 
-                        Sequence.Add(ActionMachine.OpenPinceMobile);
-                        Sequence.Add(ActionMachine.WaitOpenPinceMobile);
-
-                        Sequence.Add(ActionMachine.OpenWelder);
-                        Sequence.Add(ActionMachine.WaitOpenWelder);
-
-                        Sequence.Add(ActionMachine.Up);
-                        Sequence.Add(ActionMachine.WaitUpWelder1);
-                        Sequence.Add(ActionMachine.WaitUpWelder2);
-                        Sequence.Add(ActionMachine.WaitUpWelder3);
-                        Sequence.Add(ActionMachine.WaitUp);
-                        
-                        Sequence.Add(ActionMachine.CloseWelder);
-                        Sequence.Add(ActionMachine.WaitCloseWelder);
-                        
-                        Sequence.Add(ActionMachine.ClosePinceMobile);
-                        Sequence.Add(ActionMachine.WaitClosePinceMobile);
-                        
-                        Sequence.Add(ActionMachine.OpenPinceFixe);
-                        Sequence.Add(ActionMachine.WaitOpenPinceFixe);
-                        
+                        Sequence.Add(ActionMachine.LockConnector);
+                        Sequence.Add(ActionMachine.UnlockBottom);
+                        Sequence.Add(ActionMachine.StartWelder);
                         Sequence.Add(ActionMachine.Down);
-                        Sequence.Add(ActionMachine.WaitDown);
-                        
-                        Sequence.Add(ActionMachine.ClosePinceFixe);
-                        Sequence.Add(ActionMachine.WaitClosePinceFixe);
+                        Sequence.Add(ActionMachine.StopWelder);
+                        Sequence.Add(ActionMachine.LockBottom);
+                        Sequence.Add(ActionMachine.UnlockConnector);
+                        Sequence.Add(ActionMachine.UnlockTop);
+                        Sequence.Add(ActionMachine.Up);
+                        Sequence.Add(ActionMachine.LockTop);
+
                         Sequence.Add(ActionMachine.Stop);
 
                         Sequence.Add(ActionMachine.Terminated);
@@ -315,34 +284,17 @@ namespace IngameScript
                         Sequence = new List<ActionMachine>();
                         Sequence.Add(ActionMachine.Start);
 
-                        Sequence.Add(ActionMachine.OpenPinceFixe);
-                        Sequence.Add(ActionMachine.WaitOpenPinceFixe);
-
-                        Sequence.Add(ActionMachine.Up);
-                        Sequence.Add(ActionMachine.WaitUp);
-
-                        Sequence.Add(ActionMachine.ClosePinceFixe);
-                        Sequence.Add(ActionMachine.WaitClosePinceFixe);
-
-                        Sequence.Add(ActionMachine.OpenPinceMobile);
-                        Sequence.Add(ActionMachine.WaitOpenPinceMobile);
-
-                        Sequence.Add(ActionMachine.OpenGrinder);
-                        Sequence.Add(ActionMachine.WaitOpenGrinder);
-
+                        Sequence.Add(ActionMachine.UnlockTop);
+                        Sequence.Add(ActionMachine.UnlockConnector);
                         Sequence.Add(ActionMachine.Down);
-                        Sequence.Add(ActionMachine.WaitDownGrinder1);
-                        Sequence.Add(ActionMachine.WaitDownGrinder2);
-                        Sequence.Add(ActionMachine.WaitDownGrinder3);
-                        Sequence.Add(ActionMachine.WaitDownGrinder4);
-                        Sequence.Add(ActionMachine.WaitDownGrinder5);
-                        Sequence.Add(ActionMachine.WaitDown);
+                        Sequence.Add(ActionMachine.LockConnector);
+                        Sequence.Add(ActionMachine.LockTop);
+                        Sequence.Add(ActionMachine.UnlockBottom);
+                        Sequence.Add(ActionMachine.StartGrinder);
+                        Sequence.Add(ActionMachine.Up);
+                        Sequence.Add(ActionMachine.StopGrinder);
+                        Sequence.Add(ActionMachine.LockBottom);
 
-                        Sequence.Add(ActionMachine.CloseGrinder);
-                        Sequence.Add(ActionMachine.WaitCloseGrinder);
-
-                        Sequence.Add(ActionMachine.ClosePinceMobile);
-                        Sequence.Add(ActionMachine.WaitClosePinceMobile);
                         Sequence.Add(ActionMachine.Stop);
 
                         Sequence.Add(ActionMachine.Terminated);
@@ -357,7 +309,9 @@ namespace IngameScript
         void RunContinuousLogic()
         {
             Display();
-            if(Mode != ModeMachine.Stop && Cycle > 0)
+            DisplayProjection();
+            CheckMergers();
+            if (Mode != ModeMachine.Stop && Cycle > 0 && Sequence.Count > Stage)
             {
                 Staging(Sequence[Stage]);
             }
@@ -375,483 +329,363 @@ namespace IngameScript
             drawingSurface.WriteText($"\nMachine Deep:{deep}", true);
         }
 
+        private void CheckMergers()
+        {
+            check_lcds.First.WriteText($"Check Mergers\n", false);
+            bottom_mergers.ForEach(delegate (IMyShipMergeBlock block)
+            {
+                check_lcds.First.WriteText($"{block.CustomName} IsConnected:{block.IsConnected}\n", true);
+                check_lcds.First.WriteText($"{block.CustomName} IsWorking:{block.IsWorking}\n", true);
+                check_lcds.First.WriteText($"{block.CustomName} CheckConnectionAllowed:{block.CheckConnectionAllowed}\n", true);
+            });
+            top_mergers.ForEach(delegate (IMyShipMergeBlock block)
+            {
+                check_lcds.First.WriteText($"{block.CustomName} IsConnected:{block.IsConnected}\n", true);
+                check_lcds.First.WriteText($"{block.CustomName} IsWorking:{block.IsWorking}\n", true);
+                check_lcds.First.WriteText($"{block.CustomName} CheckConnectionAllowed:{block.CheckConnectionAllowed}\n", true);
+            });
+        }
+        private void DisplayProjection()
+        {
+            projection_lcds.ForEach(delegate (IMyTextPanel block)
+            {
+                block.WriteText($"TotalBlocks:{projector.First.TotalBlocks}\n", false);
+                block.WriteText($"BuildableBlocksCount:{projector.First.BuildableBlocksCount}\n", true);
+                block.WriteText($"RemainingBlocks:{projector.First.RemainingBlocks}\n", true);
+            });
+        }
+
         private void Staging(ActionMachine action)
         {
+            bool closed = true;
+            bool opened = true;
+            float position_target = 0f;
+            float angle1 = 0f;
+            float angle2 = 0f;
             switch (action)
             {
-                case ActionMachine.OpenPinceFixe:
-                    // Open pince
-                    stators_pince_fixe_1.On();
-                    drawingSurface.WriteText($"\nPince Fixe 1: On", true);
-                    stators_pince_fixe_1.Unlock();
-                    drawingSurface.WriteText($"\nPince Fixe 1: Unlock", true);
-                    stators_pince_fixe_2.On();
-                    drawingSurface.WriteText($"\nPince Fixe 2: On", true);
-                    stators_pince_fixe_2.Unlock();
-                    drawingSurface.WriteText($"\nPince Fixe 2: Unlock", true);
-                    merger_pince_fixe.Off();
-                    drawingSurface.WriteText($"\nMerge Pince Fixe: Off", true);
-                    stators_pince_fixe_1.Velocity(MyProperty.locker_velocity);
-                    stators_pince_fixe_2.Velocity(-MyProperty.locker_velocity);
-                    projector.Off();
-                    Stage++;
-                    break;
-                case ActionMachine.WaitOpenPinceFixe:
-                    if (stators_pince_fixe_1.IsPosition(15f, MyProperty.locker_epsilon) && stators_pince_fixe_2.IsPosition(345f, MyProperty.locker_epsilon))
+                case ActionMachine.LockBottom:
+                    velocity = MyProperty.locker_velocity;
+                    angle1 = MyProperty.locker_position_max_1;
+                    angle2 = MyProperty.locker_position_min_2;
+
+                    bottom_mergers.On();
+                    drawingSurface.WriteText($"\nBottom mergers: On", true);
+                    drawingSurface.WriteText($"\nVelocity: {velocity}", true);
+                    drawingSurface.WriteText($"\nTarget position 1: {angle1}", true);
+                    drawingSurface.WriteText($"\nTarget position 2: {angle2}", true);
+                    closed = true;
+
+                    bottom_stators_1.Unlock();
+                    bottom_stators_1.Velocity(velocity);
+                    bottom_stators_1.ForEach(delegate (IMyMotorStator block)
                     {
-                        stators_pince_fixe_1.Lock();
-                        stators_pince_fixe_2.Lock();
-                        Stage++;
-                    }
-                    drawingSurface.WriteText($"\nPince Fixe 1: Angle={Util.RadToDeg(stators_pince_fixe_1.List[0].Angle)}", true);
-                    drawingSurface.WriteText($"\nPince Fixe 2: Angle={Util.RadToDeg(stators_pince_fixe_2.List[0].Angle)}", true);
-                    break;
-                case ActionMachine.ClosePinceFixe:
-                    // Close pince
-                    stators_pince_fixe_1.On();
-                    drawingSurface.WriteText($"\nPince Fixe 1: On", true);
-                    stators_pince_fixe_1.Unlock();
-                    drawingSurface.WriteText($"\nPince Fixe 1: Unlock", true);
-                    stators_pince_fixe_2.On();
-                    drawingSurface.WriteText($"\nPince Fixe 2: On", true);
-                    stators_pince_fixe_2.Unlock();
-                    drawingSurface.WriteText($"\nPince Fixe 2: Unlock", true);
-                    merger_pince_fixe.On();
-                    drawingSurface.WriteText($"\nMerge Pince Fixe: On", true);
-                    stators_pince_fixe_1.Velocity(-MyProperty.locker_velocity);
-                    stators_pince_fixe_2.Velocity(MyProperty.locker_velocity);
-                    Stage++;
-                    break;
-                case ActionMachine.WaitClosePinceFixe:
-                    if (stators_pince_fixe_1.IsPosition(0f, MyProperty.locker_epsilon) && stators_pince_fixe_2.IsPosition(360f, MyProperty.locker_epsilon))
-                    {
-                        stators_pince_fixe_1.Lock();
-                        stators_pince_fixe_2.Lock();
-                        projector.On();
-                        Stage++;
-                    }
-                    drawingSurface.WriteText($"\nPince Fixe 1: Angle={Util.RadToDeg(stators_pince_fixe_1.List[0].Angle)}", true);
-                    drawingSurface.WriteText($"\nPince Fixe 2: Angle={Util.RadToDeg(stators_pince_fixe_2.List[0].Angle)}", true);
-                    break;
-                case ActionMachine.OpenPinceMobile:
-                    // Open pince
-                    stators_pince_mobile_1.On();
-                    drawingSurface.WriteText($"\nPince Mobile 1: On", true);
-                    stators_pince_mobile_1.Unlock();
-                    drawingSurface.WriteText($"\nPince Mobile 1: Unlock", true);
-                    stators_pince_mobile_2.On();
-                    drawingSurface.WriteText($"\nPince Mobile 2: On", true);
-                    stators_pince_mobile_2.Unlock();
-                    drawingSurface.WriteText($"\nPince Mobile 2: Unlock", true);
-                    merger_pince_mobile.Off();
-                    drawingSurface.WriteText($"\nMerge Pince Mobile: Off", true);
-                    stators_pince_mobile_1.Velocity(-MyProperty.locker_velocity);
-                    stators_pince_mobile_2.Velocity(MyProperty.locker_velocity);
-                    connector_drill.ForEach(delegate (IMyShipConnector block)
-                    {
-                        block.Disconnect();
+                        drawingSurface.WriteText($"\nBottom angle 1: {Util.RadToDeg(block.Angle)}", true);
                     });
-                    drawingSurface.WriteText($"\nConnector Drill: Disconnect", true);
-                    piston_connector_drill.Velocity(-MyProperty.locker_velocity);
-                    Stage++;
-                    break;
-                case ActionMachine.WaitOpenPinceMobile:
-                    if (stators_pince_mobile_1.IsPosition(345f, MyProperty.locker_epsilon)
-                        && stators_pince_mobile_2.IsPosition(15f, MyProperty.locker_epsilon)
-                        && piston_connector_drill.IsPosition(0f))
+
+                    bottom_stators_2.Unlock();
+                    bottom_stators_2.Velocity(-velocity);
+                    bottom_stators_2.ForEach(delegate (IMyMotorStator block)
                     {
-                        stators_pince_mobile_1.Lock();
-                        stators_pince_mobile_2.Lock();
+                        drawingSurface.WriteText($"\nBottom angle 2: {Util.RadToDeg(block.Angle)}", true);
+                    });
+                    if(bottom_stators_1.IsLessPosition(angle1) || bottom_stators_2.IsMorePosition(angle2)) closed = false;
+                    if (closed)
+                    {
+                        bottom_stators_1.Lock();
+                        bottom_stators_2.Lock();
                         Stage++;
                     }
-                    drawingSurface.WriteText($"\nPince Mobile 1: Angle={Util.RadToDeg(stators_pince_mobile_1.List[0].Angle)}", true);
-                    drawingSurface.WriteText($"\nPince Mobile 2: Angle={Util.RadToDeg(stators_pince_mobile_2.List[0].Angle)}", true);
-                    drawingSurface.WriteText($"\nPiston Connector Drill: Position={piston_connector_drill.List[0].CurrentPosition}", true);
                     break;
-                case ActionMachine.ClosePinceMobile:
-                    // Close pince
-                    stators_pince_mobile_1.On();
-                    drawingSurface.WriteText($"\nPince Mobile 1: On", true);
-                    stators_pince_mobile_1.Unlock();
-                    drawingSurface.WriteText($"\nPince Mobile 1: Unlock", true);
-                    stators_pince_mobile_2.On();
-                    drawingSurface.WriteText($"\nPince Mobile 2: On", true);
-                    stators_pince_mobile_2.Unlock();
-                    drawingSurface.WriteText($"\nPince Mobile 2: Unlock", true);
-                    merger_pince_mobile.On();
-                    drawingSurface.WriteText($"\nMerge Mobile Fixe: On", true);
-                    stators_pince_mobile_1.Velocity(MyProperty.locker_velocity);
-                    stators_pince_mobile_2.Velocity(-MyProperty.locker_velocity);
-                    piston_connector_drill.Velocity(MyProperty.locker_velocity);
-                    Stage++;
-                    break;
-                case ActionMachine.WaitClosePinceMobile:
-                    if (stators_pince_mobile_1.IsPosition(360f, MyProperty.locker_epsilon)
-                        && stators_pince_mobile_2.IsPosition(0f, MyProperty.locker_epsilon)
-                        && piston_connector_drill.IsPosition(MyProperty.locker_position_max))
+                case ActionMachine.UnlockBottom:
+                    closed = true;
+                    top_mergers.ForEach(delegate (IMyShipMergeBlock block) {
+                        if (!block.IsConnected) closed = false;
+                    });
+                    if (!closed)
                     {
-                        stators_pince_mobile_1.Lock();
-                        stators_pince_mobile_2.Lock();
-                        connector_drill.ForEach(delegate (IMyShipConnector block)
+                        drawingSurface.WriteText($"\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!", true);
+                        drawingSurface.WriteText($"\nSecurity: Top mergers is Off", true);
+                    }
+                    else
+                    {
+                        velocity = MyProperty.locker_velocity;
+                        angle1 = MyProperty.locker_position_min_1;
+                        angle2 = MyProperty.locker_position_max_2;
+
+                        bottom_mergers.Off();
+                        drawingSurface.WriteText($"\nBottom mergers: Off", true);
+                        drawingSurface.WriteText($"\nVelocity: {velocity}", true);
+                        drawingSurface.WriteText($"\nTarget position 1: {angle1}", true);
+                        drawingSurface.WriteText($"\nTarget position 2: {angle2}", true);
+                        closed = true;
+
+                        bottom_stators_1.Unlock();
+                        bottom_stators_1.Velocity(-velocity);
+                        bottom_stators_1.ForEach(delegate (IMyMotorStator block)
                         {
-                            block.Connect();
+                            drawingSurface.WriteText($"\nBottom angle 1: {Util.RadToDeg(block.Angle)}", true);
                         });
-                        drawingSurface.WriteText($"\nConnector Drill: Connected", true);
+
+                        bottom_stators_2.Unlock();
+                        bottom_stators_2.Velocity(velocity);
+                        bottom_stators_2.ForEach(delegate (IMyMotorStator block)
+                        {
+                            drawingSurface.WriteText($"\nBottom angle 2: {Util.RadToDeg(block.Angle)}", true);
+                        });
+                        if (bottom_stators_1.IsMorePosition(angle1) || bottom_stators_2.IsLessPosition(angle2)) closed = false;
+                        if (closed)
+                        {
+                            bottom_stators_1.Lock();
+                            bottom_stators_2.Lock();
+                            
+                            Stage++;
+                        }
+                    }
+                    break;
+                case ActionMachine.LockTop:
+                    velocity = MyProperty.locker_velocity;
+                    angle1 = MyProperty.locker_position_max_1;
+                    angle2 = MyProperty.locker_position_min_2;
+
+                    top_mergers.On();
+                    drawingSurface.WriteText($"\nTop mergers: On", true);
+                    drawingSurface.WriteText($"\nVelocity: {velocity}", true);
+                    drawingSurface.WriteText($"\nTarget position 1: {angle1}", true);
+                    drawingSurface.WriteText($"\nTarget position 2: {angle2}", true);
+                    closed = true;
+
+                    top_stators_1.Unlock();
+                    top_stators_1.Velocity(velocity);
+                    top_stators_1.ForEach(delegate (IMyMotorStator block)
+                    {
+                        drawingSurface.WriteText($"\nTop angle 1: {Util.RadToDeg(block.Angle)}", true);
+                    });
+
+                    top_stators_2.Unlock();
+                    top_stators_2.Velocity(-velocity);
+                    top_stators_2.ForEach(delegate (IMyMotorStator block)
+                    {
+                        drawingSurface.WriteText($"\nTop angle 2: {Util.RadToDeg(block.Angle)}", true);
+                    });
+                    if (top_stators_1.IsLessPosition(angle1) || top_stators_2.IsMorePosition(angle2)) closed = false;
+                    if (closed)
+                    {
+                        top_stators_1.Lock();
+                        top_stators_2.Lock();
                         Stage++;
-                    };
-                    drawingSurface.WriteText($"\nPince Mobile 1: Angle={Util.RadToDeg(stators_pince_mobile_1.List[0].Angle)}", true);
-                    drawingSurface.WriteText($"\nPince Mobile 2: Angle={Util.RadToDeg(stators_pince_mobile_2.List[0].Angle)}", true);
-                    drawingSurface.WriteText($"\nPiston Connector Drill: Position={piston_connector_drill.List[0].CurrentPosition}", true);
+                    }
+                    break;
+                case ActionMachine.UnlockTop:
+                    closed = true;
+                    bottom_mergers.ForEach(delegate (IMyShipMergeBlock block) {
+                        if (!block.IsConnected) closed = false;
+                    });
+                    if (!closed)
+                    {
+                        drawingSurface.WriteText($"\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!", true);
+                        drawingSurface.WriteText($"\nSecurity: Bottom mergers is Off", true);
+                    }
+                    else
+                    {
+                        velocity = MyProperty.locker_velocity;
+                        angle1 = MyProperty.locker_position_min_1;
+                        angle2 = MyProperty.locker_position_max_2;
+
+                        top_mergers.Off();
+                        drawingSurface.WriteText($"\nTop mergers: Off", true);
+                        drawingSurface.WriteText($"\nVelocity: {velocity}", true);
+                        drawingSurface.WriteText($"\nTarget position 1: {angle1}", true);
+                        drawingSurface.WriteText($"\nTarget position 2: {angle2}", true);
+                        closed = true;
+
+                        top_stators_1.Unlock();
+                        top_stators_1.Velocity(-velocity);
+                        top_stators_1.ForEach(delegate (IMyMotorStator block)
+                        {
+                            drawingSurface.WriteText($"\nTop angle 1: {Util.RadToDeg(block.Angle)}", true);
+                        });
+
+                        top_stators_2.Unlock();
+                        top_stators_2.Velocity(velocity);
+                        top_stators_2.ForEach(delegate (IMyMotorStator block)
+                        {
+                            drawingSurface.WriteText($"\nTop angle 2: {Util.RadToDeg(block.Angle)}", true);
+                        });
+                        if (top_stators_1.IsMorePosition(angle1) || top_stators_2.IsLessPosition(angle2)) closed = false;
+                        if (closed)
+                        {
+                            top_stators_1.Lock();
+                            top_stators_2.Lock();
+
+                            Stage++;
+                        }
+                    }
+                    break;
+                case ActionMachine.LockConnector:
+                    velocity = MyProperty.connector_velocity;
+                    position_target = MyProperty.connector_position_max;
+                    drawingSurface.WriteText($"\nVelocity: {velocity}", true);
+                    drawingSurface.WriteText($"\nTarget position: {position_target}", true);
+                    closed = true;
+                    connector_stator.Velocity(velocity);
+                    connector_stator.Unlock();
+                    connector.On();
+                    connector_stator.ForEach(delegate (IMyMotorStator block)
+                    {
+                        drawingSurface.WriteText($"\nAngle: {Util.RadToDeg(block.Angle)}", true);
+                        if (connector_stator.IsLessPosition(position_target))
+                        {
+                            closed = false;
+                        }
+                    });
+                    if (closed)
+                    {
+                        connector.Lock();
+                        connector_stator.Lock();
+                        Stage++;
+                    }
+                    break;
+                case ActionMachine.UnlockConnector:
+                    velocity = -MyProperty.connector_velocity;
+                    position_target = MyProperty.connector_position_min;
+                    drawingSurface.WriteText($"\nVelocity: {velocity}", true);
+                    drawingSurface.WriteText($"\nTarget position: {position_target}", true);
+                    closed = true;
+                    connector_stator.Unlock();
+                    connector_stator.Velocity(velocity);
+                    connector.Unlock();
+                    connector.Off();
+                    connector_stator.ForEach(delegate (IMyMotorStator block)
+                    {
+                        drawingSurface.WriteText($"\nAngle: {Util.RadToDeg(block.Angle)}", true);
+                        if (connector_stator.IsMorePosition(position_target))
+                        {
+                            closed = false;
+                        }
+                    });
+                    if (closed)
+                    {
+                        connector_stator.Lock();
+                        Stage++;
+                    }
                     break;
                 case ActionMachine.Down:
-                    piston_levage.On();
+                    levage_pistons.On();
                     drawingSurface.WriteText($"\nPiston Levage: On", true);
-                    velocity = -MyProperty.elevator_velocity_min;
-                    if(Mode == ModeMachine.Up) velocity = -MyProperty.elevator_velocity_medium;
-                    piston_levage.Velocity(velocity);
-                    if (Mode == ModeMachine.Up)
+
+                    velocity = MyProperty.elevator_velocity_min;
+                    if (Mode == ModeMachine.Up) velocity = MyProperty.elevator_velocity_max;
+                    drawingSurface.WriteText($"\nPiston Velocity: {velocity}", true);
+                    levage_pistons.Velocity(velocity);
+
+                    position_target = MyProperty.elevator_position_max;
+                    drawingSurface.WriteText($"\nTarget Position={position_target}", true);
+
+                    levage_pistons.ForEach(delegate (IMyPistonBase block)
                     {
-                        blueprint_count -= 1;
-                    }
-                    Stage++;
-                    break;
-                case ActionMachine.WaitDownGrinder1:
-                    if (Mode == ModeMachine.Up)
-                    {
-                        grinder.On();
-                        drawingSurface.WriteText($"\nTarget Position={MyProperty.elevator_position_3}", true);
-                        piston_levage.List.ForEach(delegate (IMyPistonBase block)
-                        {
-                            drawingSurface.WriteText($"\nPiston Position={block.CurrentPosition}", true);
-                        });
-                        projector_count = projector.List[0].RemainingBlocks;
-                        drawingSurface.WriteText($"\nProjector Count={projector_count}", true);
-                        if (piston_levage.IsLessPosition(MyProperty.elevator_position_3))
-                        {
-                            piston_levage.Velocity(0f);
-                        }
-                        if (projector_count == MyProperty.tool_count_5)
-                        {
-                            Stage++;
-                        }
-                    }
-                    else
-                    {
-                        Stage++;
-                    }
-                    break;
-                case ActionMachine.WaitDownGrinder2:
-                    if (Mode == ModeMachine.Up)
-                    {
-                        grinder_middle2.On();
-                        drawingSurface.WriteText($"\nTarget Position={MyProperty.elevator_position_3}", true);
-                        piston_levage.List.ForEach(delegate (IMyPistonBase block)
-                        {
-                            drawingSurface.WriteText($"\nPiston Position={block.CurrentPosition}", true);
-                        });
-                        projector_count = projector.List[0].RemainingBlocks;
-                        drawingSurface.WriteText($"\nProjector Count={projector_count}", true);
-                        if (projector_count == MyProperty.tool_count_4)
-                        {
-                            Stage++;
-                        }
-                    }
-                    else
-                    {
-                        Stage++;
-                    }
-                    break;
-                case ActionMachine.WaitDownGrinder3:
-                    if (Mode == ModeMachine.Up)
-                    {
-                        grinder_middle1.On();
-                        drawingSurface.WriteText($"\nTarget Position={MyProperty.elevator_position_3}", true);
-                        piston_levage.List.ForEach(delegate (IMyPistonBase block)
-                        {
-                            drawingSurface.WriteText($"\nPiston Position={block.CurrentPosition}", true);
-                        });
-                        projector_count = projector.List[0].RemainingBlocks;
-                        drawingSurface.WriteText($"\nProjector Count={projector_count}", true);
-                        if (projector_count == MyProperty.tool_count_3)
-                        {
-                            Stage++;
-                            piston_levage.Velocity(velocity);
-                        }
-                    }
-                    else
-                    {
-                        Stage++;
-                    }
-                    break;
-                case ActionMachine.WaitDownGrinder4:
-                    if (Mode == ModeMachine.Up)
-                    {
-                        drawingSurface.WriteText($"\nTarget Position={MyProperty.elevator_position_2}", true);
-                        piston_levage.List.ForEach(delegate (IMyPistonBase block)
-                        {
-                            drawingSurface.WriteText($"\nPiston Position={block.CurrentPosition}", true);
-                        });
-                        projector_count = projector.List[0].RemainingBlocks;
-                        drawingSurface.WriteText($"\nProjector Count={projector_count}", true);
-                        if (piston_levage.IsLessPosition(MyProperty.elevator_position_2))
-                        {
-                            piston_levage.Velocity(0f);
-                        }
-                        if (projector_count == MyProperty.tool_count_2)
-                        {
-                            Stage++;
-                            piston_levage.Velocity(velocity);
-                        }
-                    }
-                    else
-                    {
-                        Stage++;
-                    }
-                    break;
-                case ActionMachine.WaitDownGrinder5:
-                    if (Mode == ModeMachine.Up)
-                    {
-                        drawingSurface.WriteText($"\nTarget Position={MyProperty.elevator_position_1}", true);
-                        piston_levage.List.ForEach(delegate (IMyPistonBase block)
-                        {
-                            drawingSurface.WriteText($"\nPiston Position={block.CurrentPosition}", true);
-                        });
-                        projector_count = projector.List[0].RemainingBlocks;
-                        drawingSurface.WriteText($"\nProjector Count={projector_count}", true);
-                        if (piston_levage.IsLessPosition(MyProperty.elevator_position_1))
-                        {
-                            piston_levage.Velocity(0f);
-                        }
-                        if (projector_count == MyProperty.tool_count_1)
-                        {
-                            Stage++;
-                            piston_levage.Velocity(velocity);
-                        }
-                    }
-                    else
-                    {
-                        Stage++;
-                    }
-                    break;
-                case ActionMachine.WaitDown:
-                    current_position = 0f;
-                    piston_levage.List.ForEach(delegate (IMyPistonBase block)
-                    {
-                        drawingSurface.WriteText($"\nPiston Position={block.CurrentPosition}", true);
-                        current_position = block.CurrentPosition;
+                        drawingSurface.WriteText($"\nPosition={block.CurrentPosition}", true);
                     });
-                    if (piston_levage.IsPosition(0f))
+
+                    //projector_count = projector.List[0].RemainingBlocks;
+                    if (levage_pistons.IsMorePosition(position_target))
                     {
                         Stage++;
-                    }
-                    else
-                    {
-                        if(last_position == current_position)
-                        {
-                            stators_levage.ForEach(delegate (IMyMotorStator block)
-                            {
-                                if (block.Displacement == -0.4f) block.Displacement = -0.3f;
-                                else block.Displacement = -0.4f;
-                            });
-                        }
-                        else
-                        {
-                            stators_levage.ForEach(delegate (IMyMotorStator block)
-                            {
-                                block.Displacement = -0.4f;
-                            });
-                        }
-                        last_position = current_position;
                     }
                     break;
                 case ActionMachine.Up:
-                    piston_levage.On();
+                    levage_pistons.On();
                     drawingSurface.WriteText($"\nPiston Levage: On", true);
-                    velocity = MyProperty.elevator_velocity_max;
-                    piston_levage.Velocity(velocity);
-                    Stage++;
-                    break;
-                case ActionMachine.WaitUpWelder1:
-                    if (Mode == ModeMachine.Down)
-                    {
-                        drawingSurface.WriteText($"\nTarget Position={MyProperty.elevator_position_1}", true);
-                        piston_levage.List.ForEach(delegate (IMyPistonBase block)
-                        {
-                            drawingSurface.WriteText($"\nPiston Position={block.CurrentPosition}", true);
-                        });
-                        projector_count = projector.List[0].RemainingBlocks;
-                        drawingSurface.WriteText($"\nProjector Count={projector_count}", true);
-                        if (piston_levage.IsMorePosition(MyProperty.elevator_position_1))
-                        {
-                            piston_levage.Velocity(0f);
-                        }
-                        if (projector_count == MyProperty.tool_count_2)
-                        {
-                            Stage++;
-                            piston_levage.Velocity(velocity);
-                        }
-                    }
-                    else
-                    {
-                        Stage++;
-                    }
-                    break;
-                case ActionMachine.WaitUpWelder2:
-                    if (Mode == ModeMachine.Down)
-                    {
-                        drawingSurface.WriteText($"\nTarget Position={MyProperty.elevator_position_2}", true);
-                        piston_levage.List.ForEach(delegate (IMyPistonBase block)
-                        {
-                            drawingSurface.WriteText($"\nPiston Position={block.CurrentPosition}", true);
-                        });
-                        projector_count = projector.List[0].RemainingBlocks;
-                        drawingSurface.WriteText($"\nProjector Count={projector_count}", true);
-                        if (piston_levage.IsMorePosition(MyProperty.elevator_position_2))
-                        {
-                            piston_levage.Velocity(0f);
-                        }
-                        if (projector_count == MyProperty.tool_count_3)
-                        {
-                            Stage++;
-                            piston_levage.Velocity(velocity);
-                        }
-                    }
-                    else
-                    {
-                        Stage++;
-                    }
-                    break;
-                case ActionMachine.WaitUpWelder3:
-                    if (Mode == ModeMachine.Down)
-                    {
-                        drawingSurface.WriteText($"\nTarget Position={MyProperty.elevator_position_3}", true);
-                        piston_levage.List.ForEach(delegate (IMyPistonBase block)
-                        {
-                            drawingSurface.WriteText($"\nPiston Position={block.CurrentPosition}", true);
-                        });
-                        projector_count = projector.List[0].RemainingBlocks;
-                        drawingSurface.WriteText($"\nProjector Count={projector_count}", true);
-                        if (piston_levage.IsMorePosition(MyProperty.elevator_position_3))
-                        {
-                            piston_levage.Velocity(0f);
-                        }
-                        if (projector_count == 0)
-                        {
-                            Stage++;
-                            piston_levage.Velocity(velocity);
-                        }
-                    }
-                    else
-                    {
-                        Stage++;
-                    }
-                    break;
-                case ActionMachine.WaitUp:
-                    current_position = 0f;
-                    piston_levage.List.ForEach(delegate (IMyPistonBase block)
-                    {
-                        drawingSurface.WriteText($"\nPiston Position={block.CurrentPosition}", true);
-                        current_position = block.CurrentPosition;
-                    });
-                    if (piston_levage.IsPosition(MyProperty.elevator_position_max))
-                    {
-                        Stage++;
-                        if (Mode == ModeMachine.Down)
-                        {
-                            blueprint_count += 1;
-                        }
 
-                    }
-                    else
+                    velocity = -MyProperty.elevator_velocity_max;
+                    if (Mode == ModeMachine.Up) velocity = -MyProperty.elevator_velocity_min;
+                    drawingSurface.WriteText($"\nPiston Velocity: {velocity}", true);
+                    levage_pistons.Velocity(velocity);
+
+                    position_target = MyProperty.elevator_position_min;
+                    drawingSurface.WriteText($"\nTarget Position={position_target}", true);
+
+                    levage_pistons.ForEach(delegate (IMyPistonBase block)
                     {
-                        if (last_position == current_position)
-                        {
-                            stators_levage.ForEach(delegate (IMyMotorStator block)
-                            {
-                                if (block.Displacement == -0.4f) block.Displacement = -0.3f;
-                                else block.Displacement = -0.4f;
-                            });
-                        }
-                        else
-                        {
-                            stators_levage.ForEach(delegate (IMyMotorStator block)
-                            {
-                                block.Displacement = -0.4f;
-                            });
-                        }
-                        last_position = current_position;
-                    }
-                    break;
-                case ActionMachine.OpenGrinder:
-                    piston_grinder.On();
-                    drawingSurface.WriteText($"\nPiston Grinder: On", true);
-                    velocity = MyProperty.tool_velocity;
-                    piston_grinder.Velocity(velocity);
-                    Stage++;
-                    break;
-                case ActionMachine.WaitOpenGrinder:
-                    piston_grinder.List.ForEach(delegate (IMyPistonBase block)
-                    {
-                        drawingSurface.WriteText($"\nPiston Grinder Position={block.CurrentPosition}", true);
+                        drawingSurface.WriteText($"\nPosition={block.CurrentPosition}", true);
                     });
-                    if (piston_grinder.IsPosition(MyProperty.tool_position_max))
+                    //projector_count = projector.List[0].RemainingBlocks;
+                    if (levage_pistons.IsLessPosition(position_target))
                     {
                         Stage++;
                     }
                     break;
-                case ActionMachine.CloseGrinder:
-                    grinder.Off();
-                    grinder_middle1.Off();
-                    grinder_middle2.Off();
-                    piston_grinder.On();
-                    drawingSurface.WriteText($"\nPiston Grinder: On", true);
-                    velocity = MyProperty.tool_velocity;
-                    piston_grinder.Velocity(-velocity);
-                    Stage++;
-                    break;
-                case ActionMachine.WaitCloseGrinder:
-                    piston_grinder.List.ForEach(delegate (IMyPistonBase block)
+                case ActionMachine.StartWelder:
+                    projector.On();
+                    drawingSurface.WriteText($"\nWelders: On", true);
+                    
+                    velocity = -MyProperty.welder_velocity;
+                    welder_stator.Velocity(velocity);
+                    drawingSurface.WriteText($"\nWelder Velocity: {velocity}", true);
+
+                    position_target = MyProperty.welder_position_min;
+                    drawingSurface.WriteText($"\nTarget Position: {position_target}", true);
+                    drawingSurface.WriteText($"\nPosition: {Util.RadToDeg(welder_stator.First.Angle)}", true);
+                    welder_stator.Unlock();
+                    if (welder_stator.IsLessPosition(position_target))
                     {
-                        drawingSurface.WriteText($"\nPiston Grinder Position={block.CurrentPosition}", true);
-                    });
-                    if (piston_grinder.IsPosition(0f))
-                    {
+                        welder_stator.Lock();
+                        welders.On();
                         Stage++;
                     }
                     break;
-                case ActionMachine.OpenWelder:
-                    piston_welder.On();
-                    drawingSurface.WriteText($"\nPiston Welder: On", true);
-                    velocity = MyProperty.tool_velocity;
-                    piston_welder.Velocity(velocity);
-                    Stage++;
-                    break;
-                case ActionMachine.WaitOpenWelder:
-                    piston_welder.List.ForEach(delegate (IMyPistonBase block)
+                case ActionMachine.StopWelder:
+                    welders.Off();
+                    projector.Off();
+                    drawingSurface.WriteText($"\nWelders: Off", true);
+
+                    velocity = MyProperty.welder_velocity;
+                    welder_stator.Velocity(velocity);
+                    drawingSurface.WriteText($"\nWelder Velocity: {velocity}", true);
+
+                    position_target = MyProperty.welder_position_max;
+                    drawingSurface.WriteText($"\nTarget Position: {position_target}", true);
+                    drawingSurface.WriteText($"\nPosition: {Util.RadToDeg(welder_stator.First.Angle)}", true);
+                    welder_stator.Unlock();
+                    if (welder_stator.IsMorePosition(position_target))
                     {
-                        drawingSurface.WriteText($"\nPiston Welder Position={block.CurrentPosition}", true);
-                    });
-                    if (piston_welder.IsPosition(MyProperty.tool_position_max))
-                    {
-                        welder.On();
+                        welder_stator.Lock();
                         Stage++;
                     }
                     break;
-                case ActionMachine.CloseWelder:
-                    welder.Off();
-                    piston_welder.On();
-                    drawingSurface.WriteText($"\nPiston Welder: On", true);
-                    velocity = MyProperty.tool_velocity;
-                    piston_welder.Velocity(-velocity);
-                    Stage++;
+                case ActionMachine.StartGrinder:
+                    grinders.On();
+                    projector.On();
+                    drawingSurface.WriteText($"\nGrinders: On", true);
+
+                    velocity = MyProperty.grinder_velocity;
+                    grinder_stator.Velocity(velocity);
+                    drawingSurface.WriteText($"\nGrinder Velocity: {velocity}", true);
+
+                    position_target = MyProperty.grinder_position_max;
+                    drawingSurface.WriteText($"\nTarget Position: {position_target}", true);
+                    grinder_stator.Unlock();
+                    if (grinder_stator.IsMorePosition(position_target))
+                    {
+                        grinder_stator.Lock();
+                        Stage++;
+                    }
                     break;
-                case ActionMachine.WaitCloseWelder:
-                    piston_welder.List.ForEach(delegate (IMyPistonBase block)
+                case ActionMachine.StopGrinder:
+                    grinders.Off();
+                    projector.Off();
+                    drawingSurface.WriteText($"\nGrinders: Off", true);
+
+                    velocity = -MyProperty.grinder_velocity;
+                    grinder_stator.Velocity(velocity);
+                    drawingSurface.WriteText($"\nGrinder Velocity: {velocity}", true);
+
+                    position_target = MyProperty.grinder_position_min;
+                    drawingSurface.WriteText($"\nTarget Position: {position_target}", true);
+                    grinder_stator.Unlock();
+                    if (grinder_stator.IsLessPosition(position_target))
                     {
-                        drawingSurface.WriteText($"\nPiston Welder Position={block.CurrentPosition}", true);
-                    });
-                    if (piston_welder.IsPosition(0f))
-                    {
+                        grinder_stator.Lock();
                         Stage++;
                     }
                     break;
@@ -863,12 +697,13 @@ namespace IngameScript
                 case ActionMachine.Start:
                     MyProperty.Load();
                     light.On();
-                    drill.On();
+                    drills.On();
                     Stage++;
                     break;
                 case ActionMachine.Stop:
+                    projector.Off();
                     light.Off();
-                    drill.Off();
+                    drills.Off();
                     Stage++;
                     break;
             }
@@ -876,53 +711,32 @@ namespace IngameScript
 
         public enum ModeMachine
         {
+            Lock,
+            LockBottom,
+            UnlockBottom,
+            LockTop,
+            UnlockTop,
             Stop,
             Down,
             Up,
-            Reset,
-            Open,
-            OpenFixe,
-            OpenMobile,
-            OpenGrinder,
-            OpenWelder,
-            Close,
-            CloseFixe,
-            CloseMobile,
-            CloseGrinder,
-            CloseWelder
+            Reset
         }
         public enum ActionMachine
         {
-            OpenPinceFixe,
-            WaitOpenPinceFixe,
-            ClosePinceFixe,
-            WaitClosePinceFixe,
-            OpenPinceMobile,
-            WaitOpenPinceMobile,
-            ClosePinceMobile,
-            WaitClosePinceMobile,
-            OpenGrinder,
-            WaitOpenGrinder,
-            CloseGrinder,
-            WaitCloseGrinder,
-            OpenWelder,
-            WaitOpenWelder,
-            CloseWelder,
-            WaitCloseWelder,
-            Stop,
+            LockBottom,
+            UnlockBottom,
+            LockTop,
+            UnlockTop,
+            LockConnector,
+            UnlockConnector,
             Start,
+            Stop,
+            StartWelder,
+            StopWelder,
+            StartGrinder,
+            StopGrinder,
             Up,
-            WaitUp,
-            WaitUpWelder1,
-            WaitUpWelder2,
-            WaitUpWelder3,
             Down,
-            WaitDown,
-            WaitDownGrinder1,
-            WaitDownGrinder2,
-            WaitDownGrinder3,
-            WaitDownGrinder4,
-            WaitDownGrinder5,
             Terminated
         }
     }

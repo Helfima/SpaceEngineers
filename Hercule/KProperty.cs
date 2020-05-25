@@ -27,27 +27,32 @@ namespace IngameScript
             protected MyIni MyIni = new MyIni();
             protected Program program;
 
-            public string color_default;
+            public string color_default = "128,128,128,255";
 
             public float elevator_position_max;
-            public float elevator_position_1;
-            public float elevator_position_2;
-            public float elevator_position_3;
+            public float elevator_position_min;
             public float elevator_velocity_max;
             public float elevator_velocity_medium;
             public float elevator_velocity_min;
 
-            public float locker_epsilon;
             public float locker_velocity;
-            public float locker_position_max;
+            public float locker_position_min_1;
+            public float locker_position_max_1;
+            public float locker_position_min_2;
+            public float locker_position_max_2;
 
-            public float tool_velocity;
-            public float tool_position_max;
-            public int tool_count_1;
-            public int tool_count_2;
-            public int tool_count_3;
-            public int tool_count_4;
-            public int tool_count_5;
+            public float grinder_velocity;
+            public float grinder_position_min;
+            public float grinder_position_max;
+
+            public float welder_velocity;
+            public float welder_position_min;
+            public float welder_position_max;
+
+            public float connector_velocity;
+            public float connector_position_min;
+            public float connector_position_max;
+
             public KProperty(Program program)
             {
                 this.program = program;
@@ -58,25 +63,30 @@ namespace IngameScript
                 MyIniParseResult result;
                 if (!MyIni.TryParse(program.Me.CustomData, out result))
                     throw new Exception(result.ToString());
-                elevator_position_max = MyIni.Get("Elevator", "position_max").ToSingle(7.6f);
-                elevator_position_1 = MyIni.Get("Elevator", "position_1").ToSingle(0.5f);
-                elevator_position_2 = MyIni.Get("Elevator", "position_2").ToSingle(2.6f);
-                elevator_position_3 = MyIni.Get("Elevator", "position_3").ToSingle(5.2f);
+                elevator_position_max = MyIni.Get("Elevator", "position_max").ToSingle(8.6f);
+                elevator_position_min = MyIni.Get("Elevator", "position_min").ToSingle(1.1f);
                 elevator_velocity_max = MyIni.Get("Elevator", "velocity_max").ToSingle(1f);
                 elevator_velocity_medium = MyIni.Get("Elevator", "velocity_medium").ToSingle(0.5f);
-                elevator_velocity_min = MyIni.Get("Elevator", "velocity_min").ToSingle(0.2f);
+                elevator_velocity_min = MyIni.Get("Elevator", "velocity_min").ToSingle(0.1f);
 
-                locker_epsilon = MyIni.Get("Locker", "epsilon").ToSingle(0.01f);
-                locker_velocity = MyIni.Get("Locker", "velocity").ToSingle(1.2f);
-                locker_position_max = MyIni.Get("Locker", "position_max").ToSingle(2.35f);
+                locker_velocity = MyIni.Get("Locker", "velocity").ToSingle(0.4f);
+                locker_position_min_1 = MyIni.Get("Locker", "position_min_1").ToSingle(75f);
+                locker_position_max_1 = MyIni.Get("Locker", "position_max_1").ToSingle(89.5f);
+                locker_position_min_2 = MyIni.Get("Locker", "position_min_2").ToSingle(270.5f);
+                locker_position_max_2 = MyIni.Get("Locker", "position_max_2").ToSingle(285f);
 
-                tool_position_max = MyIni.Get("Tool", "position_max").ToSingle(10f);
-                tool_velocity = MyIni.Get("Tool", "velocity").ToSingle(4f);
-                tool_count_1 = MyIni.Get("Tool", "count_1").ToInt32(10);
-                tool_count_2 = MyIni.Get("Tool", "count_2").ToInt32(9);
-                tool_count_3 = MyIni.Get("Tool", "count_3").ToInt32(8);
-                tool_count_4 = MyIni.Get("Tool", "count_4").ToInt32(7);
-                tool_count_5 = MyIni.Get("Tool", "count_5").ToInt32(5);
+                grinder_velocity = MyIni.Get("Grinder", "velocity").ToSingle(1f);
+                grinder_position_min = MyIni.Get("Grinder", "position_min").ToSingle(80f);
+                grinder_position_max = MyIni.Get("Grinder", "position_max").ToSingle(95f);
+
+                welder_velocity = MyIni.Get("Welder", "velocity").ToSingle(1f);
+                welder_position_min = MyIni.Get("Welder", "position_min").ToSingle(265f);
+                welder_position_max = MyIni.Get("Welder", "position_max").ToSingle(280f);
+
+                connector_velocity = MyIni.Get("Connector", "velocity").ToSingle(.8f);
+                connector_position_min = MyIni.Get("Connector", "position_min").ToSingle(15f);
+                connector_position_max = MyIni.Get("Connector", "position_max").ToSingle(89f);
+
                 if (program.Me.CustomData.Equals(""))
                 {
                     Save();
@@ -114,24 +124,29 @@ namespace IngameScript
                 if (!MyIni.TryParse(program.Me.CustomData, out result))
                     throw new Exception(result.ToString());
                 MyIni.Set("Elevator", "position_max", elevator_position_max);
-                MyIni.Set("Elevator", "position_1", elevator_position_1);
-                MyIni.Set("Elevator", "position_2", elevator_position_2);
-                MyIni.Set("Elevator", "position_3", elevator_position_3);
+                MyIni.Set("Elevator", "position_min", elevator_position_min);
                 MyIni.Set("Elevator", "velocity_max", elevator_velocity_max);
                 MyIni.Set("Elevator", "velocity_medium", elevator_velocity_medium);
                 MyIni.Set("Elevator", "velocity_min", elevator_velocity_min);
 
-                MyIni.Set("Locker", "epsilon", locker_epsilon);
                 MyIni.Set("Locker", "velocity", locker_velocity);
-                MyIni.Set("Locker", "position_max", locker_position_max);
+                MyIni.Set("Locker", "position_min_1", locker_position_min_1);
+                MyIni.Set("Locker", "position_max_1", locker_position_max_1);
+                MyIni.Set("Locker", "position_min_2", locker_position_min_2);
+                MyIni.Set("Locker", "position_max_2", locker_position_max_2);
 
-                MyIni.Set("Tool", "position_max", tool_position_max);
-                MyIni.Set("Tool", "velocity", tool_velocity);
-                MyIni.Set("Tool", "count_1", tool_count_1);
-                MyIni.Set("Tool", "count_2", tool_count_2);
-                MyIni.Set("Tool", "count_3", tool_count_3);
-                MyIni.Set("Tool", "count_4", tool_count_4);
-                MyIni.Set("Tool", "count_5", tool_count_5);
+                MyIni.Set("Grinder", "velocity", grinder_velocity);
+                MyIni.Set("Grinder", "position_min", grinder_position_min);
+                MyIni.Set("Grinder", "position_max", grinder_position_max);
+
+                MyIni.Set("Welder", "velocity", welder_velocity);
+                MyIni.Set("Welder", "position_min", welder_position_min);
+                MyIni.Set("Welder", "position_max", welder_position_max);
+
+                MyIni.Set("Connector", "velocity", connector_velocity);
+                MyIni.Set("Connector", "position_min", connector_position_min);
+                MyIni.Set("Connector", "position_max", connector_position_max);
+
                 program.Me.CustomData = MyIni.ToString();
             }
         }

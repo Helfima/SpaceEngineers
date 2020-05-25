@@ -308,18 +308,42 @@ namespace IngameScript
             {
                 ApplyAction("OnOff_On");
             }
+            public bool IsOn()
+            {
+                bool isState = true;
+                if (!IsEmpty)
+                {
+                    foreach (IMyTerminalBlock block in List)
+                    {
+                        if (!block.GetValueBool("OnOff")) isState = false;
+                    }
+                }
+                return isState;
+            }
             public void Off()
             {
                 ApplyAction("OnOff_Off");
+            }
+
+            public bool IsOff()
+            {
+                return !IsOn();
             }
 
             public void Lock()
             {
                 if (!IsEmpty)
                 {
-                    foreach (IMyMotorStator block in List)
+                    if (List is List<IMyMotorStator>)
                     {
-                        block.RotorLock = true;
+                        foreach (IMyMotorStator block in List)
+                        {
+                            block.RotorLock = true;
+                        }
+                    }
+                    else
+                    {
+                        ApplyAction("Lock");
                     }
                 }
             }
@@ -327,9 +351,16 @@ namespace IngameScript
             {
                 if (!IsEmpty)
                 {
-                    foreach (IMyMotorStator block in List)
+                    if (List is List<IMyMotorStator>)
                     {
-                        block.RotorLock = false;
+                        foreach (IMyMotorStator block in List)
+                        {
+                            block.RotorLock = false;
+                        }
+                    }
+                    else
+                    {
+                        ApplyAction("Unlock");
                     }
                 }
             }
