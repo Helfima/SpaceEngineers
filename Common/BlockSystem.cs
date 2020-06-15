@@ -80,76 +80,42 @@ namespace IngameScript
 
             public static BlockSystem<T> SearchByFilter(Program program, BlockFilter<T> filter)
             {
-                return BlockSystem<T>.SearchBlocks(program, filter.Visitor());
+                List<T> list = new List<T>();
+                try
+                {
+                    if (filter.ByGroup)
+                    {
+                        List<IMyBlockGroup> groups = new List<IMyBlockGroup>();
+                        program.GridTerminalSystem.GetBlockGroups(groups, filter.GroupVisitor());
+                        List<T> group_list = new List<T>();
+                        groups.ForEach(delegate (IMyBlockGroup group)
+                        {
+                            group_list.Clear();
+                            group.GetBlocksOfType<T>(list, filter.BlockVisitor());
+                            list.AddList(group_list);
+                        });
+                    }
+                    else
+                    {
+                        program.GridTerminalSystem.GetBlocksOfType<T>(list, filter.BlockVisitor());
+                    }
+                }
+                catch { }
+                program.Echo(String.Format("List <{0}> count: {1}", filter.Value, list.Count));
+                //program.Echo(String.Format("List <{0}> count: {1}", filter.Filter, list.Count));
+                return new BlockSystem<T>()
+                {
+                    program = program,
+                    List = list
+                };
             }
 
-            public static BlockSystem<T> SearchByMode(Program program, string mode, string search)
-            {
-                switch (mode)
-                {
-                    case "tag":
-                        return BlockSystem<T>.SearchByTag(program, search);
-                    case "name":
-                        return BlockSystem<T>.SearchByName(program, search);
-                    case "group":
-                        return BlockSystem<T>.SearchByGroup(program, search);
-                }
-                return null;
-            }
-
-            public static void ApplyAction(BlockSystem<T> blockSystem, string action, float value = 0f)
-            {
-                switch (action)
-                {
-                    case "on":
-                        blockSystem.On();
-                        break;
-                    case "off":
-                        blockSystem.Off();
-                        break;
-                    case "lock":
-                        blockSystem.Lock();
-                        break;
-                    case "unlock":
-                        blockSystem.Unlock();
-                        break;
-                    case "reverse":
-                        blockSystem.ApplyAction("Reverse");
-                        break;
-                    case "velocity":
-                        blockSystem.Velocity(value);
-                        break;
-                }
-            }
             public void ForEach(Action<T> action)
             {
                 if (!IsEmpty)
                 {
                     List.ForEach(action);
                 }
-            }
-
-            public object GetProperty(string name)
-            {
-                if (!IsEmpty)
-                {
-                    if (List is List<IMyTerminalBlock>)
-                    {
-                        IMyTerminalBlock block = (IMyTerminalBlock)List[0];
-                        ITerminalProperty property = block.GetProperty(name);
-                        program.drawingSurface.WriteText($"\nProperty type {name}={property.TypeName}", true);
-                        switch (property.TypeName)
-                        {
-                            case "Single":
-                                return block.GetValueFloat(name);
-                            case "Boolean":
-                                return block.GetValueBool(name);
-                            default:
-                                return "null";
-                        }
-                    }
-                }
-                return null;
             }
 
             public bool IsPosition(float position, float epsilon = 0.1f)
@@ -396,15 +362,57 @@ namespace IngameScript
 
         public class BlockFilter<T> where T : class
         {
-            public string value;
+            public string Value;
+            public string Filter;
             public IMyCubeGrid CubeGrid;
+            public bool ByContains = false;
+            public bool ByGroup = false;
+            public bool MultiGrid = false;
 
-            public Func<T, bool> Visitor()
+            public static BlockFilter<T> Create(IMyTerminalBlock parent, string filter)
+            {
+                BlockFilter<T> blockFilter = new BlockFilter<T>
+                {
+                    Value = filter,
+                    CubeGrid = parent.CubeGrid
+                };
+                if (filter.Contains(":"))
+                {
+                    string[] values = filter.Split(':');
+                    if (values[0].Contains("C")) blockFilter.ByContains = true;
+                    if (values[0].Contains("G")) blockFilter.ByGroup = true;
+                    if (values[0].Contains("M")) blockFilter.MultiGrid = true;
+                    if (!values[1].Equals("*")) blockFilter.Filter = values[1];
+                }
+                else
+                {
+                    if(!filter.Equals("*")) blockFilter.Filter = filter;
+                }
+                return blockFilter;
+            }
+            public Func<T, bool> BlockVisitor()
             {
                 return delegate(T block) {
                     bool state = true;
-                    if (value != null) if(!((IMyTerminalBlock)block).CustomName.Contains(value)) state = false;
-                    if (CubeGrid != null) if (((IMyTerminalBlock)block).CubeGrid != CubeGrid) state = false;
+                    if (Filter != null && !ByGroup)
+                    {
+                        if (ByContains) { if (!((IMyTerminalBlock)block).CustomName.Contains(Filter)) state = false; }
+                        else { if (!((IMyTerminalBlock)block).CustomName.Equals(Filter)) state = false; }
+                    }
+                    if (!MultiGrid) { if (((IMyTerminalBlock)block).CubeGrid != CubeGrid) state = false; }
+                    return state;
+                };
+            }
+
+            public Func<IMyBlockGroup, bool> GroupVisitor()
+            {
+                return delegate (IMyBlockGroup group) {
+                    bool state = true;
+                    if (Filter != null && ByGroup)
+                    {
+                        if (ByContains) if (!group.Name.Contains(Filter)) state = false;
+                        else if (!group.Name.Equals(Filter)) state = false;
+                    }
                     return state;
                 };
             }

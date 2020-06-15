@@ -21,51 +21,43 @@ namespace IngameScript
 {
     partial class Program : MyGridProgram
     {
-        KProperty MyProperty;
-
         const UpdateType CommandUpdate = UpdateType.Trigger | UpdateType.Terminal;
         MyCommandLine commandLine = new MyCommandLine();
         private IMyTextSurface drawingSurface;
         private StateMachine machine_state = StateMachine.Stopped;
 
-        private BlockSystem<IMyRefinery> refinery = null;
-        private BlockSystem<IMyCargoContainer> stock = null;
+        BlockSystem<IMyDoor> doors = null;
+        BlockSystem<IMySensorBlock> sensors = null;
         public Program()
         {
-            MyProperty = new KProperty(this);
-            MyProperty.Load();
             Runtime.UpdateFrequency = UpdateFrequency.Update100;
             drawingSurface = Me.GetSurface(0);
             drawingSurface.ContentType = ContentType.TEXT_AND_IMAGE;
-            Prepare();
+            Search();
         }
 
-        private void Prepare()
+        private void Init()
         {
-            BlockFilter<IMyRefinery> filterRefinery = new BlockFilter<IMyRefinery>()
-            {
-                CubeGrid = Me.CubeGrid
-            };
-            refinery = BlockSystem<IMyRefinery>.SearchByFilter(this, filterRefinery);
-            refinery.ForEach(delegate (IMyRefinery block)
-            {
-                block.UseConveyorSystem = false;
-            });
-            BlockFilter<IMyCargoContainer> filterContainer = new BlockFilter<IMyCargoContainer>()
-            {
-                Filter = "Ore",
-                CubeGrid = Me.CubeGrid
-            };
-            stock = BlockSystem<IMyCargoContainer>.SearchByFilter(this, filterContainer);
         }
 
         public void Save()
         {
-            MyProperty.Save();
+
+        }
+
+        private void Search()
+        {
+            BlockFilter<IMyDoor> block_filter1 = BlockFilter<IMyDoor>.Create(Me, "*");
+            doors = BlockSystem<IMyDoor>.SearchByFilter(this, block_filter1);
+
+            BlockFilter<IMySensorBlock> block_filter2 = BlockFilter<IMySensorBlock>.Create(Me, "*");
+            sensors = BlockSystem<IMySensorBlock>.SearchByFilter(this, block_filter2);
+
         }
 
         public void Main(string argument, UpdateType updateType)
         {
+            drawingSurface.WriteText($"Argument:{argument}", false);
             if ((updateType & CommandUpdate) != 0)
             {
                 RunCommand(argument);
@@ -86,7 +78,10 @@ namespace IngameScript
                 switch (command)
                 {
                     case "reset":
-                        Prepare();
+                        Init();
+                        break;
+                    default:
+                        Search();
                         break;
                 }
             }
@@ -101,29 +96,10 @@ namespace IngameScript
             drawingSurface.WriteText($"Machine Status:{machine_state}", false);
         }
 
-        //public void RefineryCleanup(int inventory_index, List<IMyCargoContainer> cargo_list)
-        //{
-        //    foreach (IMyRefinery refinery in refinery_list)
-        //    {
-        //        IMyInventory refinery_inventory = refinery.GetInventory(inventory_index);
-        //        List<MyInventoryItem> items = new List<MyInventoryItem>();
-        //        refinery_inventory.GetItems(items);
-        //        MyInventoryItem[] refinery_items = items.ToArray();
-        //        for (int idx = 0; idx < refinery_items.Length; idx++)
-        //        {
-        //            MyInventoryItem refinery_item = refinery_items[idx];
-        //            foreach (IMyCargoContainer cargo in cargo_list)
-        //            {
-        //                IMyInventory cargo_inventory = cargo.GetInventory(0);
-        //                if (!cargo_inventory.IsFull) refinery_inventory.TransferItemTo(cargo_inventory, idx, null, true, null);
-        //                if (refinery_item.Amount.ToIntSafe() < 1) break;
-        //            }
-        //        }
-        //    }
-        //}
         public enum StateMachine
         {
             Stopped,
+            Traking,
             Running,
             Waitting
         }

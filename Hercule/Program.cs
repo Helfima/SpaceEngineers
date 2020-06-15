@@ -27,6 +27,7 @@ namespace IngameScript
         KProperty MyProperty;
 
         private ModeMachine Mode = ModeMachine.Stop;
+        private ModeMachine LastMode = ModeMachine.Stop;
         private List<ActionMachine> Sequence;
         private List<int> SequenceBlocks;
         private int Stage = 0;
@@ -61,8 +62,7 @@ namespace IngameScript
         private BlockSystem<IMyLightingBlock> light = null;
         private BlockSystem<IMyShipDrill> drills = null;
 
-        private BlockSystem<IMyTextPanel> projection_lcds = null;
-        private BlockSystem<IMyTextPanel> check_lcds = null;
+        private BlockSystem<IMyTextPanel> control_lcds = null;
         public Program()
         {
             Runtime.UpdateFrequency = UpdateFrequency.Update100;
@@ -105,9 +105,11 @@ namespace IngameScript
 
             drills = BlockSystem<IMyShipDrill>.SearchByGroup(this, "Drills");
 
-            projection_lcds = BlockSystem<IMyTextPanel>.SearchByName(this, "Projection LCD");
-
-            check_lcds = BlockSystem<IMyTextPanel>.SearchByName(this, "Check LCD");
+            control_lcds = BlockSystem<IMyTextPanel>.SearchByName(this, "Control LCD");
+            control_lcds.ForEach(delegate (IMyTextPanel block)
+            {
+                block.ContentType = ContentType.TEXT_AND_IMAGE;
+            });
 
             SequenceBlocks = new List<int>() { };
 
@@ -116,6 +118,16 @@ namespace IngameScript
         public void Save()
         {
 
+        }
+
+        public void WriteText(string message, bool append)
+        {
+            message += "\n";
+            drawingSurface.WriteText(message, append);
+            control_lcds.ForEach(delegate (IMyTextPanel block)
+            {
+                block.WriteText(message, append);
+            });
         }
 
         public void Main(string argument, UpdateType updateType)
@@ -151,11 +163,14 @@ namespace IngameScript
                     case "init":
                         Init();
                         break;
-                    case "check":
-                        CheckMergers();
-                        break;
                     case "stop":
+                        LastMode = Mode;
+                        drills.Off();
                         Mode = ModeMachine.Stop;
+                        break;
+                    case "start":
+                        drills.On();
+                        Mode = LastMode;
                         break;
                     case "lock":
                         Stage = 0;
@@ -309,8 +324,6 @@ namespace IngameScript
         void RunContinuousLogic()
         {
             Display();
-            DisplayProjection();
-            CheckMergers();
             if (Mode != ModeMachine.Stop && Cycle > 0 && Sequence.Count > Stage)
             {
                 Staging(Sequence[Stage]);
@@ -318,42 +331,18 @@ namespace IngameScript
         }
         private void Display()
         {
-            drawingSurface.WriteText($"Machine Mode:{Mode}", false);
-            drawingSurface.WriteText($"Machine Cycle:{Cycle}", false);
+            WriteText($"Machine Mode:{Mode}", false);
+            WriteText($"Machine Cycle:{Cycle}", true);
             if (Sequence != null && Sequence.Count > Stage)
             {
-                drawingSurface.WriteText($"\nMachine Action:{Sequence[Stage]}", true);
+                WriteText($"Machine Action:{Sequence[Stage]}", true);
             }
-            drawingSurface.WriteText($"\nMachine Stage:{Stage}", true);
-            float deep = MyProperty.elevator_position_max * blueprint_count;
-            drawingSurface.WriteText($"\nMachine Deep:{deep}", true);
+            WriteText($"Machine Stage:{Stage}", true);
+            BlockSystem<IMyShipConnector> connectors = BlockSystem<IMyShipConnector>.SearchBlocks(this);
+            float deep = MyProperty.elevator_position_max * connectors.List.Count;
+            WriteText($"Machine Deep:{deep}", true);
         }
 
-        private void CheckMergers()
-        {
-            check_lcds.First.WriteText($"Check Mergers\n", false);
-            bottom_mergers.ForEach(delegate (IMyShipMergeBlock block)
-            {
-                check_lcds.First.WriteText($"{block.CustomName} IsConnected:{block.IsConnected}\n", true);
-                check_lcds.First.WriteText($"{block.CustomName} IsWorking:{block.IsWorking}\n", true);
-                check_lcds.First.WriteText($"{block.CustomName} CheckConnectionAllowed:{block.CheckConnectionAllowed}\n", true);
-            });
-            top_mergers.ForEach(delegate (IMyShipMergeBlock block)
-            {
-                check_lcds.First.WriteText($"{block.CustomName} IsConnected:{block.IsConnected}\n", true);
-                check_lcds.First.WriteText($"{block.CustomName} IsWorking:{block.IsWorking}\n", true);
-                check_lcds.First.WriteText($"{block.CustomName} CheckConnectionAllowed:{block.CheckConnectionAllowed}\n", true);
-            });
-        }
-        private void DisplayProjection()
-        {
-            projection_lcds.ForEach(delegate (IMyTextPanel block)
-            {
-                block.WriteText($"TotalBlocks:{projector.First.TotalBlocks}\n", false);
-                block.WriteText($"BuildableBlocksCount:{projector.First.BuildableBlocksCount}\n", true);
-                block.WriteText($"RemainingBlocks:{projector.First.RemainingBlocks}\n", true);
-            });
-        }
 
         private void Staging(ActionMachine action)
         {
@@ -370,24 +359,24 @@ namespace IngameScript
                     angle2 = MyProperty.locker_position_min_2;
 
                     bottom_mergers.On();
-                    drawingSurface.WriteText($"\nBottom mergers: On", true);
-                    drawingSurface.WriteText($"\nVelocity: {velocity}", true);
-                    drawingSurface.WriteText($"\nTarget position 1: {angle1}", true);
-                    drawingSurface.WriteText($"\nTarget position 2: {angle2}", true);
+                    WriteText($"Bottom mergers: On", true);
+                    WriteText($"Velocity: {velocity}", true);
+                    WriteText($"Target position 1: {angle1}", true);
+                    WriteText($"Target position 2: {angle2}", true);
                     closed = true;
 
                     bottom_stators_1.Unlock();
                     bottom_stators_1.Velocity(velocity);
                     bottom_stators_1.ForEach(delegate (IMyMotorStator block)
                     {
-                        drawingSurface.WriteText($"\nBottom angle 1: {Util.RadToDeg(block.Angle)}", true);
+                        WriteText($"Bottom angle 1: {Util.RadToDeg(block.Angle)}", true);
                     });
 
                     bottom_stators_2.Unlock();
                     bottom_stators_2.Velocity(-velocity);
                     bottom_stators_2.ForEach(delegate (IMyMotorStator block)
                     {
-                        drawingSurface.WriteText($"\nBottom angle 2: {Util.RadToDeg(block.Angle)}", true);
+                        WriteText($"Bottom angle 2: {Util.RadToDeg(block.Angle)}", true);
                     });
                     if(bottom_stators_1.IsLessPosition(angle1) || bottom_stators_2.IsMorePosition(angle2)) closed = false;
                     if (closed)
@@ -404,8 +393,8 @@ namespace IngameScript
                     });
                     if (!closed)
                     {
-                        drawingSurface.WriteText($"\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!", true);
-                        drawingSurface.WriteText($"\nSecurity: Top mergers is Off", true);
+                        WriteText($"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!", true);
+                        WriteText($"Security: Top mergers is Off", true);
                     }
                     else
                     {
@@ -414,24 +403,24 @@ namespace IngameScript
                         angle2 = MyProperty.locker_position_max_2;
 
                         bottom_mergers.Off();
-                        drawingSurface.WriteText($"\nBottom mergers: Off", true);
-                        drawingSurface.WriteText($"\nVelocity: {velocity}", true);
-                        drawingSurface.WriteText($"\nTarget position 1: {angle1}", true);
-                        drawingSurface.WriteText($"\nTarget position 2: {angle2}", true);
+                        WriteText($"Bottom mergers: Off", true);
+                        WriteText($"Velocity: {velocity}", true);
+                        WriteText($"Target position 1: {angle1}", true);
+                        WriteText($"Target position 2: {angle2}", true);
                         closed = true;
 
                         bottom_stators_1.Unlock();
                         bottom_stators_1.Velocity(-velocity);
                         bottom_stators_1.ForEach(delegate (IMyMotorStator block)
                         {
-                            drawingSurface.WriteText($"\nBottom angle 1: {Util.RadToDeg(block.Angle)}", true);
+                            WriteText($"Bottom angle 1: {Util.RadToDeg(block.Angle)}", true);
                         });
 
                         bottom_stators_2.Unlock();
                         bottom_stators_2.Velocity(velocity);
                         bottom_stators_2.ForEach(delegate (IMyMotorStator block)
                         {
-                            drawingSurface.WriteText($"\nBottom angle 2: {Util.RadToDeg(block.Angle)}", true);
+                            WriteText($"Bottom angle 2: {Util.RadToDeg(block.Angle)}", true);
                         });
                         if (bottom_stators_1.IsMorePosition(angle1) || bottom_stators_2.IsLessPosition(angle2)) closed = false;
                         if (closed)
@@ -449,24 +438,24 @@ namespace IngameScript
                     angle2 = MyProperty.locker_position_min_2;
 
                     top_mergers.On();
-                    drawingSurface.WriteText($"\nTop mergers: On", true);
-                    drawingSurface.WriteText($"\nVelocity: {velocity}", true);
-                    drawingSurface.WriteText($"\nTarget position 1: {angle1}", true);
-                    drawingSurface.WriteText($"\nTarget position 2: {angle2}", true);
+                    WriteText($"Top mergers: On", true);
+                    WriteText($"Velocity: {velocity}", true);
+                    WriteText($"Target position 1: {angle1}", true);
+                    WriteText($"Target position 2: {angle2}", true);
                     closed = true;
 
                     top_stators_1.Unlock();
                     top_stators_1.Velocity(velocity);
                     top_stators_1.ForEach(delegate (IMyMotorStator block)
                     {
-                        drawingSurface.WriteText($"\nTop angle 1: {Util.RadToDeg(block.Angle)}", true);
+                        WriteText($"Top angle 1: {Util.RadToDeg(block.Angle)}", true);
                     });
 
                     top_stators_2.Unlock();
                     top_stators_2.Velocity(-velocity);
                     top_stators_2.ForEach(delegate (IMyMotorStator block)
                     {
-                        drawingSurface.WriteText($"\nTop angle 2: {Util.RadToDeg(block.Angle)}", true);
+                        WriteText($"Top angle 2: {Util.RadToDeg(block.Angle)}", true);
                     });
                     if (top_stators_1.IsLessPosition(angle1) || top_stators_2.IsMorePosition(angle2)) closed = false;
                     if (closed)
@@ -483,8 +472,8 @@ namespace IngameScript
                     });
                     if (!closed)
                     {
-                        drawingSurface.WriteText($"\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!", true);
-                        drawingSurface.WriteText($"\nSecurity: Bottom mergers is Off", true);
+                        WriteText($"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!", true);
+                        WriteText($"Security: Bottom mergers is Off", true);
                     }
                     else
                     {
@@ -493,24 +482,24 @@ namespace IngameScript
                         angle2 = MyProperty.locker_position_max_2;
 
                         top_mergers.Off();
-                        drawingSurface.WriteText($"\nTop mergers: Off", true);
-                        drawingSurface.WriteText($"\nVelocity: {velocity}", true);
-                        drawingSurface.WriteText($"\nTarget position 1: {angle1}", true);
-                        drawingSurface.WriteText($"\nTarget position 2: {angle2}", true);
+                        WriteText($"Top mergers: Off", true);
+                        WriteText($"Velocity: {velocity}", true);
+                        WriteText($"Target position 1: {angle1}", true);
+                        WriteText($"Target position 2: {angle2}", true);
                         closed = true;
 
                         top_stators_1.Unlock();
                         top_stators_1.Velocity(-velocity);
                         top_stators_1.ForEach(delegate (IMyMotorStator block)
                         {
-                            drawingSurface.WriteText($"\nTop angle 1: {Util.RadToDeg(block.Angle)}", true);
+                            WriteText($"Top angle 1: {Util.RadToDeg(block.Angle)}", true);
                         });
 
                         top_stators_2.Unlock();
                         top_stators_2.Velocity(velocity);
                         top_stators_2.ForEach(delegate (IMyMotorStator block)
                         {
-                            drawingSurface.WriteText($"\nTop angle 2: {Util.RadToDeg(block.Angle)}", true);
+                            WriteText($"Top angle 2: {Util.RadToDeg(block.Angle)}", true);
                         });
                         if (top_stators_1.IsMorePosition(angle1) || top_stators_2.IsLessPosition(angle2)) closed = false;
                         if (closed)
@@ -525,15 +514,15 @@ namespace IngameScript
                 case ActionMachine.LockConnector:
                     velocity = MyProperty.connector_velocity;
                     position_target = MyProperty.connector_position_max;
-                    drawingSurface.WriteText($"\nVelocity: {velocity}", true);
-                    drawingSurface.WriteText($"\nTarget position: {position_target}", true);
+                    WriteText($"Velocity: {velocity}", true);
+                    WriteText($"Target position: {position_target}", true);
                     closed = true;
                     connector_stator.Velocity(velocity);
                     connector_stator.Unlock();
                     connector.On();
                     connector_stator.ForEach(delegate (IMyMotorStator block)
                     {
-                        drawingSurface.WriteText($"\nAngle: {Util.RadToDeg(block.Angle)}", true);
+                        WriteText($"Angle: {Util.RadToDeg(block.Angle)}", true);
                         if (connector_stator.IsLessPosition(position_target))
                         {
                             closed = false;
@@ -549,8 +538,8 @@ namespace IngameScript
                 case ActionMachine.UnlockConnector:
                     velocity = -MyProperty.connector_velocity;
                     position_target = MyProperty.connector_position_min;
-                    drawingSurface.WriteText($"\nVelocity: {velocity}", true);
-                    drawingSurface.WriteText($"\nTarget position: {position_target}", true);
+                    WriteText($"Velocity: {velocity}", true);
+                    WriteText($"Target position: {position_target}", true);
                     closed = true;
                     connector_stator.Unlock();
                     connector_stator.Velocity(velocity);
@@ -558,7 +547,7 @@ namespace IngameScript
                     connector.Off();
                     connector_stator.ForEach(delegate (IMyMotorStator block)
                     {
-                        drawingSurface.WriteText($"\nAngle: {Util.RadToDeg(block.Angle)}", true);
+                        WriteText($"Angle: {Util.RadToDeg(block.Angle)}", true);
                         if (connector_stator.IsMorePosition(position_target))
                         {
                             closed = false;
@@ -572,19 +561,19 @@ namespace IngameScript
                     break;
                 case ActionMachine.Down:
                     levage_pistons.On();
-                    drawingSurface.WriteText($"\nPiston Levage: On", true);
+                    WriteText($"Piston Levage: On", true);
 
                     velocity = MyProperty.elevator_velocity_min;
                     if (Mode == ModeMachine.Up) velocity = MyProperty.elevator_velocity_max;
-                    drawingSurface.WriteText($"\nPiston Velocity: {velocity}", true);
+                    WriteText($"Piston Velocity: {velocity}", true);
                     levage_pistons.Velocity(velocity);
 
                     position_target = MyProperty.elevator_position_max;
-                    drawingSurface.WriteText($"\nTarget Position={position_target}", true);
+                    WriteText($"Target Position={position_target}", true);
 
                     levage_pistons.ForEach(delegate (IMyPistonBase block)
                     {
-                        drawingSurface.WriteText($"\nPosition={block.CurrentPosition}", true);
+                        WriteText($"Position={block.CurrentPosition}", true);
                     });
 
                     //projector_count = projector.List[0].RemainingBlocks;
@@ -595,99 +584,52 @@ namespace IngameScript
                     break;
                 case ActionMachine.Up:
                     levage_pistons.On();
-                    drawingSurface.WriteText($"\nPiston Levage: On", true);
+                    WriteText($"Piston Levage: On", true);
 
                     velocity = -MyProperty.elevator_velocity_max;
                     if (Mode == ModeMachine.Up) velocity = -MyProperty.elevator_velocity_min;
-                    drawingSurface.WriteText($"\nPiston Velocity: {velocity}", true);
+                    WriteText($"Piston Velocity: {velocity}", true);
                     levage_pistons.Velocity(velocity);
 
                     position_target = MyProperty.elevator_position_min;
-                    drawingSurface.WriteText($"\nTarget Position={position_target}", true);
+                    WriteText($"Target Position={position_target}", true);
 
                     levage_pistons.ForEach(delegate (IMyPistonBase block)
                     {
-                        drawingSurface.WriteText($"\nPosition={block.CurrentPosition}", true);
+                        WriteText($"Position={block.CurrentPosition}", true);
                     });
                     //projector_count = projector.List[0].RemainingBlocks;
-                    if (levage_pistons.IsLessPosition(position_target))
+                    if (levage_pistons.IsLessPosition(position_target+0.1f))
                     {
                         Stage++;
                     }
                     break;
                 case ActionMachine.StartWelder:
                     projector.On();
-                    drawingSurface.WriteText($"\nWelders: On", true);
-                    
-                    velocity = -MyProperty.welder_velocity;
-                    welder_stator.Velocity(velocity);
-                    drawingSurface.WriteText($"\nWelder Velocity: {velocity}", true);
-
-                    position_target = MyProperty.welder_position_min;
-                    drawingSurface.WriteText($"\nTarget Position: {position_target}", true);
-                    drawingSurface.WriteText($"\nPosition: {Util.RadToDeg(welder_stator.First.Angle)}", true);
-                    welder_stator.Unlock();
-                    if (welder_stator.IsLessPosition(position_target))
-                    {
-                        welder_stator.Lock();
-                        welders.On();
-                        Stage++;
-                    }
+                    welders.On();
+                    WriteText($"Welders: On", true);
+                    Stage++;
                     break;
                 case ActionMachine.StopWelder:
                     welders.Off();
                     projector.Off();
-                    drawingSurface.WriteText($"\nWelders: Off", true);
+                    WriteText($"Welders: Off", true);
 
-                    velocity = MyProperty.welder_velocity;
-                    welder_stator.Velocity(velocity);
-                    drawingSurface.WriteText($"\nWelder Velocity: {velocity}", true);
-
-                    position_target = MyProperty.welder_position_max;
-                    drawingSurface.WriteText($"\nTarget Position: {position_target}", true);
-                    drawingSurface.WriteText($"\nPosition: {Util.RadToDeg(welder_stator.First.Angle)}", true);
-                    welder_stator.Unlock();
-                    if (welder_stator.IsMorePosition(position_target))
-                    {
-                        welder_stator.Lock();
-                        Stage++;
-                    }
+                    Stage++;
                     break;
                 case ActionMachine.StartGrinder:
                     grinders.On();
                     projector.On();
-                    drawingSurface.WriteText($"\nGrinders: On", true);
+                    WriteText($"Grinders: On", true);
 
-                    velocity = MyProperty.grinder_velocity;
-                    grinder_stator.Velocity(velocity);
-                    drawingSurface.WriteText($"\nGrinder Velocity: {velocity}", true);
-
-                    position_target = MyProperty.grinder_position_max;
-                    drawingSurface.WriteText($"\nTarget Position: {position_target}", true);
-                    grinder_stator.Unlock();
-                    if (grinder_stator.IsMorePosition(position_target))
-                    {
-                        grinder_stator.Lock();
-                        Stage++;
-                    }
+                    Stage++;
                     break;
                 case ActionMachine.StopGrinder:
                     grinders.Off();
                     projector.Off();
-                    drawingSurface.WriteText($"\nGrinders: Off", true);
+                    WriteText($"Grinders: Off", true);
 
-                    velocity = -MyProperty.grinder_velocity;
-                    grinder_stator.Velocity(velocity);
-                    drawingSurface.WriteText($"\nGrinder Velocity: {velocity}", true);
-
-                    position_target = MyProperty.grinder_position_min;
-                    drawingSurface.WriteText($"\nTarget Position: {position_target}", true);
-                    grinder_stator.Unlock();
-                    if (grinder_stator.IsLessPosition(position_target))
-                    {
-                        grinder_stator.Lock();
-                        Stage++;
-                    }
+                    Stage++;
                     break;
                 case ActionMachine.Terminated:
                     Cycle -= 1;

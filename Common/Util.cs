@@ -45,7 +45,6 @@ namespace IngameScript
             {
                 return angle * Math.PI / 180;
             }
-
             static public string GetType(MyInventoryItem inventory_item)
             {
                 return inventory_item.Type.TypeId.ToString();
@@ -54,6 +53,15 @@ namespace IngameScript
             static public string GetName(MyInventoryItem inventory_item)
             {
                 return inventory_item.Type.SubtypeId.ToString();
+            }
+            static public string GetType(MyProductionItem production_item)
+            {
+                return production_item.BlueprintId.TypeId.ToString();
+            }
+
+            static public string GetName(MyProductionItem production_item)
+            {
+                return production_item.BlueprintId.SubtypeId.ToString();
             }
         }
     }

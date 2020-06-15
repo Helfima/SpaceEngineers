@@ -24,8 +24,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hercule", "Hercule\Hercule.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ControllerRefinery", "ControllerRefinery\ControllerRefinery.csproj", "{20F0848C-8BB6-4704-9541-105EF12183FF}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AutoDoor", "AutoDoor\AutoDoor.csproj", "{0CC98787-7FFE-4880-A0D2-54FFA6BA943B}"
+EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		Common\Common.projitems*{0cc98787-7ffe-4880-a0d2-54ffa6ba943b}*SharedItemsImports = 4
 		Common\Common.projitems*{20f0848c-8bb6-4704-9541-105ef12183ff}*SharedItemsImports = 4
 		Common\Common.projitems*{32a0b0d2-ff96-4fd8-acd2-cdeeb4465e7a}*SharedItemsImports = 4
 		Common\Common.projitems*{49439b24-cd30-403a-92fb-1a3f265b2bc8}*SharedItemsImports = 4
@@ -53,6 +56,8 @@ Global
 		{66E99C32-C5B0-4278-BC49-1FC95B422C6B}.Debug|x64.Build.0 = Debug|x64
 		{20F0848C-8BB6-4704-9541-105EF12183FF}.Debug|x64.ActiveCfg = Debug|x64
 		{20F0848C-8BB6-4704-9541-105EF12183FF}.Debug|x64.Build.0 = Debug|x64
+		{0CC98787-7FFE-4880-A0D2-54FFA6BA943B}.Debug|x64.ActiveCfg = Debug|x64
+		{0CC98787-7FFE-4880-A0D2-54FFA6BA943B}.Debug|x64.Build.0 = Debug|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -421,6 +421,7 @@ namespace IngameScript
             {
                 switch (name)
                 {
+                    case "IsActive":
                     case "IsConnected":
                         return "Boolean";
                     default:

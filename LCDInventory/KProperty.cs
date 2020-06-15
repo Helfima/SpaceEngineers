@@ -30,6 +30,10 @@ namespace IngameScript
             public string limit_default;
             public string color_default;
 
+            public bool multigrid_inventory;
+            public bool multigrid_lcd;
+            public bool multigrid_drills;
+
             public KProperty(Program program)
             {
                 this.program = program;
@@ -42,9 +46,14 @@ namespace IngameScript
                     throw new Exception(result.ToString());
                 limit_default = MyIni.Get("Limit", "default").ToString("10000");
                 color_default = MyIni.Get("Color", "default").ToString("128,128,128,255");
+
+                multigrid_inventory = MyIni.Get("MultiGrid", "inventory").ToBoolean(false);
+                multigrid_lcd = MyIni.Get("MultiGrid", "lcd").ToBoolean(false);
+                multigrid_drills = MyIni.Get("MultiGrid", "drills").ToBoolean(true);
+
                 if (program.Me.CustomData.Equals(""))
                 {
-                    Save();
+                    Save(true);
                 }
             }
 
@@ -73,13 +82,38 @@ namespace IngameScript
                 return color;
             }
 
-            public void Save()
+            public void Save(bool prepare = false)
             {
                 MyIniParseResult result;
                 if (!MyIni.TryParse(program.Me.CustomData, out result))
                     throw new Exception(result.ToString());
+                MyIni.Set("MultiGrid", "inventory", multigrid_inventory);
+                MyIni.Set("MultiGrid", "lcd", multigrid_lcd);
+                MyIni.Set("MultiGrid", "drills", multigrid_drills);
+
                 MyIni.Set("Limit", "default", limit_default);
+                if (prepare)
+                {
+                    MyIni.Set("Limit", "Cobalt", "1000");
+                    MyIni.Set("Limit", "Iron", "100000");
+                    MyIni.Set("Limit", "Gold", "1000");
+                    MyIni.Set("Limit", "Platinum", "1000");
+                    MyIni.Set("Limit", "Silver", "1000");
+                }
                 MyIni.Set("Color", "default", color_default);
+                if (prepare)
+                {
+                    MyIni.Set("Color", "Cobalt", "000,080,080,255");
+                    MyIni.Set("Color", "Gold", "255,153,000,255");
+                    MyIni.Set("Color", "Ice", "040,130,130,255");
+                    MyIni.Set("Color", "Iron", "040,040,040,255");
+                    MyIni.Set("Color", "Nickel", "110,080,080,255");
+                    MyIni.Set("Color", "Platinum", "120,150,120,255");
+                    MyIni.Set("Color", "Silicon", "150,150,150,255");
+                    MyIni.Set("Color", "Silver", "120,120,150,255");
+                    MyIni.Set("Color", "Stone", "120,040,000,200");
+                    MyIni.Set("Color", "Uranium", "040,130,000,200");
+                }
                 program.Me.CustomData = MyIni.ToString();
             }
         }

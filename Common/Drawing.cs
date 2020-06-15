@@ -34,6 +34,8 @@ namespace IngameScript
 
             private MySprite icon;
 
+            public Dictionary<string, string> Symbol = new Dictionary<string, string>();
+
             public Drawing(IMyTextPanel lcd)
             {
                 surfaceProvider = lcd;
@@ -50,6 +52,12 @@ namespace IngameScript
                 this.viewport = new RectangleF((surfaceProvider.TextureSize - surfaceProvider.SurfaceSize) / 2f, surfaceProvider.SurfaceSize);
                 // Retrieve the Large Display, which is the first surface
                 this.frame = surfaceProvider.DrawFrame();
+
+                Symbol.Add("Cobalt", "Co");
+                Symbol.Add("Iron", "Fe");
+                Symbol.Add("Gold", "Au");
+                Symbol.Add("Silver", "Ag");
+                Symbol.Add("Stone", "Stone");
             }
 
             public void Dispose()
@@ -112,7 +120,7 @@ namespace IngameScript
                     Padding = new StylePadding(0)
                 };
                 DrawGauge(position2 + new Vector2(width + style_icon.Margin.X, style_icon.Height / 2), (float)amount, limit, style);
-                
+
                 // Element Name
                 icon = new MySprite()
                 {
@@ -120,7 +128,7 @@ namespace IngameScript
                     Data = name,
                     Size = new Vector2(width, width),
                     Color = Color.DimGray,
-                    Position = position2 + new Vector2(style_icon.Margin.X, 0),
+                    Position = position2 + new Vector2(style_icon.Margin.X, -8),
                     RotationOrScale = 0.5f,
                     FontId = Font,
                     Alignment = TextAlignment.LEFT
@@ -177,23 +185,25 @@ namespace IngameScript
                     float length = height2 * percent;
                     AddForm(position2 + new Vector2(style.Margin.X, height2 - length + style.Margin.Y), SpriteForm.SquareSimple, width2, length, color);
                 }
-                string data = $"{percent:P1}";
-                if(percent >= 0.999) data = $"{percent:P0}";
-                // Tag
-                icon = new MySprite()
+                if (style.Percent)
                 {
-                    Type = SpriteType.TEXT,
-                    Data = data,
-                    Size = new Vector2(width, width),
-                    Color = Color.Black,
-                    Position = position2 + new Vector2(2 * style.Margin.X, style.Margin.Y),
-                    RotationOrScale = 0.6f,
-                    FontId = Font,
-                    Alignment = TextAlignment.LEFT
+                    string data = $"{percent:P0}";
+                    if (percent < 0.999 && style.Round) data = $"{percent:P1}";
+                    // Tag
+                    icon = new MySprite()
+                    {
+                        Type = SpriteType.TEXT,
+                        Data = data,
+                        Size = new Vector2(width, width),
+                        Color = Color.Black,
+                        Position = position2 + new Vector2(2 * style.Margin.X, style.Margin.Y),
+                        RotationOrScale = style.RotationOrScale,
+                        FontId = Font,
+                        Alignment = TextAlignment.LEFT
 
-                };
-                AddSprite(icon);
-
+                    };
+                    AddSprite(icon);
+                }
             }
             public void Test(IMyTextSurface drawingSurface)
             {
@@ -309,7 +319,34 @@ namespace IngameScript
         {
             public SpriteOrientation Orientation = SpriteOrientation.Horizontal;
             public bool Fullscreen = false;
+            public bool Percent = true;
+            public bool Round = true;
+            public float RotationOrScale = 0.6f;
         }
 
+        public class Item : IComparable<Item>
+        {
+            public const string TYPE_ORE = "MyObjectBuilder_Ore";
+            public const string TYPE_INGOT = "MyObjectBuilder_Ingot";
+            public const string TYPE_COMPONENT = "MyObjectBuilder_Component";
+            public const string TYPE_AMMO = "MyObjectBuilder_AmmoMagazine";
+
+            public string Name;
+            public string Type;
+            public Double Amount;
+
+            public string Icon
+            {
+                get
+                {
+                    return String.Format("{0}/{1}", Type, Name);
+                }
+            }
+
+            public int CompareTo(Item other)
+            {
+                return Amount.CompareTo(other.Amount);
+            }
+        }
     }
 }
