@@ -88,6 +88,7 @@ namespace IngameScript
             private void Search()
             {
                 BlockFilter<IMyTerminalBlock> block_filter = BlockFilter<IMyTerminalBlock>.Create(DisplayLcd.lcd, filter);
+                block_filter.HasInventory = true;
                 inventories = BlockSystem<IMyTerminalBlock>.SearchByFilter(DisplayLcd.program, block_filter);
 
                 search = false;
@@ -196,6 +197,7 @@ namespace IngameScript
                             double amount = 0;
                             string key = String.Format("{0}_{1}", type, name);
                             //string icon = block_item.Type.
+                            //DisplayLcd.program.drawingSurface.WriteText($"Type:{type} Name:{name}\n",true);
                             Double.TryParse(block_item.Amount.ToString(), out amount);
                             Item item = new Item()
                             {

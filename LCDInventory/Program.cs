@@ -30,6 +30,7 @@ namespace IngameScript
 
         private BlockSystem<IMyTextPanel> lcds = null;
         
+        private bool ForceUpdate = false;
         public Program()
         {
             MyProperty = new KProperty(this);
@@ -76,7 +77,7 @@ namespace IngameScript
             if (argument != null)
             {
                 commandLine.TryParse(argument);
-                var command = commandLine.Argument(0);
+                var command = commandLine.Argument(0).Trim().ToLower();
 
                 switch (command)
                 {
@@ -84,6 +85,9 @@ namespace IngameScript
                         Me.CustomData = "";
                         MyProperty.Load();
                         MyProperty.Save();
+                        break;
+                    case "forceupdate":
+                        ForceUpdate = true;
                         break;
                     case "test":
                         IMyTextPanel lcd = (IMyTextPanel)GridTerminalSystem.GetBlockWithName(commandLine.Argument(1));
@@ -98,6 +102,21 @@ namespace IngameScript
                         var names = new List<string>();
                         drawingSurface.GetSprites(names);
                         Echo($"Sprite {index} name={names[index]}");
+                        IMyTextPanel lcdResult = (IMyTextPanel)GridTerminalSystem.GetBlockWithName("Result Name");
+                        lcdResult.ContentType = ContentType.TEXT_AND_IMAGE;
+                        lcdResult.WriteText($"Sprite {index}\n", false);
+                        lcdResult.WriteText($"name={names[index]}", true);
+                        break;
+                    case "gettype":
+                        int.TryParse(commandLine.Argument(1), out index);
+                        string name = commandLine.Argument(1);
+                        IMyTerminalBlock block = (IMyTerminalBlock)GridTerminalSystem.GetBlockWithName(name);
+                        IMyTextPanel lcdResult2 = (IMyTextPanel)GridTerminalSystem.GetBlockWithName("Result Type");
+                        lcdResult2.ContentType = ContentType.TEXT_AND_IMAGE;
+                        lcdResult2.WriteText($"Block {name}\n", false);
+                        lcdResult2.WriteText($"Type Name={block.GetType().Name}\n", true);
+                        lcdResult2.WriteText($"SubtypeName={block.BlockDefinition.SubtypeName}\n", true);
+                        lcdResult2.WriteText($"SubtypeId={block.BlockDefinition.SubtypeId}\n", true);
                         break;
                 }
             }
@@ -130,6 +149,7 @@ namespace IngameScript
                     }
                 }
             });
+            ForceUpdate = false;
         }
 
     }

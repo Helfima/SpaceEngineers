@@ -90,7 +90,7 @@ namespace IngameScript
 
                     foreach (string type in types)
                     {
-                        BlockSystem<IMyProductionBlock> producers = BlockSystem<IMyProductionBlock>.SearchBlocks(DisplayLcd.program, block => block.BlockDefinition.SubtypeName.Contains(type));
+                        BlockSystem<IMyProductionBlock> producers = BlockSystem<IMyProductionBlock>.SearchBlocks(DisplayLcd.program, block => block.GetType().Name.Contains(type));
                         int count = 0;
                         producers.ForEach(delegate (IMyProductionBlock block)
                         {
@@ -125,6 +125,9 @@ namespace IngameScript
                         {
                             string iName = Util.GetName(productionItem);
                             string iType = Util.GetType(productionItem);
+                            MyDefinitionId itemDefinitionId = productionItem.BlueprintId;
+                            DisplayLcd.program.drawingSurface.WriteText($"SubtypeName:{itemDefinitionId.SubtypeName}\n", true);
+                            DisplayLcd.program.drawingSurface.WriteText($"Icon:{iType}/{iName}\n", true);
                             double amount = 0;
                             Double.TryParse(productionItem.Amount.ToString(), out amount);
                             items.Add(new Item()
@@ -159,10 +162,11 @@ namespace IngameScript
                     }
                 }
 
-
+                int loop = 0;
                 float x = 0f;
                 foreach (Item item in items)
                 {
+                    if (loop >= 3) break;
                     // icon
                     drawing.AddSprite(new MySprite()
                     {
@@ -201,6 +205,7 @@ namespace IngameScript
                         Alignment = TextAlignment.LEFT
                     });
                     x += style.Height;
+                    loop += 1;
                 }
 
                 // Element Name

@@ -54,7 +54,7 @@ namespace IngameScript
                 DisplayPower.Load(MyIni);
                 DisplayShip.Load(MyIni);
                 DisplayTank.Load(MyIni);
-                if (lcd.CustomData.Trim().Equals("prepare"))
+                if (lcd.CustomData.Trim().Equals("prepare") || program.ForceUpdate)
                 {
                     program.drawingSurface.WriteText($"Prepare:{lcd.CustomName}\n", true);
                     DisplayInventory.Save(MyIni);

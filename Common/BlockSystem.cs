@@ -368,6 +368,7 @@ namespace IngameScript
             public bool ByContains = false;
             public bool ByGroup = false;
             public bool MultiGrid = false;
+            public bool HasInventory = false;
 
             public static BlockFilter<T> Create(IMyTerminalBlock parent, string filter)
             {
@@ -393,13 +394,15 @@ namespace IngameScript
             public Func<T, bool> BlockVisitor()
             {
                 return delegate(T block) {
+                    IMyTerminalBlock tBlock = (IMyTerminalBlock)block;
                     bool state = true;
                     if (Filter != null && !ByGroup)
                     {
-                        if (ByContains) { if (!((IMyTerminalBlock)block).CustomName.Contains(Filter)) state = false; }
-                        else { if (!((IMyTerminalBlock)block).CustomName.Equals(Filter)) state = false; }
+                        if (ByContains) { if (!tBlock.CustomName.Contains(Filter)) state = false; }
+                        else { if (!tBlock.CustomName.Equals(Filter)) state = false; }
                     }
-                    if (!MultiGrid) { if (((IMyTerminalBlock)block).CubeGrid != CubeGrid) state = false; }
+                    if (!MultiGrid) { if (tBlock.CubeGrid != CubeGrid) state = false; }
+                    if (HasInventory) { if (!tBlock.HasInventory) state = false; }
                     return state;
                 };
             }
