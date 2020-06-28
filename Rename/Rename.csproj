@@ -4,10 +4,10 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{32A0B0D2-FF96-4FD8-ACD2-CDEEB4465E7A}</ProjectGuid>
+    <ProjectGuid>{3B2939ED-BC04-4197-A79F-4E38DAB55B73}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <RootNamespace>IngameScript</RootNamespace>
-    <AssemblyName>LCDInventory</AssemblyName>
+    <AssemblyName>Rename</AssemblyName>
     <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
@@ -38,13 +38,6 @@
   <Import Project="MDK/MDK.options.props" />
   <Import Project="MDK/MDK.paths.props" Condition="exists('MDK/MDK.paths.props')" />
   <ItemGroup>
-    <Compile Include="DisplayShip.cs" />
-    <Compile Include="DisplayMachine.cs" />
-    <Compile Include="DisplayDrill.cs" />
-    <Compile Include="DisplayInventory.cs" />
-    <Compile Include="DisplayLcd.cs" />
-    <Compile Include="DisplayTank.cs" />
-    <Compile Include="DisplayPower.cs" />
     <Compile Include="MDK\Bootstrapper.cs" />
     <AdditionalFiles Include="MDK\MDK.options.props">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
@@ -56,15 +49,6 @@
     <AdditionalFiles Include="Instructions.readme" />
     <AdditionalFiles Include="thumb.png" />
     <AdditionalFiles Include="MDK\whitelist.cache" />
-    <Compile Include="KProperty.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Data\LCDTextures.sbc" />
-    <None Include="publish_preview.vdf" />
-    <None Include="publish_preview.bat" />
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Textures\" />
   </ItemGroup>
   <Import Project="..\Common\Common.projitems" Label="Shared" />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

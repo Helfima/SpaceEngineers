@@ -76,6 +76,16 @@ namespace IngameScript
                 if (subtypeName.EndsWith("Magazine")) subtypeName = subtypeName.Replace("Magazine", "");
                 return subtypeName;
             }
+
+            static public string CutString(string value, int limit)
+            {
+                if(value.Length > limit)
+                {
+                    int len = (limit - 3) / 2;
+                    return value.Substring(0, len) + "..." + value.Substring(value.Length - len, len);
+                }
+                return value;
+            }
         }
     }
 }

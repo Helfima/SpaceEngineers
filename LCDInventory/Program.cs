@@ -31,6 +31,7 @@ namespace IngameScript
         private BlockSystem<IMyTextPanel> lcds = null;
         
         private bool ForceUpdate = false;
+        private bool search = true;
         public Program()
         {
             MyProperty = new KProperty(this);
@@ -38,19 +39,18 @@ namespace IngameScript
             Runtime.UpdateFrequency = UpdateFrequency.Update100;
             drawingSurface = Me.GetSurface(0);
             drawingSurface.ContentType = ContentType.TEXT_AND_IMAGE;
-            Init();
+            Search();
         }
 
         private void Init()
         {
-            if (MyProperty.multigrid_lcd)
-            {
-                lcds = BlockSystem<IMyTextPanel>.SearchBlocks(this);
-            }
-            else
-            {
-                lcds = BlockSystem<IMyTextPanel>.SearchBlocks(this, block => (block.CubeGrid == Me.CubeGrid));
-            }
+        }
+
+        private void Search()
+        {
+            BlockFilter<IMyTextPanel> block_filter = BlockFilter<IMyTextPanel>.Create(Me, MyProperty.lcd_filter);
+            lcds = BlockSystem<IMyTextPanel>.SearchByFilter(this, block_filter);
+            search = false;
         }
 
         public void Save()
@@ -77,8 +77,8 @@ namespace IngameScript
             if (argument != null)
             {
                 commandLine.TryParse(argument);
-                var command = commandLine.Argument(0).Trim().ToLower();
-
+                var command = commandLine.Argument(0);
+                if (command != null) command = command.Trim().ToLower();
                 switch (command)
                 {
                     case "default":
@@ -118,11 +118,16 @@ namespace IngameScript
                         lcdResult2.WriteText($"SubtypeName={block.BlockDefinition.SubtypeName}\n", true);
                         lcdResult2.WriteText($"SubtypeId={block.BlockDefinition.SubtypeId}\n", true);
                         break;
+                    default:
+                        search = true;
+                        Search();
+                        break;
                 }
             }
         }
         void RunContinuousLogic()
         {
+            if (search) Search();
             Display();
             RunLcd();
         }
@@ -142,7 +147,6 @@ namespace IngameScript
                     MyIni.TryParse(lcd.CustomData, out result);
                     if (MyIni.ContainsSection("Inventory") || lcd.CustomData.Trim().Equals("prepare"))
                     {
-
                         DisplayLcd displayLcd = new DisplayLcd(this, lcd);
                         displayLcd.Load(MyIni);
                         displayLcd.Draw();

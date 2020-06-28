@@ -33,6 +33,12 @@ namespace IngameScript
 
             private bool machine_refinery = false;
             private bool machine_assembler = false;
+
+            private int max_loop = 3;
+            private int string_len = 15;
+
+            private BlockSystem<IMyProductionBlock> producers;
+
             public DisplayMachine(DisplayLcd DisplayLcd)
             {
                 this.DisplayLcd = DisplayLcd;
@@ -41,7 +47,7 @@ namespace IngameScript
             public void Load(MyIni MyIni)
             {
                 enable = MyIni.Get("Machine", "on").ToBoolean(false);
-                //filter = MyIni.Get("Machine", "filter").ToString("*");
+                filter = MyIni.Get("Machine", "filter").ToString("*");
                 machine_refinery = MyIni.Get("Machine", "refinery").ToBoolean(true);
                 machine_assembler = MyIni.Get("Machine", "assembler").ToBoolean(true);
             }
@@ -49,15 +55,15 @@ namespace IngameScript
             public void Save(MyIni MyIni)
             {
                 MyIni.Set("Machine", "on", enable);
-                //MyIni.Set("Machine", "filter", filter);
+                MyIni.Set("Machine", "filter", filter);
                 MyIni.Set("Machine", "refinery", machine_refinery);
                 MyIni.Set("Machine", "assembler", machine_assembler);
             }
 
             private void Search()
             {
-                //BlockFilter<IMyShipDrill> block_filter = BlockFilter<IMyShipDrill>.Create(parent, filter);
-                //drill_inventories = BlockSystem<IMyShipDrill>.SearchByFilter(program, block_filter);
+                BlockFilter<IMyProductionBlock> block_filter = BlockFilter<IMyProductionBlock>.Create(DisplayLcd.lcd, filter);
+                producers = BlockSystem<IMyProductionBlock>.SearchByFilter(DisplayLcd.program, block_filter);
 
                 search = false;
             }
@@ -83,7 +89,7 @@ namespace IngameScript
                 {
                     Style style = new Style()
                     {
-                        Width = 300,
+                        Width = 250,
                         Height = 80,
                         Padding = new StylePadding(0),
                     };
@@ -94,9 +100,13 @@ namespace IngameScript
                         int count = 0;
                         producers.ForEach(delegate (IMyProductionBlock block)
                         {
-                            Vector2 position2 = position + new Vector2(style.Width * (count / limit), style.Height * (count - (count / limit) * limit));
-                            DrawMachine(drawing, position2, block, style);
-                            count += 1;
+                            if (block.GetType().Name.Contains(type))
+                            {
+                                Vector2 position2 = position + new Vector2(style.Width * (count / limit), style.Height * (count - (count / limit) * limit));
+                                List<Item> items = TraversalMachine(block);
+                                DrawMachine(drawing, position2, block, items, style);
+                                count += 1;
+                            }
                         });
                         position += new Vector2(0, style.Height) * limit;
                     }
@@ -104,16 +114,10 @@ namespace IngameScript
 
                 return position;
             }
-            public void DrawMachine(Drawing drawing, Vector2 position, IMyProductionBlock block, Style style)
+
+            public List<Item> TraversalMachine(IMyProductionBlock block)
             {
-                float size_icon = style.Height - 10;
-                Color color_title = new Color(100, 100, 100, 128);
-                Color color_text = new Color(100, 100, 100, 255);
-                float RotationOrScale = 0.5f;
-
-                string colorDefault = DisplayLcd.program.MyProperty.Get("color", "default");
-
-
+                int loop = 0;
                 List<Item> items = new List<Item>();
                 if (block is IMyAssembler)
                 {
@@ -121,13 +125,13 @@ namespace IngameScript
                     block.GetQueue(productionItems);
                     if (productionItems.Count > 0)
                     {
+                        loop = 0;
                         foreach (MyProductionItem productionItem in productionItems)
                         {
+                            if (loop >= max_loop) break;
                             string iName = Util.GetName(productionItem);
                             string iType = Util.GetType(productionItem);
                             MyDefinitionId itemDefinitionId = productionItem.BlueprintId;
-                            DisplayLcd.program.drawingSurface.WriteText($"SubtypeName:{itemDefinitionId.SubtypeName}\n", true);
-                            DisplayLcd.program.drawingSurface.WriteText($"Icon:{iType}/{iName}\n", true);
                             double amount = 0;
                             Double.TryParse(productionItem.Amount.ToString(), out amount);
                             items.Add(new Item()
@@ -137,6 +141,7 @@ namespace IngameScript
                                 Amount = amount
 
                             });
+                            loop++;
                         }
                     }
                 }
@@ -146,8 +151,10 @@ namespace IngameScript
                     block.InputInventory.GetItems(inventoryItems);
                     if (inventoryItems.Count > 0)
                     {
+                        loop = 0;
                         foreach (MyInventoryItem inventoryItem in inventoryItems)
                         {
+                            if (loop >= max_loop) break;
                             string iName = Util.GetName(inventoryItem);
                             string iType = Util.GetType(inventoryItem);
                             double amount = 0;
@@ -158,15 +165,32 @@ namespace IngameScript
                                 Type = iType,
                                 Amount = amount
                             });
+                            loop++;
                         }
                     }
                 }
+                return items;
+            }
+            public void DrawMachine(Drawing drawing, Vector2 position, IMyProductionBlock block, List<Item> items, Style style)
+            {
+                float size_icon = style.Height - 10;
+                Color color_title = new Color(100, 100, 100, 128);
+                Color color_text = new Color(100, 100, 100, 255);
+                float RotationOrScale = 0.5f;
+                float cell_spacing = 10f;
 
-                int loop = 0;
+                float form_width = style.Width - 5;
+                float form_height = style.Height - 5;
+
+                string colorDefault = DisplayLcd.program.MyProperty.Get("color", "default");
+
                 float x = 0f;
+
+                drawing.AddForm(position + new Vector2(0, 0), SpriteForm.SquareSimple, form_width, form_height, new Color(5, 5, 5, 125));
+
                 foreach (Item item in items)
                 {
-                    if (loop >= 3) break;
+                    
                     // icon
                     drawing.AddSprite(new MySprite()
                     {
@@ -174,10 +198,9 @@ namespace IngameScript
                         Data = item.Icon,
                         Size = new Vector2(size_icon, size_icon),
                         Color = DisplayLcd.program.MyProperty.GetColor("color", item.Name, colorDefault),
-                        Position = position + new Vector2(x, size_icon / 2 + 10)
+                        Position = position + new Vector2(x, size_icon / 2 + cell_spacing)
 
                     });
-                    drawing.AddForm(position + new Vector2(x, 10), SpriteForm.SquareSimple, size_icon, size_icon, new Color(0, 0, 0, 150));
 
                     if (drawing.Symbol.Keys.Contains(item.Name))
                     {
@@ -205,14 +228,13 @@ namespace IngameScript
                         Alignment = TextAlignment.LEFT
                     });
                     x += style.Height;
-                    loop += 1;
                 }
 
                 // Element Name
                 MySprite icon = new MySprite()
                 {
                     Type = SpriteType.TEXT,
-                    Data = block.CustomName,
+                    Data = Util.CutString(block.CustomName, string_len),
                     Color = color_title,
                     Position = position + new Vector2(style.Margin.X, 0),
                     RotationOrScale = 0.8f,

@@ -26,11 +26,13 @@ namespace IngameScript
         {
             protected MyIni MyIni = new MyIni();
             protected Program program;
+            public string color_default = "255,130,0,255";
 
-            public string limit_default;
-            public string color_default;
-
-            public string lcd_filter = "*";
+            public string filter = "*";
+            public int timer;
+            public string pressurised_color;
+            public string running_color;
+            public string depressurised_color;
 
             public KProperty(Program program)
             {
@@ -42,17 +44,30 @@ namespace IngameScript
                 MyIniParseResult result;
                 if (!MyIni.TryParse(program.Me.CustomData, out result))
                     throw new Exception(result.ToString());
-                limit_default = MyIni.Get("Limit", "default").ToString("10000");
-                color_default = MyIni.Get("Color", "default").ToString("128,128,128,255");
-
-                lcd_filter = MyIni.Get("LCD", "filter").ToString("*");
+                filter = MyIni.Get("Airlock", "filter").ToString("CG:SAS1");
+                timer = MyIni.Get("Airlock", "timer").ToInt32(30);
+                pressurised_color = MyIni.Get("Airlock", "pressurised_color").ToString("0,255,0,255");
+                running_color = MyIni.Get("Airlock", "running_color").ToString("255,130,0,255");
+                depressurised_color = MyIni.Get("Airlock", "depressurised_color").ToString("255,0,0,255");
 
                 if (program.Me.CustomData.Equals(""))
                 {
-                    Save(true);
+                    Save();
                 }
             }
+            public void Save()
+            {
+                MyIniParseResult result;
+                if (!MyIni.TryParse(program.Me.CustomData, out result))
+                    throw new Exception(result.ToString());
+                MyIni.Set("Airlock", "filter", filter);
+                MyIni.Set("Airlock", "timer", timer);
+                MyIni.Set("Airlock", "pressurised_color", pressurised_color);
+                MyIni.Set("Airlock", "running_color", running_color);
+                MyIni.Set("Airlock", "depressurised_color", depressurised_color);
 
+                program.Me.CustomData = MyIni.ToString();
+            }
             public string Get(string section, string key, string default_value = "")
             {
                 return MyIni.Get(section, key).ToString(default_value);
@@ -77,39 +92,7 @@ namespace IngameScript
                 }
                 return color;
             }
-
-            public void Save(bool prepare = false)
-            {
-                MyIniParseResult result;
-                if (!MyIni.TryParse(program.Me.CustomData, out result))
-                    throw new Exception(result.ToString());
-                MyIni.Set("LCD", "filter", lcd_filter);
-
-                MyIni.Set("Limit", "default", limit_default);
-                if (prepare)
-                {
-                    MyIni.Set("Limit", "Cobalt", "1000");
-                    MyIni.Set("Limit", "Iron", "100000");
-                    MyIni.Set("Limit", "Gold", "1000");
-                    MyIni.Set("Limit", "Platinum", "1000");
-                    MyIni.Set("Limit", "Silver", "1000");
-                }
-                MyIni.Set("Color", "default", color_default);
-                if (prepare)
-                {
-                    MyIni.Set("Color", "Cobalt", "000,080,080,255");
-                    MyIni.Set("Color", "Gold", "255,153,000,255");
-                    MyIni.Set("Color", "Ice", "040,130,130,255");
-                    MyIni.Set("Color", "Iron", "040,040,040,255");
-                    MyIni.Set("Color", "Nickel", "110,080,080,255");
-                    MyIni.Set("Color", "Platinum", "120,150,120,255");
-                    MyIni.Set("Color", "Silicon", "150,150,150,255");
-                    MyIni.Set("Color", "Silver", "120,120,150,255");
-                    MyIni.Set("Color", "Stone", "120,040,000,200");
-                    MyIni.Set("Color", "Uranium", "040,130,000,200");
-                }
-                program.Me.CustomData = MyIni.ToString();
-            }
+            
         }
     }
 }

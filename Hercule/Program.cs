@@ -36,18 +36,14 @@ namespace IngameScript
         private int blueprint_count = 0;
         private float current_position = 0f;
         private float last_position = 0f;
-        private float velocity = 0f;
 
-        private BlockSystem<IMyMotorStator> bottom_stators_1 = null;
-        private BlockSystem<IMyMotorStator> bottom_stators_2 = null;
+        private BlockSystem<IMyPistonBase> bottom_pistons = null;
         private BlockSystem<IMyShipMergeBlock> bottom_mergers = null;
 
-        private BlockSystem<IMyMotorStator> top_stators_1 = null;
-        private BlockSystem<IMyMotorStator> top_stators_2 = null;
+        private BlockSystem<IMyPistonBase> top_pistons = null;
         private BlockSystem<IMyShipMergeBlock> top_mergers = null;
 
         private BlockSystem<IMyShipConnector> connector = null;
-        private BlockSystem<IMyMotorStator> connector_stator = null;
 
         private BlockSystem<IMyPistonBase> levage_pistons = null;
 
@@ -76,36 +72,41 @@ namespace IngameScript
             MyProperty = new KProperty(this);
             MyProperty.Load();
             Stage = 0;
-            bottom_stators_1 = BlockSystem<IMyMotorStator>.SearchByName(this, "Bottom Stator 1");
-            bottom_stators_2 = BlockSystem<IMyMotorStator>.SearchByName(this, "Bottom Stator 2");
-            bottom_mergers = BlockSystem<IMyShipMergeBlock>.SearchByGroup(this, "Bottom Mergers");
+            bottom_pistons = BlockSystem<IMyPistonBase>.SearchByGroup(this, "Foreuse Bottom Pistons");
+            bottom_pistons.ForEach(delegate (IMyPistonBase block) {
+                block.MinLimit = MyProperty.locker_position_min;
+                block.MaxLimit = MyProperty.locker_position_max;
+            });
+            bottom_mergers = BlockSystem<IMyShipMergeBlock>.SearchByGroup(this, "Foreuse Bottom Mergers");
 
-            top_stators_1 = BlockSystem<IMyMotorStator>.SearchByName(this, "Top Stator 1");
-            top_stators_2 = BlockSystem<IMyMotorStator>.SearchByName(this, "Top Stator 2");
-            top_mergers = BlockSystem<IMyShipMergeBlock>.SearchByGroup(this, "Top Mergers");
+            top_pistons = BlockSystem<IMyPistonBase>.SearchByGroup(this, "Foreuse Top Pistons");
+            top_pistons.ForEach(delegate (IMyPistonBase block) {
+                block.MinLimit = MyProperty.locker_position_min;
+                block.MaxLimit = MyProperty.locker_position_max;
+            });
+            top_mergers = BlockSystem<IMyShipMergeBlock>.SearchByGroup(this, "Foreuse Top Mergers");
 
-            connector = BlockSystem<IMyShipConnector>.SearchByName(this, "Connector Drill");
-            connector_stator = BlockSystem<IMyMotorStator>.SearchByName(this, "Connector Stator");
+            connector = BlockSystem<IMyShipConnector>.SearchByName(this, "Foreuse Connector Drills");
 
-            levage_pistons = BlockSystem<IMyPistonBase>.SearchByGroup(this, "Levage Pistons");
+            levage_pistons = BlockSystem<IMyPistonBase>.SearchByGroup(this, "Foreuse Levage Pistons");
             levage_pistons.ForEach(delegate (IMyPistonBase block) {
                 block.MinLimit = MyProperty.elevator_position_min;
                 block.MaxLimit = MyProperty.elevator_position_max;
             });
 
-            grinder_stator = BlockSystem<IMyMotorStator>.SearchByName(this, "Grinder Stator");
-            grinders = BlockSystem<IMyShipGrinder>.SearchByGroup(this, "Grinders");
+            grinder_stator = BlockSystem<IMyMotorStator>.SearchByName(this, "Foreuse Grinder Stator");
+            grinders = BlockSystem<IMyShipGrinder>.SearchByGroup(this, "Foreuse Grinders");
 
-            welder_stator = BlockSystem<IMyMotorStator>.SearchByName(this, "Welder Stator");
-            welders = BlockSystem<IMyShipWelder>.SearchByGroup(this, "Welders");
+            welder_stator = BlockSystem<IMyMotorStator>.SearchByName(this, "Foreuse Welder Stator");
+            welders = BlockSystem<IMyShipWelder>.SearchByGroup(this, "Foreuse Welders");
 
-            projector = BlockSystem<IMyProjector>.SearchByName(this, "Projector Drill");
+            projector = BlockSystem<IMyProjector>.SearchByName(this, "Foreuse Projector Drill");
 
-            light = BlockSystem<IMyLightingBlock>.SearchByGroup(this, "Rotating Light");
+            light = BlockSystem<IMyLightingBlock>.SearchByGroup(this, "Foreuse Rotating Light");
 
-            drills = BlockSystem<IMyShipDrill>.SearchByGroup(this, "Drills");
+            drills = BlockSystem<IMyShipDrill>.SearchByGroup(this, "Foreuse Drills");
 
-            control_lcds = BlockSystem<IMyTextPanel>.SearchByName(this, "Control LCD");
+            control_lcds = BlockSystem<IMyTextPanel>.SearchByName(this, "Foreuse Control LCD");
             control_lcds.ForEach(delegate (IMyTextPanel block)
             {
                 block.ContentType = ContentType.TEXT_AND_IMAGE;
@@ -171,6 +172,7 @@ namespace IngameScript
                     case "start":
                         drills.On();
                         Mode = LastMode;
+                        if (Mode == ModeMachine.Down) projector.On();
                         break;
                     case "lock":
                         Stage = 0;
@@ -228,28 +230,6 @@ namespace IngameScript
 
                         Sequence.Add(ActionMachine.Terminated);
                         break;
-                    case "lockconnector":
-                        Stage = 0;
-                        Mode = ModeMachine.LockTop;
-                        Sequence = new List<ActionMachine>();
-                        Sequence.Add(ActionMachine.Start);
-
-                        Sequence.Add(ActionMachine.LockConnector);
-                        Sequence.Add(ActionMachine.Stop);
-
-                        Sequence.Add(ActionMachine.Terminated);
-                        break;
-                    case "unlockconnector":
-                        Stage = 0;
-                        Mode = ModeMachine.UnlockTop;
-                        Sequence = new List<ActionMachine>();
-                        Sequence.Add(ActionMachine.Start);
-
-                        Sequence.Add(ActionMachine.UnlockConnector);
-                        Sequence.Add(ActionMachine.Stop);
-
-                        Sequence.Add(ActionMachine.Terminated);
-                        break;
                     case "startwelder":
                         Stage = 0;
                         Mode = ModeMachine.LockTop;
@@ -278,13 +258,11 @@ namespace IngameScript
                         Sequence = new List<ActionMachine>();
                         Sequence.Add(ActionMachine.Start);
 
-                        Sequence.Add(ActionMachine.LockConnector);
                         Sequence.Add(ActionMachine.UnlockBottom);
                         Sequence.Add(ActionMachine.StartWelder);
                         Sequence.Add(ActionMachine.Down);
                         Sequence.Add(ActionMachine.StopWelder);
                         Sequence.Add(ActionMachine.LockBottom);
-                        Sequence.Add(ActionMachine.UnlockConnector);
                         Sequence.Add(ActionMachine.UnlockTop);
                         Sequence.Add(ActionMachine.Up);
                         Sequence.Add(ActionMachine.LockTop);
@@ -300,9 +278,7 @@ namespace IngameScript
                         Sequence.Add(ActionMachine.Start);
 
                         Sequence.Add(ActionMachine.UnlockTop);
-                        Sequence.Add(ActionMachine.UnlockConnector);
                         Sequence.Add(ActionMachine.Down);
-                        Sequence.Add(ActionMachine.LockConnector);
                         Sequence.Add(ActionMachine.LockTop);
                         Sequence.Add(ActionMachine.UnlockBottom);
                         Sequence.Add(ActionMachine.StartGrinder);
@@ -347,42 +323,28 @@ namespace IngameScript
         private void Staging(ActionMachine action)
         {
             bool closed = true;
-            bool opened = true;
             float position_target = 0f;
-            float angle1 = 0f;
-            float angle2 = 0f;
+            float velocity = 0f;
             switch (action)
             {
                 case ActionMachine.LockBottom:
-                    velocity = MyProperty.locker_velocity;
-                    angle1 = MyProperty.locker_position_max_1;
-                    angle2 = MyProperty.locker_position_min_2;
+                    velocity = -MyProperty.locker_velocity;
+                    position_target = MyProperty.locker_position_min;
 
                     bottom_mergers.On();
+                    bottom_pistons.Velocity(velocity);
                     WriteText($"Bottom mergers: On", true);
                     WriteText($"Velocity: {velocity}", true);
-                    WriteText($"Target position 1: {angle1}", true);
-                    WriteText($"Target position 2: {angle2}", true);
+                    WriteText($"Target Position={position_target}", true);
                     closed = true;
 
-                    bottom_stators_1.Unlock();
-                    bottom_stators_1.Velocity(velocity);
-                    bottom_stators_1.ForEach(delegate (IMyMotorStator block)
+                    bottom_pistons.ForEach(delegate (IMyPistonBase block)
                     {
-                        WriteText($"Bottom angle 1: {Util.RadToDeg(block.Angle)}", true);
+                        WriteText($"Position={block.CurrentPosition}", true);
                     });
 
-                    bottom_stators_2.Unlock();
-                    bottom_stators_2.Velocity(-velocity);
-                    bottom_stators_2.ForEach(delegate (IMyMotorStator block)
+                    if (bottom_pistons.IsLessPosition(position_target))
                     {
-                        WriteText($"Bottom angle 2: {Util.RadToDeg(block.Angle)}", true);
-                    });
-                    if(bottom_stators_1.IsLessPosition(angle1) || bottom_stators_2.IsMorePosition(angle2)) closed = false;
-                    if (closed)
-                    {
-                        bottom_stators_1.Lock();
-                        bottom_stators_2.Lock();
                         Stage++;
                     }
                     break;
@@ -399,69 +361,45 @@ namespace IngameScript
                     else
                     {
                         velocity = MyProperty.locker_velocity;
-                        angle1 = MyProperty.locker_position_min_1;
-                        angle2 = MyProperty.locker_position_max_2;
+                        position_target = MyProperty.locker_position_max;
 
                         bottom_mergers.Off();
+                        bottom_pistons.Velocity(velocity);
                         WriteText($"Bottom mergers: Off", true);
                         WriteText($"Velocity: {velocity}", true);
-                        WriteText($"Target position 1: {angle1}", true);
-                        WriteText($"Target position 2: {angle2}", true);
+                        WriteText($"Target Position={position_target}", true);
                         closed = true;
 
-                        bottom_stators_1.Unlock();
-                        bottom_stators_1.Velocity(-velocity);
-                        bottom_stators_1.ForEach(delegate (IMyMotorStator block)
+                        bottom_pistons.ForEach(delegate (IMyPistonBase block)
                         {
-                            WriteText($"Bottom angle 1: {Util.RadToDeg(block.Angle)}", true);
+                            WriteText($"Position={block.CurrentPosition}", true);
                         });
 
-                        bottom_stators_2.Unlock();
-                        bottom_stators_2.Velocity(velocity);
-                        bottom_stators_2.ForEach(delegate (IMyMotorStator block)
+                        if (bottom_pistons.IsMorePosition(position_target))
                         {
-                            WriteText($"Bottom angle 2: {Util.RadToDeg(block.Angle)}", true);
-                        });
-                        if (bottom_stators_1.IsMorePosition(angle1) || bottom_stators_2.IsLessPosition(angle2)) closed = false;
-                        if (closed)
-                        {
-                            bottom_stators_1.Lock();
-                            bottom_stators_2.Lock();
-                            
                             Stage++;
                         }
                     }
                     break;
                 case ActionMachine.LockTop:
-                    velocity = MyProperty.locker_velocity;
-                    angle1 = MyProperty.locker_position_max_1;
-                    angle2 = MyProperty.locker_position_min_2;
+                    velocity = -MyProperty.locker_velocity;
+                    position_target = MyProperty.locker_position_min;
 
                     top_mergers.On();
-                    WriteText($"Top mergers: On", true);
+                    top_pistons.Velocity(velocity);
+                    WriteText($"Bottom mergers: On", true);
                     WriteText($"Velocity: {velocity}", true);
-                    WriteText($"Target position 1: {angle1}", true);
-                    WriteText($"Target position 2: {angle2}", true);
+                    WriteText($"Target Position={position_target}", true);
                     closed = true;
 
-                    top_stators_1.Unlock();
-                    top_stators_1.Velocity(velocity);
-                    top_stators_1.ForEach(delegate (IMyMotorStator block)
+                    top_pistons.ForEach(delegate (IMyPistonBase block)
                     {
-                        WriteText($"Top angle 1: {Util.RadToDeg(block.Angle)}", true);
+                        WriteText($"Position={block.CurrentPosition}", true);
                     });
 
-                    top_stators_2.Unlock();
-                    top_stators_2.Velocity(-velocity);
-                    top_stators_2.ForEach(delegate (IMyMotorStator block)
+                    if (top_pistons.IsLessPosition(position_target))
                     {
-                        WriteText($"Top angle 2: {Util.RadToDeg(block.Angle)}", true);
-                    });
-                    if (top_stators_1.IsLessPosition(angle1) || top_stators_2.IsMorePosition(angle2)) closed = false;
-                    if (closed)
-                    {
-                        top_stators_1.Lock();
-                        top_stators_2.Lock();
+                        connector.Lock();
                         Stage++;
                     }
                     break;
@@ -478,85 +416,26 @@ namespace IngameScript
                     else
                     {
                         velocity = MyProperty.locker_velocity;
-                        angle1 = MyProperty.locker_position_min_1;
-                        angle2 = MyProperty.locker_position_max_2;
+                        position_target = MyProperty.locker_position_max;
 
                         top_mergers.Off();
+                        top_pistons.Velocity(velocity);
+                        connector.Unlock();
                         WriteText($"Top mergers: Off", true);
+                        WriteText($"Connector: Unlock", true);
                         WriteText($"Velocity: {velocity}", true);
-                        WriteText($"Target position 1: {angle1}", true);
-                        WriteText($"Target position 2: {angle2}", true);
+                        WriteText($"Target Position={position_target}", true);
                         closed = true;
 
-                        top_stators_1.Unlock();
-                        top_stators_1.Velocity(-velocity);
-                        top_stators_1.ForEach(delegate (IMyMotorStator block)
+                        top_pistons.ForEach(delegate (IMyPistonBase block)
                         {
-                            WriteText($"Top angle 1: {Util.RadToDeg(block.Angle)}", true);
+                            WriteText($"Position={block.CurrentPosition}", true);
                         });
 
-                        top_stators_2.Unlock();
-                        top_stators_2.Velocity(velocity);
-                        top_stators_2.ForEach(delegate (IMyMotorStator block)
+                        if (top_pistons.IsMorePosition(position_target))
                         {
-                            WriteText($"Top angle 2: {Util.RadToDeg(block.Angle)}", true);
-                        });
-                        if (top_stators_1.IsMorePosition(angle1) || top_stators_2.IsLessPosition(angle2)) closed = false;
-                        if (closed)
-                        {
-                            top_stators_1.Lock();
-                            top_stators_2.Lock();
-
                             Stage++;
                         }
-                    }
-                    break;
-                case ActionMachine.LockConnector:
-                    velocity = MyProperty.connector_velocity;
-                    position_target = MyProperty.connector_position_max;
-                    WriteText($"Velocity: {velocity}", true);
-                    WriteText($"Target position: {position_target}", true);
-                    closed = true;
-                    connector_stator.Velocity(velocity);
-                    connector_stator.Unlock();
-                    connector.On();
-                    connector_stator.ForEach(delegate (IMyMotorStator block)
-                    {
-                        WriteText($"Angle: {Util.RadToDeg(block.Angle)}", true);
-                        if (connector_stator.IsLessPosition(position_target))
-                        {
-                            closed = false;
-                        }
-                    });
-                    if (closed)
-                    {
-                        connector.Lock();
-                        connector_stator.Lock();
-                        Stage++;
-                    }
-                    break;
-                case ActionMachine.UnlockConnector:
-                    velocity = -MyProperty.connector_velocity;
-                    position_target = MyProperty.connector_position_min;
-                    WriteText($"Velocity: {velocity}", true);
-                    WriteText($"Target position: {position_target}", true);
-                    closed = true;
-                    connector_stator.Unlock();
-                    connector_stator.Velocity(velocity);
-                    connector.Unlock();
-                    connector.Off();
-                    connector_stator.ForEach(delegate (IMyMotorStator block)
-                    {
-                        WriteText($"Angle: {Util.RadToDeg(block.Angle)}", true);
-                        if (connector_stator.IsMorePosition(position_target))
-                        {
-                            closed = false;
-                        }
-                    });
-                    if (closed)
-                    {
-                        connector_stator.Lock();
-                        Stage++;
                     }
                     break;
                 case ActionMachine.Down:
@@ -619,14 +498,14 @@ namespace IngameScript
                     break;
                 case ActionMachine.StartGrinder:
                     grinders.On();
-                    projector.On();
+                    //projector.On();
                     WriteText($"Grinders: On", true);
 
                     Stage++;
                     break;
                 case ActionMachine.StopGrinder:
                     grinders.Off();
-                    projector.Off();
+                    //projector.Off();
                     WriteText($"Grinders: Off", true);
 
                     Stage++;
@@ -669,8 +548,6 @@ namespace IngameScript
             UnlockBottom,
             LockTop,
             UnlockTop,
-            LockConnector,
-            UnlockConnector,
             Start,
             Stop,
             StartWelder,

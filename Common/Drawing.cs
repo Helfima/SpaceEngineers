@@ -54,8 +54,12 @@ namespace IngameScript
                 this.frame = surfaceProvider.DrawFrame();
 
                 Symbol.Add("Cobalt", "Co");
+                Symbol.Add("Nickel", "Ni");
+                Symbol.Add("Magnesium", "Ma");
+                Symbol.Add("Platinium", "Pi");
                 Symbol.Add("Iron", "Fe");
                 Symbol.Add("Gold", "Au");
+                Symbol.Add("Silicon", "Si");
                 Symbol.Add("Silver", "Ag");
                 Symbol.Add("Stone", "Stone");
             }
@@ -100,6 +104,8 @@ namespace IngameScript
                 //AddForm(position2, SpriteForm.SquareSimple, style_icon.Width, style_icon.Height, new Color(40, 40, 40, 128));
 
                 float width = (style_icon.Width - 3 * style_icon.Margin.X) / 3;
+                float fontTitle = Math.Max(0.3f, (float)Math.Round(0.5f * (style_icon.Height / 80f), 1));
+                float fontQuantity = Math.Max(0.5f, (float)Math.Round(1f * (style_icon.Height / 80f), 1));
                 // Icon 
                 AddSprite(new MySprite()
                 {
@@ -117,7 +123,8 @@ namespace IngameScript
                     Fullscreen = false,
                     Width = width * 2,
                     Height = width / 3,
-                    Padding = new StylePadding(0)
+                    Padding = new StylePadding(0),
+                    RotationOrScale = Math.Max(0.3f, (float)Math.Round(0.6f * (style_icon.Height / 80f), 1))
                 };
                 DrawGauge(position2 + new Vector2(width + style_icon.Margin.X, style_icon.Height / 2), (float)amount, limit, style);
 
@@ -129,7 +136,7 @@ namespace IngameScript
                     Size = new Vector2(width, width),
                     Color = Color.DimGray,
                     Position = position2 + new Vector2(style_icon.Margin.X, -8),
-                    RotationOrScale = 0.5f,
+                    RotationOrScale = fontTitle,
                     FontId = Font,
                     Alignment = TextAlignment.LEFT
 
@@ -143,14 +150,14 @@ namespace IngameScript
                     Size = new Vector2(width, width),
                     Color = Color.LightGray,
                     Position = position2 + new Vector2(width + style_icon.Margin.X, style_icon.Margin.Y),
-                    RotationOrScale = 1f,
+                    RotationOrScale = fontQuantity,
                     FontId = Font
 
                 };
                 AddSprite(icon);
             }
 
-            public void DrawGauge(Vector2 position, float amount, float limit, StyleGauge style)
+            public void DrawGauge(Vector2 position, float amount, float limit, StyleGauge style, bool invert = false)
             {
                 float width = style.Width;
                 float height = style.Height;
@@ -169,8 +176,12 @@ namespace IngameScript
                 // Gauge quantity
                 float percent = Math.Min(1f, amount / limit);
                 Color color = Color.Green;
-                if (percent > 0.5) color = new Color(180, 130, 0, 128);
-                if (percent > 0.75) color = new Color(180, 0, 0, 128);
+                if (percent > 0.5 && !invert) color = new Color(180, 130, 0, 128);
+                if (percent > 0.75 && !invert) color = new Color(180, 0, 0, 128);
+
+                if (percent < 0.5 && invert) color = new Color(180, 130, 0, 128);
+                if (percent < 0.25 && invert) color = new Color(180, 0, 0, 128);
+
                 if (style.Orientation.Equals(SpriteOrientation.Horizontal))
                 {
                     float width2 = width - 2 * style.Margin.X;

@@ -32,6 +32,7 @@ namespace IngameScript
             private string filter = "*";
 
             private string drills_orientation = "y";
+            private bool drills_rotate = false;
             private bool drills_flip_x = false;
             private bool drills_flip_y = false;
             private float drills_size = 50f;
@@ -46,6 +47,7 @@ namespace IngameScript
                 enable = MyIni.Get("Drills", "on").ToBoolean(false);
                 filter = MyIni.Get("Drills", "filter").ToString("GM:Drills");
                 drills_orientation = MyIni.Get("Drills", "orientation").ToString("y");
+                drills_rotate = MyIni.Get("Drills", "rotate").ToBoolean(false);
                 drills_flip_x = MyIni.Get("Drills", "flip_x").ToBoolean(false);
                 drills_flip_y = MyIni.Get("Drills", "flip_y").ToBoolean(false);
                 drills_size = MyIni.Get("Drills", "size").ToSingle(50f);
@@ -56,6 +58,7 @@ namespace IngameScript
                 MyIni.Set("Drills", "on", enable);
                 MyIni.Set("Drills", "filter", filter);
                 MyIni.Set("Drills", "orientation", drills_orientation);
+                MyIni.Set("Drills", "rotate", drills_rotate);
                 MyIni.Set("Drills", "flip_x", drills_flip_x);
                 MyIni.Set("Drills", "flip_y", drills_flip_y);
                 MyIni.Set("Drills", "size", drills_size);
@@ -95,7 +98,7 @@ namespace IngameScript
                 drawing.AddSprite(new MySprite()
                 {
                     Type = SpriteType.TEXT,
-                    Data = $"Drill Number:{drill_inventories.List.Count}",
+                    Data = $"Drill Number:{drill_inventories.List.Count} ({filter})",
                     Size = new Vector2(width, width),
                     Color = Color.DimGray,
                     Position = position + new Vector2(0, 0),
@@ -157,7 +160,8 @@ namespace IngameScript
                     if (drills_flip_x) x = Math.Abs(x_max - x_min) - x;
                     if (drills_flip_y) y = Math.Abs(y_max - y_min) - y;
                     //drawingSurface.WriteText($"Volume [{x},{y}]:{volume}/{maxVolume}\n", true);
-                    Vector2 position_relative = new Vector2(x * (width + padding), y * (width + padding));
+                    Vector2 position_relative = drills_rotate ? new Vector2(y * (width + padding), x * (width + padding)) : new Vector2(x * (width + padding), y * (width + padding));
+
                     drawing.DrawGauge(position + position_relative, volume, maxVolume, style);
                 });
 

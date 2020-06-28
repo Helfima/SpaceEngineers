@@ -110,6 +110,21 @@ namespace IngameScript
                 };
             }
 
+            public static List<IMyBlockGroup> SearchGroupFilter(Program program, BlockFilter<T> filter)
+            {
+                List<IMyBlockGroup> groups = new List<IMyBlockGroup>();
+                try
+                {
+                    if (filter.ByGroup)
+                    {
+                        program.GridTerminalSystem.GetBlockGroups(groups, filter.GroupVisitor());
+                    }
+                }
+                catch { }
+                program.Echo(String.Format("List <{0}> count: {1}", filter.Value, groups.Count));
+                return groups;
+            }
+
             public void ForEach(Action<T> action)
             {
                 if (!IsEmpty)
@@ -413,8 +428,8 @@ namespace IngameScript
                     bool state = true;
                     if (Filter != null && ByGroup)
                     {
-                        if (ByContains) if (!group.Name.Contains(Filter)) state = false;
-                        else if (!group.Name.Equals(Filter)) state = false;
+                        if (ByContains) { if (!group.Name.Contains(Filter)) state = false; }
+                        else { if (!group.Name.Equals(Filter)) state = false; }
                     }
                     return state;
                 };

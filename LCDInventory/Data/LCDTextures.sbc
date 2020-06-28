@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Definitions xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <LCDTextures>
+
+        <!-- TODO -->
+        <LCDTextureDefinition>
+            <Id Type="LCDTextureDefinition" Subtype="Test" />
+            <LocalizationId>Large Grid Icon</LocalizationId>
+            <TexturePath>Textures\test.dds</TexturePath>
+            <SpritePath>Textures\test.dds</SpritePath>
+            <Selectable>true</Selectable>
+        </LCDTextureDefinition>
+        
+    </LCDTextures>
+</Definitions>
+

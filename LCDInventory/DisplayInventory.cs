@@ -38,10 +38,15 @@ namespace IngameScript
             private float gaugeHeight = 40f;
 
             private bool item = true;
+            private float itemSize = 80f;
             private bool itemOre = true;
             private bool itemIngot = true;
             private bool itemComponent = true;
             private bool itemAmmo = true;
+
+            private float topPadding = 10f;
+            private float leftPadding = 10f;
+            private float cellSpacing = 2f;
 
             private BlockSystem<IMyTerminalBlock> inventories = null;
             private Dictionary<string, Item> item_list = new Dictionary<string, Item>();
@@ -61,6 +66,7 @@ namespace IngameScript
                 gaugeHeight = MyIni.Get("Inventory", "gauge_height").ToSingle(40f);
 
                 item = MyIni.Get("Inventory", "item_on").ToBoolean(true);
+                itemSize = MyIni.Get("Inventory", "item_size").ToSingle(80f);
                 itemOre = MyIni.Get("Inventory", "item_ore").ToBoolean(true);
                 itemIngot = MyIni.Get("Inventory", "item_ingot").ToBoolean(true);
                 itemComponent = MyIni.Get("Inventory", "item_component").ToBoolean(true);
@@ -79,6 +85,7 @@ namespace IngameScript
                 MyIni.Set("Inventory", "gauge_height", gaugeHeight);
 
                 MyIni.Set("Inventory", "item_on", item);
+                MyIni.Set("Inventory", "item_size", itemSize);
                 MyIni.Set("Inventory", "item_ore", itemOre);
                 MyIni.Set("Inventory", "item_ingot", itemIngot);
                 MyIni.Set("Inventory", "item_component", itemComponent);
@@ -102,6 +109,7 @@ namespace IngameScript
                 {
                     position = DisplayGauge(drawing, position);
                 }
+                else { position += new Vector2(0, topPadding); }
                 if (item)
                 {
                     List<string> types = new List<string>();
@@ -140,16 +148,24 @@ namespace IngameScript
                     Height = gaugeHeight
                 };
                 drawing.DrawGauge(position, volumes, maxVolumes, style);
-                if (gaugeHorizontal) position += new Vector2(0, gaugeHeight + 20);
-                else position += new Vector2(gaugeWidth + 20, 0);
+                if (gaugeHorizontal) position += new Vector2(0, gaugeHeight + topPadding);
+                else position += new Vector2(gaugeWidth + leftPadding, 0);
                 return position;
+            }
+
+            private int GetLimit(Drawing drawing)
+            {
+                int limit = 5;
+                if (gauge && gaugeHorizontal) { limit = (int)Math.Floor((drawing.viewport.Height - gaugeHeight - topPadding) / (itemSize + cellSpacing)); }
+                else { limit = (int)Math.Floor((drawing.viewport.Height - topPadding) / (itemSize + cellSpacing)); }
+                return Math.Max(limit, 1);
             }
             private Vector2 DisplayByType(Drawing drawing, Vector2 position, List<string> types)
             {
                 int count = 0;
-                float height = 80f;
-                float width = 3 * height;
-                int limit = 5;
+                float height = itemSize;
+                float width = 3 * itemSize;
+                int limit = GetLimit(drawing);
                 string colorDefault = DisplayLcd.program.MyProperty.Get("color", "default");
                 int limitDefault = DisplayLcd.program.MyProperty.GetInt("Limit", "default");
 
@@ -158,7 +174,7 @@ namespace IngameScript
                     foreach (KeyValuePair<string, Item> entry in item_list.OrderByDescending(entry => entry.Value.Amount).Where(entry => entry.Value.Type == type))
                     {
                         Item item = entry.Value;
-                        Vector2 position2 = position + new Vector2(width * (count / limit), (2 + height) * (count - (count / limit) * limit));
+                        Vector2 position2 = position + new Vector2(width * (count / limit), (cellSpacing + height) * (count - (count / limit) * limit));
                         // Icon
                         Color color = DisplayLcd.program.MyProperty.GetColor("color", item.Name, colorDefault);
                         int limitBar = DisplayLcd.program.MyProperty.GetInt("Limit", item.Name, limitDefault);
@@ -174,8 +190,8 @@ namespace IngameScript
                         count++;
                     }
                 }
-                if(item_list.Count > limit) return position + new Vector2(0, (2 + height) * limit);
-                return position + new Vector2(0, (2 + height) * item_list.Count);
+                if(item_list.Count > limit) return position + new Vector2(0, (cellSpacing + height) * limit);
+                return position + new Vector2(0, (cellSpacing + height) * item_list.Count);
             }
 
             private void InventoryCount()

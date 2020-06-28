@@ -46,11 +46,12 @@ namespace IngameScript
                 if (!enable) return position;
                 BlockSystem<IMyTerminalBlock> producers = BlockSystem<IMyTerminalBlock>.SearchBlocks(DisplayLcd.program, block => block.Components.Has<MyResourceSourceComponent>());
                 BlockSystem<IMyTerminalBlock> consummers = BlockSystem<IMyTerminalBlock>.SearchBlocks(DisplayLcd.program, block => block.Components.Has<MyResourceSinkComponent>());
-                float current_output = 0f;
+                Dictionary<string, Power> outputs = new Dictionary<string, Power>();
+                Power batteries_store = new Power() { Type = "Batteries" };
+                outputs.Add("all", new Power() { Type = "All" });
                 float current_input = 0f;
-                float max_output = 0f;
                 float max_input = 0f;
-                float width = 50f;
+                float width = 30f;
                 StyleGauge style = new StyleGauge()
                 {
                     Orientation = SpriteOrientation.Horizontal,
@@ -67,7 +68,7 @@ namespace IngameScript
                     Type = SpriteType.TEXT,
                     Color = Color.DimGray,
                     Position = position + new Vector2(0, 0),
-                    RotationOrScale = .8f,
+                    RotationOrScale = .6f,
                     FontId = drawing.Font,
                     Alignment = TextAlignment.LEFT
 
@@ -75,47 +76,116 @@ namespace IngameScript
 
                 producers.ForEach(delegate (IMyTerminalBlock block)
                 {
-                    MyResourceSourceComponent resourceSource;
-                    block.Components.TryGet<MyResourceSourceComponent>(out resourceSource);
-                    if (resourceSource != null)
+                    string type = block.BlockDefinition.SubtypeName;
+                    if (block is IMyBatteryBlock)
                     {
-                        ListReader<MyDefinitionId> myDefinitionIds = resourceSource.ResourceTypes;
-                        if (myDefinitionIds.Contains(PowerDefinitionId))
+                        IMyBatteryBlock battery = (IMyBatteryBlock)block;
+                        batteries_store.AddCurrent(battery.CurrentStoredPower);
+                        batteries_store.AddMax(battery.MaxStoredPower);
+                    }
+                    else
+                    {
+                        MyResourceSourceComponent resourceSource;
+                        block.Components.TryGet<MyResourceSourceComponent>(out resourceSource);
+                        if (resourceSource != null)
                         {
-                            current_output += resourceSource.CurrentOutputByType(PowerDefinitionId);
-                            max_output += resourceSource.MaxOutputByType(PowerDefinitionId);
+                            ListReader<MyDefinitionId> myDefinitionIds = resourceSource.ResourceTypes;
+                            if (myDefinitionIds.Contains(PowerDefinitionId))
+                            {
+                                Power global_output = outputs["all"];
+                                global_output.AddCurrent(resourceSource.CurrentOutputByType(PowerDefinitionId));
+                                global_output.AddMax(resourceSource.MaxOutputByType(PowerDefinitionId));
+
+                                if (!outputs.ContainsKey(type)) outputs.Add(type, new Power() { Type = type });
+                                Power current_output = outputs[type];
+                                current_output.AddCurrent(resourceSource.CurrentOutputByType(PowerDefinitionId));
+                                current_output.AddMax(resourceSource.MaxOutputByType(PowerDefinitionId));
+                            }
                         }
                     }
                 });
 
-                drawing.DrawGauge(position, current_output, max_output, style);
-                position += new Vector2(0, 60);
-                text.Data = $"Power Out: {Math.Round(current_output, 2)}MW / {Math.Round(max_output, 2)}MW";
+                drawing.DrawGauge(position, outputs["all"].Current, outputs["all"].Max, style);
+
+                foreach (KeyValuePair<string, Power> kvp in outputs)
+                {
+                    string title = kvp.Key;
+                    
+                    position += new Vector2(0, 40);
+                    if (kvp.Key.Equals("all"))
+                    {
+                        text.Data = $"Global Generator\n Out: {Math.Round(kvp.Value.Current, 2)}MW / {Math.Round(kvp.Value.Max, 2)}MW";
+                    }
+                    else
+                    {
+                        text.Data = $"{title} (n={kvp.Value.Count})\n";
+                        text.Data += $" Out: {Math.Round(kvp.Value.Current, 2)}MW / {Math.Round(kvp.Value.Max, 2)}MW";
+                        text.Data += $" (Moy={kvp.Value.Moyen}MW)";
+                    }
+                    text.Position = position;
+                    drawing.AddSprite(text);
+                }
+
+                position += new Vector2(0, 40);
+                drawing.DrawGauge(position, batteries_store.Current, batteries_store.Max, style, true);
+                position += new Vector2(0, 40);
+                text.Data = $"Battery Store (n={batteries_store.Count})\n Store: {Math.Round(batteries_store.Current, 2)}MW / {Math.Round(batteries_store.Max, 2)}MW";
                 text.Position = position;
                 drawing.AddSprite(text);
 
                 consummers.ForEach(delegate (IMyTerminalBlock block)
                 {
-                    MyResourceSinkComponent resourceSink;
-                    block.Components.TryGet<MyResourceSinkComponent>(out resourceSink);
-                    if (resourceSink != null)
+                    if (block is IMyBatteryBlock)
                     {
-                        ListReader<MyDefinitionId> myDefinitionIds = resourceSink.AcceptedResources;
-                        if (myDefinitionIds.Contains(PowerDefinitionId))
+                    }
+                    else
+                    {
+                        MyResourceSinkComponent resourceSink;
+                        block.Components.TryGet<MyResourceSinkComponent>(out resourceSink);
+                        if (resourceSink != null)
                         {
-                            max_input += resourceSink.RequiredInputByType(PowerDefinitionId);
-                            current_input += resourceSink.CurrentInputByType(PowerDefinitionId);
+                            ListReader<MyDefinitionId> myDefinitionIds = resourceSink.AcceptedResources;
+                            if (myDefinitionIds.Contains(PowerDefinitionId))
+                            {
+                                max_input += resourceSink.RequiredInputByType(PowerDefinitionId);
+                                current_input += resourceSink.CurrentInputByType(PowerDefinitionId);
+                            }
                         }
                     }
                 });
-                position += new Vector2(0, 60);
-                drawing.DrawGauge(position, current_input, max_input, style);
-                position += new Vector2(0, 60);
+                position += new Vector2(0, 40);
+                drawing.DrawGauge(position, current_input, max_input, style, true);
+                position += new Vector2(0, 40);
                 text.Data = $"Power In: {Math.Round(current_input, 2)}MW / {Math.Round(max_input, 2)}MW";
                 text.Position = position;
                 drawing.AddSprite(text);
 
                 return position + new Vector2(0, 60);
+            }
+        }
+
+        public class Power
+        {
+            public string Type;
+            public float Current = 0f;
+            public float Max = 0f;
+            public int Count = 0;
+
+            public void AddCurrent(float value)
+            {
+                Current += value;
+                Count += 1;
+            }
+            public void AddMax(float value)
+            {
+                Max += value;
+            }
+            public double Moyen
+            {
+                get
+                {
+                    return Math.Round(Current / Count, 2);
+                }
             }
         }
     }
