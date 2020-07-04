@@ -96,7 +96,6 @@ namespace IngameScript
 
                     foreach (string type in types)
                     {
-                        BlockSystem<IMyProductionBlock> producers = BlockSystem<IMyProductionBlock>.SearchBlocks(DisplayLcd.program, block => block.GetType().Name.Contains(type));
                         int count = 0;
                         producers.ForEach(delegate (IMyProductionBlock block)
                         {

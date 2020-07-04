@@ -47,7 +47,7 @@ namespace IngameScript
 
                 lcd_filter = MyIni.Get("LCD", "filter").ToString("*");
 
-                if (program.Me.CustomData.Equals(""))
+                if (program.Me.CustomData.Trim().Equals(""))
                 {
                     Save(true);
                 }
