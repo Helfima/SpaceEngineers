@@ -35,9 +35,10 @@ namespace IngameScript
             private bool machine_assembler = false;
 
             private int max_loop = 3;
-            private int string_len = 15;
+            private int string_len = 20;
 
             private BlockSystem<IMyProductionBlock> producers;
+            private Dictionary<long, Dictionary<string, double>> last_machine_amount = new Dictionary<long, Dictionary<string, double>>();
 
             public DisplayMachine(DisplayLcd DisplayLcd)
             {
@@ -97,6 +98,7 @@ namespace IngameScript
                     foreach (string type in types)
                     {
                         int count = 0;
+                        producers.List.Sort(new BlockComparer());
                         producers.ForEach(delegate (IMyProductionBlock block)
                         {
                             if (block.GetType().Name.Contains(type))
@@ -118,6 +120,18 @@ namespace IngameScript
             {
                 int loop = 0;
                 List<Item> items = new List<Item>();
+
+                Dictionary<string, double> last_amount;
+                if (last_machine_amount.ContainsKey(block.EntityId))
+                {
+                    last_amount = last_machine_amount[block.EntityId];
+                }
+                else
+                {
+                    last_amount = new Dictionary<string, double>();
+                    last_machine_amount.Add(block.EntityId, last_amount);
+                }
+
                 if (block is IMyAssembler)
                 {
                     List<MyProductionItem> productionItems = new List<MyProductionItem>();
@@ -130,15 +144,30 @@ namespace IngameScript
                             if (loop >= max_loop) break;
                             string iName = Util.GetName(productionItem);
                             string iType = Util.GetType(productionItem);
+                            string key = String.Format("{0}_{1}", iType, iName);
                             MyDefinitionId itemDefinitionId = productionItem.BlueprintId;
                             double amount = 0;
                             Double.TryParse(productionItem.Amount.ToString(), out amount);
+
+                            int variance = 2;
+                            if (last_amount.ContainsKey(key))
+                            {
+                                if (last_amount[key] < amount) variance = 1;
+                                if (last_amount[key] > amount) variance = 3;
+                                last_amount[key] = amount;
+                            }
+                            else
+                            {
+                                variance = 1;
+                                last_amount.Add(key, amount);
+                            }
+
                             items.Add(new Item()
                             {
                                 Name = iName,
                                 Type = iType,
-                                Amount = amount
-
+                                Amount = amount,
+                                Variance = variance
                             });
                             loop++;
                         }
@@ -156,18 +185,35 @@ namespace IngameScript
                             if (loop >= max_loop) break;
                             string iName = Util.GetName(inventoryItem);
                             string iType = Util.GetType(inventoryItem);
+                            string key = String.Format("{0}_{1}", iType, iName);
                             double amount = 0;
                             Double.TryParse(inventoryItem.Amount.ToString(), out amount);
+
+                            int variance = 2;
+                            if (last_amount.ContainsKey(key))
+                            {
+                                if (last_amount[key] < amount) variance = 1;
+                                if (last_amount[key] > amount) variance = 3;
+                                last_amount[key] = amount;
+                            }
+                            else
+                            {
+                                variance = 1;
+                                last_amount.Add(key, amount);
+                            }
+
                             items.Add(new Item()
                             {
                                 Name = iName,
                                 Type = iType,
-                                Amount = amount
+                                Amount = amount,
+                                Variance = variance
                             });
                             loop++;
                         }
                     }
                 }
+                last_machine_amount[block.EntityId] = last_amount;
                 return items;
             }
             public void DrawMachine(Drawing drawing, Vector2 position, IMyProductionBlock block, List<Item> items, Style style)
@@ -204,24 +250,32 @@ namespace IngameScript
                     if (drawing.Symbol.Keys.Contains(item.Name))
                     {
                         // symbol
+                        Vector2 positionSymbol = position + new Vector2(x, 20);
+                        drawing.AddForm(positionSymbol, SpriteForm.SquareSimple, size_icon, 15f, new Color(10, 10, 10, 200));
                         drawing.AddSprite(new MySprite()
                         {
                             Type = SpriteType.TEXT,
                             Data = drawing.Symbol[item.Name],
                             Color = color_text,
-                            Position = position + new Vector2(x, 20),
+                            Position = positionSymbol,
                             RotationOrScale = RotationOrScale,
                             FontId = drawing.Font,
                             Alignment = TextAlignment.LEFT
                         });
                     }
 
+                    // Quantity
+                    Vector2 positionQuantity = position + new Vector2(x, size_icon - 12);
+                    Color mask_color = new Color(0, 0, 20, 200);
+                    if (item.Variance == 2) mask_color = new Color(20, 0, 0, 200);
+                    if (item.Variance == 3) mask_color = new Color(0, 20, 0, 200);
+                    drawing.AddForm(positionQuantity, SpriteForm.SquareSimple, size_icon, 15f, mask_color);
                     drawing.AddSprite(new MySprite()
                     {
                         Type = SpriteType.TEXT,
                         Data = Util.GetKiloFormat(item.Amount),
                         Color = color_text,
-                        Position = position + new Vector2(x, size_icon - 20),
+                        Position = positionQuantity,
                         RotationOrScale = RotationOrScale,
                         FontId = drawing.Font,
                         Alignment = TextAlignment.LEFT
@@ -236,7 +290,7 @@ namespace IngameScript
                     Data = Util.CutString(block.CustomName, string_len),
                     Color = color_title,
                     Position = position + new Vector2(style.Margin.X, 0),
-                    RotationOrScale = 0.8f,
+                    RotationOrScale = 0.6f,
                     FontId = drawing.Font,
                     Alignment = TextAlignment.LEFT
 

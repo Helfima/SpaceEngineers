@@ -50,6 +50,7 @@ namespace IngameScript
 
             private BlockSystem<IMyTerminalBlock> inventories = null;
             private Dictionary<string, Item> item_list = new Dictionary<string, Item>();
+            private Dictionary<string, double> last_amount = new Dictionary<string, double>();
             public DisplayInventory(DisplayLcd DisplayLcd)
             {
                 this.DisplayLcd = DisplayLcd;
@@ -117,6 +118,13 @@ namespace IngameScript
                     if (itemIngot) types.Add(Item.TYPE_INGOT);
                     if (itemComponent) types.Add(Item.TYPE_COMPONENT);
                     if (itemAmmo) types.Add(Item.TYPE_AMMO);
+
+                    last_amount.Clear();
+                    foreach (KeyValuePair<string, Item> entry in item_list)
+                    {
+                        last_amount.Add(entry.Key, entry.Value.Amount);
+                    }
+
                     InventoryCount();
                     position = DisplayByType(drawing, position, types);
                 }
@@ -186,7 +194,18 @@ namespace IngameScript
                             Height = height,
                             Color = color
                         };
-                        drawing.DrawGaugeIcon(position2, item.Name, item.Amount, limitBar, style);
+                        int variance = 2;
+                        //DisplayLcd.program.drawingSurface.WriteText($"variance:{entry.Key}?{last_amount.ContainsKey(entry.Key)}\n", true);
+                        if (last_amount.ContainsKey(entry.Key))
+                        {
+                            if (last_amount[entry.Key] < item.Amount) variance = 1;
+                            if (last_amount[entry.Key] > item.Amount) variance = 3;
+                        }
+                        else
+                        {
+                            variance = 1;
+                        }
+                        drawing.DrawGaugeIcon(position2, item.Name, item.Amount, limitBar, style, variance);
                         count++;
                     }
                 }

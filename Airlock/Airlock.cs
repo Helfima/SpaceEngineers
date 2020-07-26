@@ -30,7 +30,8 @@ namespace IngameScript
             private StateMachine State = StateMachine.Stop;
             private ModeMachine Mode = ModeMachine.Stop;
 
-            private List<ActionMachine> Sequence;
+            private List<ActionMachine> Sequences;
+            private ActionMachine Sequence = ActionMachine.Stop;
             private int Stage = 0;
             private int Sleep = 0;
 
@@ -38,11 +39,16 @@ namespace IngameScript
 
             private float OxygenRate = 0f;
 
+            private bool blinkEnabled = false;
+            private bool soundEnabled = false;
+            private bool openned = false;
+
             private BlockSystem<IMyTextPanel> control_lcds = null;
             private BlockSystem<IMyTextPanel> control_panel = null;
             private BlockSystem<IMyDoor> doors = null;
             private BlockSystem<IMyAirVent> airvent = null;
             private BlockSystem<IMyLightingBlock> light = null;
+            private BlockSystem<IMySoundBlock> sound = null;
             public Airlock(Program program, String group_name)
             {
                 this.program = program;
@@ -67,6 +73,8 @@ namespace IngameScript
                 control_panel = BlockSystem<IMyTextPanel>.SearchByFilter(program, block_filter_control);
                 BlockFilter<IMyLightingBlock> block_filter_light = BlockFilter<IMyLightingBlock>.Create(program.Me, $"G:{GroupFilter}");
                 light = BlockSystem<IMyLightingBlock>.SearchByFilter(program, block_filter_light);
+                BlockFilter<IMySoundBlock> block_filter_sound = BlockFilter<IMySoundBlock>.Create(program.Me, $"G:{GroupFilter}");
+                sound = BlockSystem<IMySoundBlock>.SearchByFilter(program, block_filter_sound);
 
                 if (control_panel != null)
                 {
@@ -88,14 +96,21 @@ namespace IngameScript
 
             public void RunContinuousLogic()
             {
-                program.WriteText($"Stage:{Stage}", true);
+                program.WriteText($"Mode:{Mode}", true);
                 program.WriteText($"State:{State}", true);
+                program.WriteText($"Stage:{Stage}", true);
                 DisplayControl();
-                LightControl();
-                if (Mode != ModeMachine.Stop && Sequence.Count > Stage)
+                SoundControl();
+                if(Mode == ModeMachine.SimpleOpen) SimpleLightControl();
+                else AirlockLightControl();
+
+                if (Mode != ModeMachine.Stop && Sequences.Count > Stage)
                 {
-                    Staging(Sequence[Stage]);
+                    Sequence = Sequences[Stage];
+                    program.WriteText($"Sequence:{Sequence}", true);
+                    Staging(Sequence);
                 }
+                if(Sleep > 0) program.WriteText($"Sleep:{Sleep/6}", true);
             }
             public void RunCommand(string argument)
             {
@@ -110,42 +125,83 @@ namespace IngameScript
                             case "open":
                                 Stage = 0;
                                 Mode = ModeMachine.Open;
-                                Sequence = new List<ActionMachine>();
-                                Sequence.Add(ActionMachine.Start);
+                                Sequences = new List<ActionMachine>();
+                                Sequences.Add(ActionMachine.Start);
 
-                                Sequence.Add(ActionMachine.Unlock);
-                                Sequence.Add(ActionMachine.Close);
-                                Sequence.Add(ActionMachine.Lock);
-                                Sequence.Add(ActionMachine.Depressure);
-                                Sequence.Add(ActionMachine.UnlockExt);
-                                Sequence.Add(ActionMachine.OpenExt);
-                                Sequence.Add(ActionMachine.SleepInit);
-                                Sequence.Add(ActionMachine.Sleep);
-                                Sequence.Add(ActionMachine.CloseExt);
-                                Sequence.Add(ActionMachine.LockExt);
-                                Sequence.Add(ActionMachine.Pressure);
-                                Sequence.Add(ActionMachine.UnlockInt);
+                                Sequences.Add(ActionMachine.Unlock);
+                                Sequences.Add(ActionMachine.Close);
+                                Sequences.Add(ActionMachine.Lock);
+                                Sequences.Add(ActionMachine.Depressure);
+                                Sequences.Add(ActionMachine.UnlockExt);
+                                Sequences.Add(ActionMachine.OpenExt);
+                                Sequences.Add(ActionMachine.SleepInit);
+                                Sequences.Add(ActionMachine.Sleep);
+                                Sequences.Add(ActionMachine.CloseExt);
+                                Sequences.Add(ActionMachine.LockExt);
+                                Sequences.Add(ActionMachine.Pressure);
+                                Sequences.Add(ActionMachine.UnlockInt);
 
-                                Sequence.Add(ActionMachine.Stop);
-                                Sequence.Add(ActionMachine.Terminated);
+                                Sequences.Add(ActionMachine.Stop);
+                                Sequences.Add(ActionMachine.Terminated);
+                                break;
+                            case "simpleopenclose":
+                                Stage = 0;
+                                Mode = ModeMachine.SimpleOpen;
+                                Sequences = new List<ActionMachine>();
+                                Sequences.Add(ActionMachine.Start);
+
+                                Sequences.Add(ActionMachine.Unlock);
+                                Sequences.Add(ActionMachine.Open);
+                                Sequences.Add(ActionMachine.Lock);
+
+                                Sequences.Add(ActionMachine.Stop);
+                                Sequences.Add(ActionMachine.Terminated);
+                                break;
+                            case "simpleopen":
+                                Stage = 0;
+                                Mode = ModeMachine.SimpleOpen;
+                                Sequences = new List<ActionMachine>();
+                                Sequences.Add(ActionMachine.Start);
+
+                                Sequences.Add(ActionMachine.Unlock);
+                                Sequences.Add(ActionMachine.Open);
+                                Sequences.Add(ActionMachine.Lock);
+
+                                Sequences.Add(ActionMachine.Stop);
+                                Sequences.Add(ActionMachine.Terminated);
+                                break;
+                            case "simpleclose":
+                                Stage = 0;
+                                Mode = ModeMachine.SimpleClose;
+                                Sequences = new List<ActionMachine>();
+                                Sequences.Add(ActionMachine.Start);
+
+                                Sequences.Add(ActionMachine.Unlock);
+                                Sequences.Add(ActionMachine.SleepInit);
+                                Sequences.Add(ActionMachine.Sleep);
+                                Sequences.Add(ActionMachine.Close);
+                                Sequences.Add(ActionMachine.Lock);
+
+                                Sequences.Add(ActionMachine.Stop);
+                                Sequences.Add(ActionMachine.Terminated);
                                 break;
                             case "openint":
                                 if (State != StateMachine.OpenInt)
                                 {
                                     Stage = 0;
                                     Mode = ModeMachine.Open;
-                                    Sequence = new List<ActionMachine>();
-                                    Sequence.Add(ActionMachine.Start);
+                                    Sequences = new List<ActionMachine>();
+                                    Sequences.Add(ActionMachine.Start);
 
-                                    Sequence.Add(ActionMachine.Unlock);
-                                    Sequence.Add(ActionMachine.Close);
-                                    Sequence.Add(ActionMachine.Lock);
-                                    Sequence.Add(ActionMachine.Pressure);
-                                    Sequence.Add(ActionMachine.UnlockInt);
-                                    Sequence.Add(ActionMachine.OpenInt);
+                                    Sequences.Add(ActionMachine.Unlock);
+                                    Sequences.Add(ActionMachine.Close);
+                                    Sequences.Add(ActionMachine.Lock);
+                                    Sequences.Add(ActionMachine.Pressure);
+                                    Sequences.Add(ActionMachine.UnlockInt);
+                                    Sequences.Add(ActionMachine.OpenInt);
 
-                                    Sequence.Add(ActionMachine.Stop);
-                                    Sequence.Add(ActionMachine.TerminatedInt);
+                                    Sequences.Add(ActionMachine.Stop);
+                                    Sequences.Add(ActionMachine.TerminatedInt);
                                 }
                                 break;
                             case "openext":
@@ -153,34 +209,34 @@ namespace IngameScript
                                 {
                                     Stage = 0;
                                     Mode = ModeMachine.Open;
-                                    Sequence = new List<ActionMachine>();
-                                    Sequence.Add(ActionMachine.Start);
+                                    Sequences = new List<ActionMachine>();
+                                    Sequences.Add(ActionMachine.Start);
 
-                                    Sequence.Add(ActionMachine.Unlock);
-                                    Sequence.Add(ActionMachine.Close);
-                                    Sequence.Add(ActionMachine.Lock);
-                                    Sequence.Add(ActionMachine.Depressure);
-                                    Sequence.Add(ActionMachine.UnlockExt);
-                                    Sequence.Add(ActionMachine.OpenExt);
+                                    Sequences.Add(ActionMachine.Unlock);
+                                    Sequences.Add(ActionMachine.Close);
+                                    Sequences.Add(ActionMachine.Lock);
+                                    Sequences.Add(ActionMachine.Depressure);
+                                    Sequences.Add(ActionMachine.UnlockExt);
+                                    Sequences.Add(ActionMachine.OpenExt);
 
-                                    Sequence.Add(ActionMachine.Stop);
-                                    Sequence.Add(ActionMachine.TerminatedExt);
+                                    Sequences.Add(ActionMachine.Stop);
+                                    Sequences.Add(ActionMachine.TerminatedExt);
                                 }
                                 break;
                             case "close":
                                 Stage = 0;
                                 Mode = ModeMachine.Open;
-                                Sequence = new List<ActionMachine>();
-                                Sequence.Add(ActionMachine.Start);
+                                Sequences = new List<ActionMachine>();
+                                Sequences.Add(ActionMachine.Start);
 
-                                Sequence.Add(ActionMachine.Unlock);
-                                Sequence.Add(ActionMachine.Close);
-                                Sequence.Add(ActionMachine.Lock);
-                                Sequence.Add(ActionMachine.Pressure);
-                                Sequence.Add(ActionMachine.UnlockInt);
+                                Sequences.Add(ActionMachine.Unlock);
+                                Sequences.Add(ActionMachine.Close);
+                                Sequences.Add(ActionMachine.Lock);
+                                Sequences.Add(ActionMachine.Pressure);
+                                Sequences.Add(ActionMachine.UnlockInt);
 
-                                Sequence.Add(ActionMachine.Stop);
-                                Sequence.Add(ActionMachine.Terminated);
+                                Sequences.Add(ActionMachine.Stop);
+                                Sequences.Add(ActionMachine.Terminated);
                                 break;
                         }
                     }
@@ -203,7 +259,11 @@ namespace IngameScript
                             block.OpenDoor();
                             if (block.OpenRatio < 1 - Epsilon) state = false;
                         });
-                        if (state) Stage++;
+                        if (state)
+                        {
+                            Stage++;
+                            openned = true;
+                        }
                         break;
                     case ActionMachine.OpenInt:
                         state = true;
@@ -214,7 +274,11 @@ namespace IngameScript
                                 if (block.OpenRatio < 1 - Epsilon) state = false;
                             }
                         });
-                        if (state) Stage++;
+                        if (state)
+                        {
+                            Stage++;
+                            openned = true;
+                        }
                         break;
                     case ActionMachine.OpenExt:
                         state = true;
@@ -225,7 +289,11 @@ namespace IngameScript
                                 if (block.OpenRatio < 1 - Epsilon) state = false;
                             }
                         });
-                        if (state) Stage++;
+                        if (state)
+                        {
+                            Stage++;
+                            openned = true;
+                        }
                         break;
                     case ActionMachine.Close:
                         state = true;
@@ -233,7 +301,11 @@ namespace IngameScript
                             block.CloseDoor();
                             if (block.OpenRatio > 0 + Epsilon) state = false;
                         });
-                        if (state) Stage++;
+                        if (state)
+                        {
+                            Stage++;
+                            openned = false;
+                        }
                         break;
                     case ActionMachine.CloseInt:
                         state = true;
@@ -244,7 +316,11 @@ namespace IngameScript
                                 if (block.OpenRatio > 0 + Epsilon) state = false;
                             }
                         });
-                        if (state) Stage++;
+                        if (state)
+                        {
+                            Stage++;
+                            openned = false;
+                        }
                         break;
                     case ActionMachine.CloseExt:
                         state = true;
@@ -255,7 +331,11 @@ namespace IngameScript
                                 if (block.OpenRatio > 0 + Epsilon) state = false;
                             }
                         });
-                        if (state) Stage++;
+                        if (state)
+                        {
+                            Stage++;
+                            openned = false;
+                        }
                         break;
                     case ActionMachine.Lock:
                         doors.ForEach(delegate (IMyDoor block) {
@@ -329,19 +409,17 @@ namespace IngameScript
                         Stage++;
                         break;
                     case ActionMachine.Stop:
+                        State = StateMachine.Stop;
                         Sleep = 0;
                         Stage++;
                         break;
                     case ActionMachine.Terminated:
-                        State = StateMachine.Open;
                         Stage++;
                         break;
                     case ActionMachine.TerminatedInt:
-                        State = StateMachine.OpenInt;
                         Stage++;
                         break;
                     case ActionMachine.TerminatedExt:
-                        State = StateMachine.OpenExt;
                         Stage++;
                         break;
                 }
@@ -357,7 +435,76 @@ namespace IngameScript
 
             }
 
-            private void LightControl()
+            private void SoundControl()
+            {
+                int sound_timer = program.MyProperty.sound_timer;
+                if (sound != null)
+                {
+                    sound.ForEach(delegate (IMySoundBlock block)
+                    {
+                        block.ApplyAction("OnOff_On");
+                        if (State == StateMachine.Running)
+                        {
+                            if (!soundEnabled && Sleep > 0 && (Sleep - sound_timer == 0))
+                            {
+                                block.Play();
+                                soundEnabled = true;
+                            }
+                        }
+                        else
+                        { 
+                            block.Stop();
+                            soundEnabled = false;
+                        }
+                    });
+                }
+            }
+
+            private void SimpleLightControl()
+            {
+                int light_timer = program.MyProperty.sound_timer;
+                if (light != null)
+                {
+                    light.ForEach(delegate (IMyLightingBlock block) {
+                        string type = block.BlockDefinition.SubtypeName;
+                        if (type.Contains("Rotating"))
+                        {
+                            if (State == StateMachine.Running && Sleep > 0 && (Sleep - light_timer <= 0)) block.ApplyAction("OnOff_On");
+                            else block.ApplyAction("OnOff_Off");
+                        }
+                        else
+                        {
+                            if (Sequence == ActionMachine.Sleep)
+                            {
+                                if (Sleep > 0 && (Sleep - light_timer <= 0))
+                                {
+                                    if (!blinkEnabled)
+                                    {
+                                        block.BlinkLength = program.MyProperty.blink_length;
+                                        block.BlinkIntervalSeconds = program.MyProperty.blink_interval_seconds;
+                                        block.Color = program.MyProperty.GetColor("Airlock", "running_color");
+                                    }
+                                } 
+                                else
+                                {
+                                    block.BlinkIntervalSeconds = 0;
+                                    block.Color = program.MyProperty.GetColor("Airlock", "pressurised_color");
+                                    blinkEnabled = false;
+                                }
+                            }
+                            else
+                            {
+                                block.BlinkIntervalSeconds = 0;
+                                if(openned) block.Color = program.MyProperty.GetColor("Airlock", "pressurised_color");
+                                else block.Color = program.MyProperty.GetColor("Airlock", "depressurised_color");
+                                blinkEnabled = false;
+                            }
+                            block.ApplyAction("OnOff_On");
+                        }
+                    });
+                }
+            }
+            private void AirlockLightControl()
             {
                 if(light != null)
                 {
@@ -373,8 +520,8 @@ namespace IngameScript
                             block.ApplyAction("OnOff_On");
                             if (State == StateMachine.Running)
                             {
-                                block.BlinkLength = 50f;
-                                block.BlinkIntervalSeconds = 0.3f;
+                                block.BlinkLength = program.MyProperty.blink_length;
+                                block.BlinkIntervalSeconds = program.MyProperty.blink_interval_seconds;
                                 block.Color = program.MyProperty.GetColor("Airlock", "running_color");
                             }
                             else
@@ -526,15 +673,20 @@ namespace IngameScript
 
             public enum StateMachine
             {
+                Close,
                 Open,
                 OpenInt,
                 OpenExt,
+                Sleep,
                 Running,
                 Stop
             }
             public enum ModeMachine
             {
                 Open,
+                SimpleOpenClose,
+                SimpleOpen,
+                SimpleClose,
                 Close,
                 Stop
             }

@@ -55,13 +55,15 @@ namespace IngameScript
 
                 Symbol.Add("Cobalt", "Co");
                 Symbol.Add("Nickel", "Ni");
-                Symbol.Add("Magnesium", "Ma");
-                Symbol.Add("Platinium", "Pi");
+                Symbol.Add("Magnesium", "Mg");
+                Symbol.Add("Platinum", "Pt");
                 Symbol.Add("Iron", "Fe");
                 Symbol.Add("Gold", "Au");
                 Symbol.Add("Silicon", "Si");
                 Symbol.Add("Silver", "Ag");
                 Symbol.Add("Stone", "Stone");
+                Symbol.Add("Uranium", "U");
+                Symbol.Add("Ice", "Ice");
             }
 
             public void Dispose()
@@ -97,7 +99,7 @@ namespace IngameScript
                 return sprite;
             }
 
-            public void DrawGaugeIcon(Vector2 position, string name, double amount, int limit, StyleIcon style_icon)
+            public void DrawGaugeIcon(Vector2 position, string name, double amount, int limit, StyleIcon style_icon, int variance = 0)
             {
                 Vector2 position2 = position + new Vector2(style_icon.Padding.X, style_icon.Padding.Y);
                 // cadre info
@@ -155,6 +157,32 @@ namespace IngameScript
 
                 };
                 AddSprite(icon);
+
+                float symbolSize = 20f;
+                if (variance == 1)
+                {
+                    AddSprite(new MySprite()
+                    {
+                        Type = SpriteType.TEXTURE,
+                        Data = SpriteForm.Triangle.ToString(),
+                        Size = new Vector2(symbolSize, symbolSize),
+                        Color = new Color(0,100,0,255),
+                        Position = position2 + new Vector2(3 * width - 25, symbolSize - style_icon.Margin.Y),
+                        RotationOrScale = 0
+                    });
+                }
+                if (variance == 3)
+                {
+                    AddSprite(new MySprite()
+                    {
+                        Type = SpriteType.TEXTURE,
+                        Data = SpriteForm.Triangle.ToString(),
+                        Size = new Vector2(symbolSize, symbolSize),
+                        Color = new Color(100, 0, 0, 255),
+                        Position = position2 + new Vector2(3 * width - 25, symbolSize + style_icon.Margin.Y),
+                        RotationOrScale = (float)Math.PI
+                    });
+                }
             }
 
             public void DrawGauge(Vector2 position, float amount, float limit, StyleGauge style, bool invert = false)
@@ -165,8 +193,8 @@ namespace IngameScript
                 if (style.Fullscreen && style.Orientation.Equals(SpriteOrientation.Horizontal)) width = viewport.Width;
                 if (style.Fullscreen && style.Orientation.Equals(SpriteOrientation.Vertical)) height = viewport.Height;
 
-                width = width - 2 * style.Padding.X;
-                height = height - 2 * style.Padding.X;
+                width += - 2 * style.Padding.X;
+                height += - 2 * style.Padding.X;
                 Vector2 position2 = position + new Vector2(style.Padding.X, style.Padding.Y);
                 // Gauge
                 AddForm(position2, SpriteForm.SquareSimple, width, height, style.Color);
@@ -216,7 +244,7 @@ namespace IngameScript
                     AddSprite(icon);
                 }
             }
-            public void Test(IMyTextSurface drawingSurface)
+            public void Test()
             {
                 MySprite icon;
                 //Sandbox.ModAPI.Ingame.IMyTextSurface#GetSprites
@@ -234,11 +262,6 @@ namespace IngameScript
                 float height = width + 10f;
                 int limit = (int)Math.Floor(viewport.Height/height);
                 Vector2 position = new Vector2(0, 0);
-
-                //drawingSurface.WriteText($"Count:{names.Count}\n", true);
-                //drawingSurface.WriteText($"Delta:{delta}\n", true);
-                //drawingSurface.WriteText($"Width:{width}\n", true);
-                //drawingSurface.WriteText($"Height:{height}\n", true);
 
                 foreach (string name in names)
                 {
@@ -345,6 +368,7 @@ namespace IngameScript
             public string Name;
             public string Type;
             public Double Amount;
+            public int Variance;
 
             public string Icon
             {
@@ -357,6 +381,14 @@ namespace IngameScript
             public int CompareTo(Item other)
             {
                 return Amount.CompareTo(other.Amount);
+            }
+        }
+
+        class BlockComparer : IComparer<IMyTerminalBlock>
+        {
+            public int Compare(IMyTerminalBlock block1, IMyTerminalBlock block2)
+            {
+                return block1.CustomName.CompareTo(block2.CustomName);
             }
         }
     }

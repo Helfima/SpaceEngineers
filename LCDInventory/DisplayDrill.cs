@@ -35,7 +35,10 @@ namespace IngameScript
             private bool drills_rotate = false;
             private bool drills_flip_x = false;
             private bool drills_flip_y = false;
+            private bool drills_info = false;
             private float drills_size = 50f;
+            private float drills_padding_x = 0f;
+            private float drills_padding_y = 0f;
 
             private BlockSystem<IMyShipDrill> drill_inventories;
             public DisplayDrill(DisplayLcd DisplayLcd)
@@ -51,6 +54,9 @@ namespace IngameScript
                 drills_flip_x = MyIni.Get("Drills", "flip_x").ToBoolean(false);
                 drills_flip_y = MyIni.Get("Drills", "flip_y").ToBoolean(false);
                 drills_size = MyIni.Get("Drills", "size").ToSingle(50f);
+                drills_info = MyIni.Get("Drills", "info").ToBoolean(false);
+                drills_padding_x = MyIni.Get("Drills", "padding_x").ToSingle(0f);
+                drills_padding_y = MyIni.Get("Drills", "padding_y").ToSingle(0f);
             }
 
             public void Save(MyIni MyIni)
@@ -62,6 +68,9 @@ namespace IngameScript
                 MyIni.Set("Drills", "flip_x", drills_flip_x);
                 MyIni.Set("Drills", "flip_y", drills_flip_y);
                 MyIni.Set("Drills", "size", drills_size);
+                MyIni.Set("Drills", "info", drills_info);
+                MyIni.Set("Drills", "padding_x", drills_padding_x);
+                MyIni.Set("Drills", "padding_y", drills_padding_y);
             }
 
             private void Search()
@@ -83,7 +92,7 @@ namespace IngameScript
                 float y_min = 0f;
                 float y_max = 0f;
                 bool first = true;
-
+                Vector2 padding_screen = new Vector2(drills_padding_x, drills_padding_y);
                 StyleGauge style = new StyleGauge()
                 {
                     Orientation = SpriteOrientation.Horizontal,
@@ -92,22 +101,26 @@ namespace IngameScript
                     Height = width,
                     Padding = new StylePadding(0),
                     Round = false,
-                    RotationOrScale = 0.5f
+                    RotationOrScale = 0.5f,
+                    Percent= drills_size > 49 ? true : false
                 };
 
-                drawing.AddSprite(new MySprite()
+                if (drills_info)
                 {
-                    Type = SpriteType.TEXT,
-                    Data = $"Drill Number:{drill_inventories.List.Count} ({filter})",
-                    Size = new Vector2(width, width),
-                    Color = Color.DimGray,
-                    Position = position + new Vector2(0, 0),
-                    RotationOrScale = 0.5f,
-                    FontId = drawing.Font,
-                    Alignment = TextAlignment.LEFT
+                    drawing.AddSprite(new MySprite()
+                    {
+                        Type = SpriteType.TEXT,
+                        Data = $"Drill Number:{drill_inventories.List.Count} ({filter})",
+                        Size = new Vector2(width, width),
+                        Color = Color.DimGray,
+                        Position = position + new Vector2(0, 0),
+                        RotationOrScale = 0.5f,
+                        FontId = drawing.Font,
+                        Alignment = TextAlignment.LEFT
 
-                });
-                position += new Vector2(0, 20);
+                    });
+                    position += new Vector2(0, 20);
+                }
                 drill_inventories.ForEach(delegate (IMyShipDrill drill)
                 {
                     switch (drills_orientation)
@@ -162,7 +175,7 @@ namespace IngameScript
                     //drawingSurface.WriteText($"Volume [{x},{y}]:{volume}/{maxVolume}\n", true);
                     Vector2 position_relative = drills_rotate ? new Vector2(y * (width + padding), x * (width + padding)) : new Vector2(x * (width + padding), y * (width + padding));
 
-                    drawing.DrawGauge(position + position_relative, volume, maxVolume, style);
+                    drawing.DrawGauge(position + position_relative + padding_screen, volume, maxVolume, style);
                 });
 
                 return position;

@@ -32,6 +32,9 @@ namespace IngameScript
         
         private bool ForceUpdate = false;
         private bool search = true;
+
+        private Dictionary<long, DisplayLcd> displayLcds = new Dictionary<long, DisplayLcd>();
+
         public Program()
         {
             MyProperty = new KProperty(this);
@@ -93,7 +96,7 @@ namespace IngameScript
                         IMyTextPanel lcd = (IMyTextPanel)GridTerminalSystem.GetBlockWithName(commandLine.Argument(1));
                         lcd.ScriptBackgroundColor = Color.Black;
                         Drawing drawing = new Drawing(lcd);
-                        drawing.Test(drawingSurface);
+                        drawing.Test();
                         drawing.Dispose();
                         break;
                     case "getname":
@@ -147,7 +150,16 @@ namespace IngameScript
                     MyIni.TryParse(lcd.CustomData, out result);
                     if (MyIni.ContainsSection("Inventory") || lcd.CustomData.Trim().Equals("prepare"))
                     {
-                        DisplayLcd displayLcd = new DisplayLcd(this, lcd);
+                        DisplayLcd displayLcd;
+                        if (displayLcds.ContainsKey(lcd.EntityId))
+                        {
+                            displayLcd = displayLcds[lcd.EntityId];
+                        }
+                        else
+                        {
+                            displayLcd = new DisplayLcd(this, lcd);
+                            displayLcds.Add(lcd.EntityId, displayLcd);
+                        }
                         displayLcd.Load(MyIni);
                         displayLcd.Draw();
                     }

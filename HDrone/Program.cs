@@ -24,13 +24,18 @@ namespace IngameScript
         const UpdateType CommandUpdate = UpdateType.Trigger | UpdateType.Terminal;
         MyCommandLine commandLine = new MyCommandLine();
         private IMyTextSurface drawingSurface;
+        private StateMachine machine_state = StateMachine.Stopped;
 
+        private BlockSystem<IMyTextPanel> lcds = null;
+
+        private bool search=true;
         public Program()
         {
             Runtime.UpdateFrequency = UpdateFrequency.Update100;
             drawingSurface = Me.GetSurface(0);
             drawingSurface.ContentType = ContentType.TEXT_AND_IMAGE;
             Init();
+            
         }
 
         private void Init()
@@ -42,6 +47,12 @@ namespace IngameScript
 
         }
 
+        private void Search()
+        {
+            BlockFilter<IMyTextPanel> block_filter = BlockFilter<IMyTextPanel>.Create(Me, "C:TEST");
+            lcds = BlockSystem<IMyTextPanel>.SearchByFilter(this, block_filter);
+            search = false;
+        }
         public void Main(string argument, UpdateType updateType)
         {
             if ((updateType & CommandUpdate) != 0)
@@ -61,57 +72,54 @@ namespace IngameScript
             {
                 commandLine.TryParse(argument);
                 var command = commandLine.Argument(0);
-                string tag = commandLine.Argument(1);
+                if (command != null) command = command.Trim().ToLower();
                 switch (command)
                 {
-                    case "prefix":
-                        RenamePrefix(tag);
-                        break;
-                    case "unprefix":
-                        UnRenamePrefix(tag);
+                    default:
+                        search = true;
+                        Search();
                         break;
                 }
             }
         }
-
-        private void RenamePrefix(string tag)
-        {
-            BlockSystem<IMyTerminalBlock> blocks = BlockSystem<IMyTerminalBlock>.SearchBlocks(this);
-            blocks.ForEach(delegate (IMyTerminalBlock block)
-            {
-                    if (!block.CustomName.StartsWith(tag))
-                    {
-                        block.CustomName = tag + " " + block.CustomName;
-                    }
-            });
-
-        }
-        private void UnRenamePrefix(string tag)
-        {
-            BlockSystem<IMyTerminalBlock> blocks = BlockSystem<IMyTerminalBlock>.SearchBlocks(this);
-            blocks.ForEach(delegate (IMyTerminalBlock block)
-            {
-                    if (block.CustomName.StartsWith(tag))
-                    {
-                        block.CustomName = block.CustomName.Replace(tag + " ", "");
-                    }
-            });
-
-        }
         void RunContinuousLogic()
         {
-            Display();
+            if(search) Search();
+            WriteText($"LCD found: {(lcds != null ? lcds.List.Count : 0)}", false);
+            BlockFilter<IMyThrust> block_filter = BlockFilter<IMyThrust>.Create(Me, "C:Up");
+            BlockSystem<IMyThrust> thrust = BlockSystem<IMyThrust>.SearchByFilter(this, block_filter);
+            if (!thrust.IsEmpty) {
+                ParserInfo parser = new ParserInfo(this);
+                IMyThrust block = thrust.First;
+                parser.ParserTitle(block);
+                parser.ParserTerminalBlock(block);
+                parser.ParserThrust(block);
+                parser.ParserCubeBlock(block);
+            }
         }
 
         private void Display()
         {
-            drawingSurface.WriteText($"Rename Script", false);
+            drawingSurface.WriteText($"Machine Status:{machine_state}", false);
         }
+
 
         public void WriteText(string message, bool append)
         {
             message += "\n";
             drawingSurface.WriteText(message, append);
+            if (lcds != null) lcds.ForEach(delegate (IMyTextPanel block)
+            {
+                block.WriteText(message, append);
+            });
+        }
+
+        public enum StateMachine
+        {
+            Stopped,
+            Traking,
+            Running,
+            Waitting
         }
     }
 }

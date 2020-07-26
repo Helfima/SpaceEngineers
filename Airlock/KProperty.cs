@@ -30,10 +30,13 @@ namespace IngameScript
 
             public string filter = "*";
             public int timer;
+            public float blink_length;
+            public float blink_interval_seconds;
             public string pressurised_color;
             public string running_color;
             public string depressurised_color;
 
+            public int sound_timer;
             public KProperty(Program program)
             {
                 this.program = program;
@@ -45,10 +48,14 @@ namespace IngameScript
                 if (!MyIni.TryParse(program.Me.CustomData, out result))
                     throw new Exception(result.ToString());
                 filter = MyIni.Get("Airlock", "filter").ToString("CG:SAS1");
-                timer = MyIni.Get("Airlock", "timer").ToInt32(30);
+                timer = MyIni.Get("Airlock", "timer").ToInt32(30)*6;
+                blink_length = MyIni.Get("Airlock", "blink_length").ToSingle(50f);
+                blink_interval_seconds = MyIni.Get("Airlock", "blink_interval_seconds").ToSingle(0.3f);
                 pressurised_color = MyIni.Get("Airlock", "pressurised_color").ToString("0,255,0,255");
                 running_color = MyIni.Get("Airlock", "running_color").ToString("255,130,0,255");
                 depressurised_color = MyIni.Get("Airlock", "depressurised_color").ToString("255,0,0,255");
+
+                sound_timer = MyIni.Get("Sound", "timer").ToInt32(3)*6;
 
                 if (program.Me.CustomData.Equals(""))
                 {
@@ -61,10 +68,14 @@ namespace IngameScript
                 if (!MyIni.TryParse(program.Me.CustomData, out result))
                     throw new Exception(result.ToString());
                 MyIni.Set("Airlock", "filter", filter);
-                MyIni.Set("Airlock", "timer", timer);
+                MyIni.Set("Airlock", "timer", timer/6);
+                MyIni.Set("Airlock", "blink_length", blink_length);
+                MyIni.Set("Airlock", "blink_interval_seconds", blink_interval_seconds);
                 MyIni.Set("Airlock", "pressurised_color", pressurised_color);
                 MyIni.Set("Airlock", "running_color", running_color);
                 MyIni.Set("Airlock", "depressurised_color", depressurised_color);
+
+                MyIni.Set("Sound", "timer", sound_timer/6);
 
                 program.Me.CustomData = MyIni.ToString();
             }
@@ -84,7 +95,6 @@ namespace IngameScript
                 string colorValue = MyIni.Get(section, key).ToString(default_value);
                 Color color = Color.Gray;
                 // Find matches.
-                //program.drawingSurface.WriteText($"{section}/{key}={colorValue}", true);
                 if (!colorValue.Equals(""))
                 {
                     string[] colorSplit = colorValue.Split(',');

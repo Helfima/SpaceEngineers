@@ -55,6 +55,18 @@ namespace IngameScript
             {
                 return BlockSystem<T>.SearchBlocks(program, block => ((IMyTerminalBlock)block).CustomName.Equals(name), name);
             }
+            public static List<IMyBlockGroup> SearchGroups(Program program, Func<IMyBlockGroup, bool> collect = null)
+            {
+                List<IMyBlockGroup> list = new List<IMyBlockGroup>();
+                try
+                {
+                    program.GridTerminalSystem.GetBlockGroups(list, collect);
+                }
+                catch { }
+                program.Echo(String.Format("List <IMyBlockGroup> count: {0}", list.Count));
+
+                return list;
+            }
             public static BlockSystem<T> SearchByGroup(Program program, string name)
             {
                 List<T> list = new List<T>();
