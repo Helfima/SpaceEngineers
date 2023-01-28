@@ -21,6 +21,8 @@ namespace IngameScript
 {
     partial class Program : MyGridProgram
     {
+        private int Timer = 50;
+
         KProperty MyProperty;
 
         const UpdateType CommandUpdate = UpdateType.Trigger | UpdateType.Terminal;
@@ -30,6 +32,7 @@ namespace IngameScript
 
         private BlockSystem<IMyRefinery> refinery = null;
         private BlockSystem<IMyCargoContainer> stock = null;
+        private int loop;
         public Program()
         {
             MyProperty = new KProperty(this);
@@ -37,6 +40,7 @@ namespace IngameScript
             Runtime.UpdateFrequency = UpdateFrequency.Update100;
             drawingSurface = Me.GetSurface(0);
             drawingSurface.ContentType = ContentType.TEXT_AND_IMAGE;
+            loop = Timer;
             Prepare();
         }
 
@@ -66,6 +70,7 @@ namespace IngameScript
 
         public void Main(string argument, UpdateType updateType)
         {
+            loop--;
             if ((updateType & CommandUpdate) != 0)
             {
                 RunCommand(argument);
@@ -73,6 +78,7 @@ namespace IngameScript
             if ((updateType & UpdateType.Update100) != 0)
             {
                 RunContinuousLogic();
+                LoopTime();
             }
         }
 
@@ -88,8 +94,23 @@ namespace IngameScript
                     case "reset":
                         Prepare();
                         break;
+                    case "rotate":
+                        RefineryRotate();
+                        break;
+                    case "test":
+                        RefineryTest();
+                        break;
                 }
             }
+        }
+        private void LoopTime()
+        {
+            if(loop <= 0)
+            {
+                loop = Timer;
+                RefineryRotate();
+            }
+            
         }
         void RunContinuousLogic()
         {
@@ -98,9 +119,32 @@ namespace IngameScript
 
         private void Display()
         {
-            drawingSurface.WriteText($"Machine Status:{machine_state}", false);
+            drawingSurface.WriteText($"Machine Status:{machine_state}\n", false);
+            drawingSurface.WriteText($"Rotate in:{loop}", true);
         }
-
+        private void RefineryTest()
+        {
+            foreach (IMyRefinery refinery in refinery.List)
+            {
+                
+                Echo($"{refinery.CustomName}:{refinery.InventoryCount}");
+            }
+        }
+        private void RefineryRotate()
+        {
+            foreach (IMyRefinery refinery in refinery.List)
+            {
+                IMyInventory refinery_inventory = refinery.GetInventory(0);
+                List<MyInventoryItem> items = new List<MyInventoryItem>();
+                refinery_inventory.GetItems(items);
+                Echo($"{refinery.CustomName}:{items.Count}");
+                if (items.Count > 1)
+                {
+                    refinery_inventory.TransferItemTo(refinery_inventory, 0, items.Count - 1);
+                }
+                refinery.UseConveyorSystem = true;
+            }
+        }
         //public void RefineryCleanup(int inventory_index, List<IMyCargoContainer> cargo_list)
         //{
         //    foreach (IMyRefinery refinery in refinery_list)

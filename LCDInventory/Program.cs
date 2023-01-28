@@ -1,5 +1,4 @@
-﻿using Sandbox.Game.EntityComponents;
-using Sandbox.ModAPI.Ingame;
+﻿using Sandbox.ModAPI.Ingame;
 using Sandbox.ModAPI.Interfaces;
 using SpaceEngineers.Game.ModAPI.Ingame;
 using System.Collections.Generic;
@@ -16,6 +15,7 @@ using VRage.Game.ObjectBuilders.Definitions;
 using VRage.Game;
 using VRage;
 using VRageMath;
+using Sandbox.Game.Entities;
 
 namespace IngameScript
 {
@@ -29,7 +29,8 @@ namespace IngameScript
         private IMyTextSurface drawingSurface;
 
         private BlockSystem<IMyTextPanel> lcds = null;
-        
+        private BlockSystem<IMyCockpit> cockpits = null;
+
         private bool ForceUpdate = false;
         private bool search = true;
 
@@ -53,6 +54,10 @@ namespace IngameScript
         {
             BlockFilter<IMyTextPanel> block_filter = BlockFilter<IMyTextPanel>.Create(Me, MyProperty.lcd_filter);
             lcds = BlockSystem<IMyTextPanel>.SearchByFilter(this, block_filter);
+
+            BlockFilter<IMyCockpit> cockpit_filter = BlockFilter<IMyCockpit>.Create(Me, MyProperty.lcd_filter);
+            cockpits = BlockSystem<IMyCockpit>.SearchByFilter(this, cockpit_filter);
+
             search = false;
         }
 
@@ -113,13 +118,7 @@ namespace IngameScript
                     case "gettype":
                         int.TryParse(commandLine.Argument(1), out index);
                         string name = commandLine.Argument(1);
-                        IMyTerminalBlock block = (IMyTerminalBlock)GridTerminalSystem.GetBlockWithName(name);
-                        IMyTextPanel lcdResult2 = (IMyTextPanel)GridTerminalSystem.GetBlockWithName("Result Type");
-                        lcdResult2.ContentType = ContentType.TEXT_AND_IMAGE;
-                        lcdResult2.WriteText($"Block {name}\n", false);
-                        lcdResult2.WriteText($"Type Name={block.GetType().Name}\n", true);
-                        lcdResult2.WriteText($"SubtypeName={block.BlockDefinition.SubtypeName}\n", true);
-                        lcdResult2.WriteText($"SubtypeId={block.BlockDefinition.SubtypeId}\n", true);
+                        DiplayGetType(name);
                         break;
                     default:
                         search = true;
@@ -134,10 +133,30 @@ namespace IngameScript
             Display();
             RunLcd();
         }
-
+        private void DiplayGetType(string name)
+        {
+            IMyTerminalBlock block = (IMyTerminalBlock)GridTerminalSystem.GetBlockWithName(name);
+            IMyTextPanel lcdResult2 = GridTerminalSystem.GetBlockWithName("Result Type") as IMyTextPanel;
+            if(lcdResult2 != null)
+            {
+                lcdResult2.ContentType = ContentType.TEXT_AND_IMAGE;
+                lcdResult2.WriteText($"Block {name}\n", false);
+                lcdResult2.WriteText($"Type Name={block.GetType().Name}\n", true);
+                lcdResult2.WriteText($"SubtypeName={block.BlockDefinition.SubtypeName}\n", true);
+                lcdResult2.WriteText($"SubtypeId={block.BlockDefinition.SubtypeId}\n", true);
+            }
+            else
+            {
+                Echo($"Block {name}");
+                Echo($"Type Name={block.GetType().Name}");
+                Echo($"SubtypeName={block.BlockDefinition.SubtypeName}");
+                Echo($"SubtypeId={block.BlockDefinition.SubtypeId}");
+            }
+        }
         private void Display()
         {
             drawingSurface.WriteText($"LCD list size:{lcds.List.Count}\n", false);
+            drawingSurface.WriteText($"Cockpit list size:{cockpits.List.Count}\n", true);
         }
 
         private void RunLcd()

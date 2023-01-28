@@ -2,25 +2,27 @@
 using Sandbox.ModAPI.Ingame;
 using Sandbox.ModAPI.Interfaces;
 using SpaceEngineers.Game.ModAPI.Ingame;
-using System.Collections.Generic;
+using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Text;
-using System;
+using VRage;
 using VRage.Collections;
+using VRage.Game;
 using VRage.Game.Components;
 using VRage.Game.GUI.TextPanel;
-using VRage.Game.ModAPI.Ingame.Utilities;
 using VRage.Game.ModAPI.Ingame;
+using VRage.Game.ModAPI.Ingame.Utilities;
 using VRage.Game.ObjectBuilders.Definitions;
-using VRage.Game;
-using VRage;
 using VRageMath;
-// ID=2100372186
+
 namespace IngameScript
 {
     partial class Program : MyGridProgram
     {
+
         const UpdateType CommandUpdate = UpdateType.Trigger | UpdateType.Terminal;
         MyCommandLine commandLine = new MyCommandLine();
         private IMyTextSurface drawingSurface;
@@ -64,54 +66,25 @@ namespace IngameScript
                 string tag = commandLine.Argument(1);
                 switch (command)
                 {
-                    case "prefix":
-                        RenamePrefix(tag);
+                    case "test":
+                        this.EchoExt();
                         break;
-                    case "unprefix":
-                        UnRenamePrefix(tag);
+                    default:
+                        // Do Nothing
                         break;
                 }
             }
         }
-
-        private void RenamePrefix(string tag)
-        {
-            BlockSystem<IMyTerminalBlock> blocks = BlockSystem<IMyTerminalBlock>.SearchBlocks(this);
-            blocks.ForEach(delegate (IMyTerminalBlock block)
-            {
-                    if (!block.CustomName.StartsWith(tag))
-                    {
-                        block.CustomName = tag + " " + block.CustomName;
-                    }
-            });
-
-        }
-        private void UnRenamePrefix(string tag)
-        {
-            BlockSystem<IMyTerminalBlock> blocks = BlockSystem<IMyTerminalBlock>.SearchBlocks(this);
-            blocks.ForEach(delegate (IMyTerminalBlock block)
-            {
-                    if (block.CustomName.StartsWith(tag))
-                    {
-                        block.CustomName = block.CustomName.Replace(tag + " ", "");
-                    }
-            });
-
-        }
         void RunContinuousLogic()
         {
-            Display();
+
         }
 
-        private void Display()
+        public void Execute()
         {
-            drawingSurface.WriteText($"Rename Script", false);
+            
         }
 
-        public void WriteText(string message, bool append)
-        {
-            message += "\n";
-            drawingSurface.WriteText(message, append);
-        }
+        
     }
 }

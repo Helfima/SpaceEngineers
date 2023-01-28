@@ -484,30 +484,37 @@ namespace IngameScript
                     }
                     break;
                 case ActionMachine.StartWelder:
-                    projector.On();
-                    welders.On();
-                    WriteText($"Welders: On", true);
+                    if (!welders.IsEmpty)
+                    {
+                        projector.On();
+                        welders.On();
+                        WriteText($"Welders: On", true);
+                    }
                     Stage++;
                     break;
                 case ActionMachine.StopWelder:
-                    welders.Off();
-                    projector.Off();
-                    WriteText($"Welders: Off", true);
-
+                    if (!welders.IsEmpty)
+                    {
+                        welders.Off();
+                        projector.Off();
+                        WriteText($"Welders: Off", true);
+                    }
                     Stage++;
                     break;
                 case ActionMachine.StartGrinder:
-                    grinders.On();
-                    //projector.On();
-                    WriteText($"Grinders: On", true);
-
+                    if (grinders.IsEmpty)
+                    {
+                        grinders.On();
+                        WriteText($"Grinders: On", true);
+                    }
                     Stage++;
                     break;
                 case ActionMachine.StopGrinder:
-                    grinders.Off();
-                    //projector.Off();
-                    WriteText($"Grinders: Off", true);
-
+                    if (grinders.IsEmpty)
+                    {
+                        grinders.Off();
+                        WriteText($"Grinders: Off", true);
+                    }
                     Stage++;
                     break;
                 case ActionMachine.Terminated:

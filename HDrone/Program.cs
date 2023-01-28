@@ -27,6 +27,7 @@ namespace IngameScript
         private StateMachine machine_state = StateMachine.Stopped;
 
         private BlockSystem<IMyTextPanel> lcds = null;
+        private ParserInfo parser;
 
         private bool search=true;
         public Program()
@@ -86,10 +87,44 @@ namespace IngameScript
         {
             if(search) Search();
             WriteText($"LCD found: {(lcds != null ? lcds.List.Count : 0)}", false);
+            parser = new ParserInfo(this);
+            CockpitInfo();
+            WheelInfo();
+        }
+
+        private void CockpitInfo()
+        {
+            BlockFilter<IMyCockpit> block_filter = BlockFilter<IMyCockpit>.Create(Me, "*");
+            BlockSystem<IMyCockpit> cockpit = BlockSystem<IMyCockpit>.SearchByFilter(this, block_filter);
+            if (!cockpit.IsEmpty)
+            {
+                IMyCockpit block = cockpit.First;
+                parser.ParserTitle(block);
+                parser.ParserTerminalBlock(block);
+                parser.ParserCockpit(block);
+                parser.ParserShipController(block);
+            }
+        }
+
+        private void WheelInfo()
+        {
+            BlockFilter<IMyMotorSuspension> block_filter = BlockFilter<IMyMotorSuspension>.Create(Me, "M:*");
+            BlockSystem<IMyMotorSuspension> wheel = BlockSystem<IMyMotorSuspension>.SearchByFilter(this, block_filter);
+            if (!wheel.IsEmpty)
+            {
+                IMyMotorSuspension block = wheel.First;
+                parser.ParserTitle(block);
+                parser.ParserTerminalBlock(block);
+                parser.ParserMotorSuspension(block);
+                //parser.ParserCubeBlock(block);
+            }
+        }
+        private void ThrusterInfo()
+        {
             BlockFilter<IMyThrust> block_filter = BlockFilter<IMyThrust>.Create(Me, "C:Up");
             BlockSystem<IMyThrust> thrust = BlockSystem<IMyThrust>.SearchByFilter(this, block_filter);
-            if (!thrust.IsEmpty) {
-                ParserInfo parser = new ParserInfo(this);
+            if (!thrust.IsEmpty)
+            {
                 IMyThrust block = thrust.First;
                 parser.ParserTitle(block);
                 parser.ParserTerminalBlock(block);
@@ -97,7 +132,6 @@ namespace IngameScript
                 parser.ParserCubeBlock(block);
             }
         }
-
         private void Display()
         {
             drawingSurface.WriteText($"Machine Status:{machine_state}", false);

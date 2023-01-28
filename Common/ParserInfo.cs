@@ -48,9 +48,55 @@ namespace IngameScript
                     block.WriteText(message, append);
                 });
             }
-            public void ParserTitle(IMyThrust block)
+            public void ParserTitle(IMyTerminalBlock block)
             {
                 WriteText($"{block.BlockDefinition.SubtypeId}:{block.CustomName}", false);
+            }
+
+            public void ParserCockpit(IMyCockpit block)
+            {
+                WriteText($"=== Cockpit Info ===", true);
+                WriteText($"OxygenCapacity={block.OxygenCapacity}", true);
+                WriteText($"OxygenFilledRatio={block.OxygenFilledRatio}", true);
+            }
+            public void ParserMotorSuspension(IMyMotorSuspension block)
+            {
+                WriteText($"=== Motor Suspension Info ===", true);
+                WriteText($"Steering={block.Steering}", true);
+                WriteText($"Propulsion={block.Propulsion}", true);
+                WriteText($"InvertSteer={block.InvertSteer}", true);
+                WriteText($"InvertPropulsion={block.InvertPropulsion}", true);
+                WriteText($"Strength={block.Strength}", true);
+                WriteText($"Friction={block.Friction}", true);
+                WriteText($"Power={block.Power}", true);
+                WriteText($"Height={block.Height}", true);
+                WriteText($"SteerAngle={block.SteerAngle}", true);
+                WriteText($"MaxSteerAngle={block.MaxSteerAngle}", true);
+                WriteText($"Brake={block.Brake}", true);
+                WriteText($"AirShockEnabled={block.AirShockEnabled}", true);
+            }
+            public void ParserShipController(IMyShipController block)
+            {
+                WriteText($"HasWheels={block.HasWheels}", true);
+                WriteText($"RollIndicator={block.RollIndicator}", true);
+                WriteText($"RotationIndicator={block.RotationIndicator}", true);
+                WriteText($"MoveIndicator={block.MoveIndicator}", true);
+                WriteText($"ShowHorizonIndicator={block.ShowHorizonIndicator}", true);
+                WriteText($"DampenersOverride={block.DampenersOverride}", true);
+                WriteText($"HandBrake={block.HandBrake}", true);
+                WriteText($"ControlThrusters={block.ControlThrusters}", true);
+                WriteText($"ControlWheels={block.ControlWheels}", true);
+                WriteText($"CenterOfMass={block.CenterOfMass}", true);
+                WriteText($"IsMainCockpit={block.IsMainCockpit}", true);
+                WriteText($"CanControlShip={block.CanControlShip}", true);
+                WriteText($"IsUnderControl={block.IsUnderControl}", true);
+                
+                WriteText($"CalculateShipMass={block.CalculateShipMass()}", true);
+                WriteText($"GetArtificialGravity={block.GetArtificialGravity()}", true);
+                WriteText($"GetNaturalGravity={block.GetNaturalGravity()}", true);
+                WriteText($"GetShipSpeed={block.GetShipSpeed()}", true);
+                WriteText($"GetShipVelocities={block.GetShipVelocities()}", true);
+                WriteText($"GetTotalGravity={block.GetTotalGravity()}", true);
             }
             public void ParserThrust(IMyThrust block)
             {
@@ -118,7 +164,6 @@ namespace IngameScript
                 WriteText($"Position={block.Position}", true);
                 WriteText($"DefinitionDisplayNameText={block.DefinitionDisplayNameText}", true);
                 WriteText($"CubeGrid={block.CubeGrid}", true);
-                WriteText($"CheckConnectionAllowed={block.CheckConnectionAllowed}", true);
                 WriteText($"BlockDefinition={block.BlockDefinition}", true);
                 WriteText($"DisassembleRatio={block.DisassembleRatio}", true);
             }
