@@ -32,6 +32,7 @@ namespace IngameScript
             private DisplayPower DisplayPower;
             private DisplayShip DisplayShip;
             private DisplayTank DisplayTank;
+            private int cleanup;
 
             public DisplayLcd(Program program, IMyTextPanel lcd)
             {
@@ -44,6 +45,7 @@ namespace IngameScript
                 this.DisplayPower = new DisplayPower(this);
                 this.DisplayShip = new DisplayShip(this);
                 this.DisplayTank = new DisplayTank(this);
+                this.cleanup = 0;
             }
 
             public void Load(MyIni MyIni)
@@ -66,19 +68,27 @@ namespace IngameScript
                     lcd.CustomData = MyIni.ToString();
                 }
             }
-
             public void Draw()
             {
+                cleanup++;
                 Drawing drawing = new Drawing(lcd);
                 lcd.ScriptBackgroundColor = Color.Black;
                 Vector2 position = drawing.viewport.Position;
 
-                position = DisplayInventory.Draw(drawing, position);
-                position = DisplayDrill.Draw(drawing, position);
-                position = DisplayMachine.Draw(drawing, position);
-                position = DisplayPower.Draw(drawing, position);
-                position = DisplayShip.Draw(drawing, position);
-                DisplayTank.Draw(drawing, position);
+                if (cleanup < 100)
+                {
+                    position = DisplayInventory.Draw(drawing, position);
+                    position = DisplayDrill.Draw(drawing, position);
+                    position = DisplayMachine.Draw(drawing, position);
+                    position = DisplayPower.Draw(drawing, position);
+                    position = DisplayShip.Draw(drawing, position);
+                    position = DisplayTank.Draw(drawing, position);
+                }
+                else
+                {
+                    drawing.Clean();
+                    cleanup = 0;
+                }
 
                 drawing.Dispose();
             }

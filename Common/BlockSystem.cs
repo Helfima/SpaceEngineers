@@ -26,8 +26,14 @@ namespace IngameScript
             protected Program program;
             public List<T> List = new List<T>();
 
-            public BlockSystem(){
+            public BlockSystem()
+            {
                 List = new List<T>();
+            }
+            public BlockSystem(Program program)
+            {
+                this.program = program;
+                this.List = new List<T>();
             }
 
             public static BlockSystem<T> SearchBlocks(Program program, Func<T, bool> collect = null, string info = null)

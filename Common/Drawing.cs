@@ -52,7 +52,6 @@ namespace IngameScript
                 this.viewport = new RectangleF((surfaceProvider.TextureSize - surfaceProvider.SurfaceSize) / 2f, surfaceProvider.SurfaceSize);
                 // Retrieve the Large Display, which is the first surface
                 this.frame = surfaceProvider.DrawFrame();
-
                 Symbol.Add("Cobalt", "Co");
                 Symbol.Add("Nickel", "Ni");
                 Symbol.Add("Magnesium", "Mg");
@@ -70,6 +69,10 @@ namespace IngameScript
             {
                 // We are done with the frame, send all the sprites to the text panel
                 this.frame.Dispose();
+            }
+            public void Clean()
+            {
+                AddForm(new Vector2(), SpriteForm.SquareSimple, viewport.Width, viewport.Height, Color.Black);
             }
 
             public MySprite AddSprite(MySprite sprite)

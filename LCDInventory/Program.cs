@@ -55,8 +55,8 @@ namespace IngameScript
             BlockFilter<IMyTextPanel> block_filter = BlockFilter<IMyTextPanel>.Create(Me, MyProperty.lcd_filter);
             lcds = BlockSystem<IMyTextPanel>.SearchByFilter(this, block_filter);
 
-            BlockFilter<IMyCockpit> cockpit_filter = BlockFilter<IMyCockpit>.Create(Me, MyProperty.lcd_filter);
-            cockpits = BlockSystem<IMyCockpit>.SearchByFilter(this, cockpit_filter);
+            //BlockFilter<IMyCockpit> cockpit_filter = BlockFilter<IMyCockpit>.Create(Me, MyProperty.lcd_filter);
+            //cockpits = BlockSystem<IMyCockpit>.SearchByFilter(this, cockpit_filter);
 
             search = false;
         }
@@ -156,7 +156,7 @@ namespace IngameScript
         private void Display()
         {
             drawingSurface.WriteText($"LCD list size:{lcds.List.Count}\n", false);
-            drawingSurface.WriteText($"Cockpit list size:{cockpits.List.Count}\n", true);
+            //drawingSurface.WriteText($"Cockpit list size:{cockpits.List.Count}\n", true);
         }
 
         private void RunLcd()

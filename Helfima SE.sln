@@ -38,11 +38,17 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestCode", "TestCode\TestCo
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ScreenInventory", "ScreenInventory\ScreenInventory.csproj", "{C9D15519-E5C4-4348-A0D5-05BB0DD173EF}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kinematics", "Kinematics\Kinematics.csproj", "{15442201-5B8F-4EDC-8E52-AC8119B937F2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RobotArm", "RobotArm\RobotArm.csproj", "{2A9E3C3A-669F-4A1B-81DE-45D0CA6148E5}"
+EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		Common\Common.projitems*{15442201-5b8f-4edc-8e52-ac8119b937f2}*SharedItemsImports = 4
 		Common\Common.projitems*{20f0848c-8bb6-4704-9541-105ef12183ff}*SharedItemsImports = 4
 		Common\Common.projitems*{26c7d73a-9406-4097-b261-c019b79440c4}*SharedItemsImports = 4
 		Common\Common.projitems*{27bc44a3-f74b-40ef-993c-57b85755d650}*SharedItemsImports = 4
+		Common\Common.projitems*{2a9e3c3a-669f-4a1b-81de-45d0ca6148e5}*SharedItemsImports = 4
 		Common\Common.projitems*{303e1ebf-1823-4586-aae2-2b30b29a4bc9}*SharedItemsImports = 4
 		Common\Common.projitems*{32a0b0d2-ff96-4fd8-acd2-cdeeb4465e7a}*SharedItemsImports = 4
 		Common\Common.projitems*{3b2939ed-bc04-4197-a79f-4e38dab55b73}*SharedItemsImports = 4
@@ -159,6 +165,21 @@ Global
 		{C9D15519-E5C4-4348-A0D5-05BB0DD173EF}.Release|Any CPU.Build.0 = Release|Any CPU
 		{C9D15519-E5C4-4348-A0D5-05BB0DD173EF}.Release|x64.ActiveCfg = Release|Any CPU
 		{C9D15519-E5C4-4348-A0D5-05BB0DD173EF}.Release|x64.Build.0 = Release|Any CPU
+		{15442201-5B8F-4EDC-8E52-AC8119B937F2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{15442201-5B8F-4EDC-8E52-AC8119B937F2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{15442201-5B8F-4EDC-8E52-AC8119B937F2}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{15442201-5B8F-4EDC-8E52-AC8119B937F2}.Debug|x64.Build.0 = Debug|Any CPU
+		{15442201-5B8F-4EDC-8E52-AC8119B937F2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{15442201-5B8F-4EDC-8E52-AC8119B937F2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{15442201-5B8F-4EDC-8E52-AC8119B937F2}.Release|x64.ActiveCfg = Release|Any CPU
+		{15442201-5B8F-4EDC-8E52-AC8119B937F2}.Release|x64.Build.0 = Release|Any CPU
+		{2A9E3C3A-669F-4A1B-81DE-45D0CA6148E5}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{2A9E3C3A-669F-4A1B-81DE-45D0CA6148E5}.Debug|x64.ActiveCfg = Debug|x64
+		{2A9E3C3A-669F-4A1B-81DE-45D0CA6148E5}.Debug|x64.Build.0 = Debug|x64
+		{2A9E3C3A-669F-4A1B-81DE-45D0CA6148E5}.Release|Any CPU.ActiveCfg = Debug|x64
+		{2A9E3C3A-669F-4A1B-81DE-45D0CA6148E5}.Release|Any CPU.Build.0 = Debug|x64
+		{2A9E3C3A-669F-4A1B-81DE-45D0CA6148E5}.Release|x64.ActiveCfg = Debug|x64
+		{2A9E3C3A-669F-4A1B-81DE-45D0CA6148E5}.Release|x64.Build.0 = Debug|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
