@@ -11,19 +11,31 @@ namespace IngameScript
 {
     public class Console
     {
+        private static Console instance;
+
+        public static Console Instance
+        {
+            get { return instance; }
+        }
+        public static void Initialize(IMyTextSurface drawingSurface)
+        {
+            var console = new Console(drawingSurface);
+            instance = console;
+        }
+
         private IMyTextSurface drawingSurface;
         public Console(IMyTextSurface drawingSurface)
         {
             this.drawingSurface = drawingSurface;
             this.drawingSurface.ContentType = ContentType.TEXT_AND_IMAGE;
         }
-        public void Clear()
+        public static void Clear()
         {
-            drawingSurface.WriteText($"", false);
+            instance.drawingSurface.WriteText($"", false);
         }
-        public void WriteLine(string message)
+        public static void WriteLine(string message)
         {
-            drawingSurface.WriteText($"{message}\n", true);
+            instance.drawingSurface.WriteText($"{message}\n", true);
         }
         public static string RoundVector(Vector3 vector, int decimals)
         {

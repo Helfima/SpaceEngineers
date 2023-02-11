@@ -43,7 +43,7 @@ namespace IngameScript
                 for (int i = 0; i < Joints.Count; i++)
                 {
                     // Rotates around a new axis
-                    var offset = Joints[i].StartOffset;
+                    var offset = Joints[i].Offset;
                     var quaternion = Quaternion.CreateFromAxisAngle(Joints[i].Axis, angles[i]);
                     rotation *= quaternion;
                     Vector3 nextPoint = prevPoint + rotation * offset;
@@ -112,35 +112,7 @@ namespace IngameScript
                     joints[i].TargetAngle = targetAngles[i];
                 }
             }
-            public class RobotJoint
-            {
-                public Vector3 Axis;
-                public Vector3 StartOffset;
-                public Vector3 Position;
-                public float Angle;
-                public float TargetAngle;
-                public float MinAngle;
-                public float MaxAngle;
-                public IMyMotorStator Item;
-
-                public float AngleDeg
-                {
-                    get { return (float)(Angle * 180 / Math.PI); }
-                }
-                public float TargetAngleDeg
-                {
-                    get { return (float)(TargetAngle * 180 / Math.PI); }
-                }
-
-                public void Apply()
-                {
-                    var kp = 1f;
-                    var maxRpm = 1f;
-                    var error = TargetAngle - Angle;
-                    var velocity = MathHelper.Clamp(error* kp, -maxRpm, maxRpm);
-                    Item.TargetVelocityRPM = velocity;
-                }
-            }
+            
         }
     }
 }

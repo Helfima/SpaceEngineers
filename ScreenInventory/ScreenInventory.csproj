@@ -87,9 +87,6 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="data\scripts\Drawing.cs" />
-    <Compile Include="data\scripts\Item.cs" />
-    <Compile Include="data\scripts\Util.cs" />
     <Compile Include="data\scripts\DisplayInventory.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

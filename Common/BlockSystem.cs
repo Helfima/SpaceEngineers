@@ -93,7 +93,7 @@ namespace IngameScript
             }
             public static BlockSystem<T> SearchByGrid(Program program, IMyCubeGrid cubeGrid)
             {
-                return BlockSystem<T>.SearchBlocks(program, block => ((IMyTerminalBlock)block).CubeGrid == cubeGrid);
+                return BlockSystem<T>.SearchBlocks(program, block => ((IMyCubeBlock)block).CubeGrid == cubeGrid);
             }
 
             public static BlockSystem<T> SearchByFilter(Program program, BlockFilter<T> filter)

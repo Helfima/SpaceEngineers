@@ -22,13 +22,13 @@ namespace IngameScript
 {
     partial class Program : MyGridProgram
     {
+        const float PI = (float)Math.PI;
         const UpdateType CommandUpdate = UpdateType.Trigger | UpdateType.Terminal;
         private StateMachine stateMachine = StateMachine.Stopped;
-        private Console console;
         public Program()
         {
             var drawingSurface = Me.GetSurface(0);
-            console = new Console(drawingSurface);
+            Console.Initialize(drawingSurface);
             
             Runtime.UpdateFrequency = UpdateFrequency.Update100;
         }
@@ -55,33 +55,24 @@ namespace IngameScript
         private BlockSystem<IMyTerminalBlock> headers = null;
         private BlockSystem<IMyTerminalBlock> reperes = null;
         private bool search = true;
-        
+
+        private RobotArm robot;
         private void Search()
         {
-            BlockFilter<IMyMotorStator> block_filter = BlockFilter<IMyMotorStator>.Create(Me, "CM:Pivot");
-            base_stator = BlockSystem<IMyMotorStator>.SearchByFilter(this, block_filter);
-
-            //BlockFilter<IMyMotorStator> axe_filter = BlockFilter<IMyMotorStator>.Create(Me, "CM:Axe");
-            axe_stators = new BlockSystem<IMyMotorStator>(this);
-
-            BlockFilter<IMyTerminalBlock> header_filter = BlockFilter<IMyTerminalBlock>.Create(Me, "CM:Header");
-            headers = BlockSystem<IMyTerminalBlock>.SearchByFilter(this, header_filter);
-
-            BlockFilter<IMyTerminalBlock> repere_filter = BlockFilter<IMyTerminalBlock>.Create(Me, "CM:Repere");
-            reperes = BlockSystem<IMyTerminalBlock>.SearchByFilter(this, repere_filter);
-
-            if (base_stator.IsEmpty == false)
-            {
-                FollowArms(base_stator.List[0]);
-            }
-
+            robot = new RobotArm(this, "CM:Pivot");
+            robot.Initialize();
+            robot.AddReperes("CM:Repere");
+            //robot.Display(console);
             search = false;
         }
         private void FollowArms(IMyMotorStator pivot, int index = 1)
         {
             Echo($"Pivot: {pivot.CustomName}");
             var attachable = pivot.Top;
+            
             var blocks = BlockSystem<IMyMotorStator>.SearchByGrid(this, attachable.CubeGrid);
+            //var entities = BlockSystem<IMyCubeBlock>.SearchByGrid(this, attachable.CubeGrid);
+
             var nextPivot = blocks.List.FirstOrDefault();
             if(nextPivot != null)
             {
@@ -90,26 +81,27 @@ namespace IngameScript
                 FollowArms(nextPivot, index + 1);
             }
         }
+        
         private void Display()
         {
-            console.Clear();
-            console.WriteLine($"Pivot list size: {base_stator.List.Count}");
-            console.WriteLine($"Axe list size: {axe_stators.List.Count}");
-            console.WriteLine($"Repere list size: {reperes.List.Count}");
-            console.WriteLine($"Status: {stateMachine}");
+            Console.Clear();
+            Console.WriteLine($"Status: {stateMachine}");
+            if(this.robot != null)
+            {
+                this.robot.Display();
+            }
         }
         private void DisplayRepere()
         {
             if (base_stator.List.Count > 0)
             {
                 var pivot = base_stator.List[0];
-                var worldMatrix = pivot.WorldMatrix;
                 if (reperes.List.Count > 0)
                 {
                     foreach (var repere in reperes.List)
                     {
-                        var positionRepere = Vector3D.Transform(repere.GetPosition(), MatrixD.Invert(worldMatrix));
-                        console.WriteLine($"Repere: {repere.CustomName} Position: {Console.RoundVector(positionRepere, 2)}");
+                        var positionRepere = Vector3D.Transform(repere.GetPosition(), matrixInverse);
+                        Console.WriteLine($"Repere: {repere.CustomName} Position: {Console.RoundVector(positionRepere, 2)}");
                     }
                 }
             }
@@ -117,13 +109,12 @@ namespace IngameScript
         void RunContinuousLogic()
         {
             if (search) Search();
+            //ComputeMatrixInverse();
             Display();
-            DisplayRepere();
+            //DisplayRepere();
             RunRobot();
-            RunZero();
             TestQuaternion();
         }
-
         MyCommandLine commandLine = new MyCommandLine();
         private void RunCommand(string argument)
         {
@@ -144,7 +135,9 @@ namespace IngameScript
                             target.X = float.Parse(x);
                             target.Y = float.Parse(y);
                             target.Z = float.Parse(z);
-                            Target = target;
+
+                            if (this.search) Search();
+                            this.robot.Start(target);
                             stateMachine = StateMachine.Running;
                         }
                         break;
@@ -155,6 +148,7 @@ namespace IngameScript
                         break;
                     case "zero":
                         {
+                            this.robot.StartZero();
                             stateMachine = StateMachine.RotorZero;
                         }
                         break;
@@ -181,6 +175,19 @@ namespace IngameScript
                 }
             }
         }
+        private MatrixD matrixInverse = MatrixD.Identity;
+        private void ComputeMatrixInverse()
+        {
+            if (base_stator.List.Count > 0)
+            {
+                var pivot = base_stator.List[0];
+                var worldMatrix = pivot.WorldMatrix;
+                var worldInverse = MatrixD.Invert(worldMatrix);
+                var pivotQZ = Quaternion.CreateFromAxisAngle(new Vector3(1, 0, 0), -PI / 2);
+                var matrixQZ = MatrixD.Invert(MatrixD.CreateFromQuaternion(pivotQZ));
+                matrixInverse = worldInverse * matrixQZ;
+            }
+        }
 
         private void TestQuaternion()
         {
@@ -189,118 +196,14 @@ namespace IngameScript
             var quaternion = Quaternion.CreateFromAxisAngle(new Vector3(0, 0, 1), PI / 2);
             var matrix = Matrix.CreateFromQuaternion(quaternion);
             var target = quaternion * vector;
-            console.WriteLine($"Origin: {vector}");
-            console.WriteLine($"Quaternion: {quaternion}");
-            console.WriteLine($"Target: {target}");
+            Console.WriteLine($"Origin: {vector}");
+            Console.WriteLine($"Quaternion: {quaternion}");
+            Console.WriteLine($"Target: {target}");
         }
-        private void RunZero()
-        {
-            if (stateMachine != StateMachine.RotorZero) return;
-            var header = headers.List[0];
-            var pivot = base_stator.List[0];
-            var origin = pivot.GetPosition();
-
-            var worldMatrix = pivot.WorldMatrix;
-
-            Vector3D headerPosition = Vector3D.Transform(header.GetPosition(), MatrixD.Invert(worldMatrix));
-
-            var joints = new List<Kinematic.RobotJoint>();
-            // premier rotor
-            var jointPivot = new Kinematic.RobotJoint();
-            jointPivot.Item = pivot;
-            jointPivot.Angle = pivot.Angle;
-            jointPivot.TargetAngle = 0f;
-            jointPivot.Position = new Vector3();
-            jointPivot.MaxAngle = 2 * PI;
-            jointPivot.MinAngle = 0f;
-            jointPivot.StartOffset = new Vector3(0f, 0f, 0f);
-            jointPivot.Axis = new Vector3(0f, 1f, 0f);
-            joints.Add(jointPivot);
-
-            foreach (var axe in axe_stators.List)
-            {
-                var positionAxe = Vector3D.Transform(axe.GetPosition(), MatrixD.Invert(worldMatrix));
-                var jointAxe = new Kinematic.RobotJoint();
-                jointAxe.Item = axe;
-                jointAxe.Angle = axe.Angle;
-                jointAxe.TargetAngle = MathHelper.ToRadians(5);
-                jointAxe.Position = positionAxe;
-                jointAxe.MaxAngle = PI / 4;
-                jointAxe.MinAngle = -PI / 4;
-                jointAxe.StartOffset = new Vector3(5f, 0f, 0f);
-                jointAxe.Axis = new Vector3(0f, 1f, 0f);
-                joints.Add(jointAxe);
-            }
-
-            console.WriteLine($"Origin: {Console.RoundVector(origin, 2)}");
-            console.WriteLine($"Header: {Console.RoundVector(headerPosition, 2)}");
-            console.WriteLine($"Target: {Target}");
-            foreach (var joint in joints)
-            {
-                console.WriteLine($"Item: {joint.Item.CustomName} Angle: {joint.AngleDeg} TargetAngle: {joint.TargetAngleDeg}");
-                joint.Apply();
-            }
-        }
-
-        private Vector3 Target = new Vector3(0, 5, 5);
-        const float PI = (float)Math.PI;
         private void RunRobot()
         {
-            if (stateMachine != StateMachine.Running) return;
-            var header = headers.List[0];
-            var pivot = base_stator.List[0];
-            var origin = pivot.GetPosition();
-
-            var worldMatrix = pivot.WorldMatrix;
-
-            Vector3D headerPosition = Vector3D.Transform(header.GetPosition(), MatrixD.Invert(worldMatrix));
-
-            var joints = new List<Kinematic.RobotJoint>();
-            // premier rotor
-            var jointPivot = new Kinematic.RobotJoint();
-            jointPivot.Item = pivot;
-            jointPivot.Angle = pivot.Angle;
-            jointPivot.Position = new Vector3();
-            jointPivot.MaxAngle = 2*PI;
-            jointPivot.MinAngle = 0f;
-            jointPivot.StartOffset = new Vector3(0f, 2.5f, 0f);
-            jointPivot.Axis = new Vector3(0f, 1f, 0f);
-            joints.Add(jointPivot);
-
-            foreach(var axe in axe_stators.List)
-            {
-                var positionAxe = Vector3D.Transform(axe.GetPosition(), MatrixD.Invert(worldMatrix));
-                var jointAxe = new Kinematic.RobotJoint();
-                jointAxe.Item = axe;
-                jointAxe.Angle = axe.Angle;
-                jointAxe.MaxAngle = PI / 4;
-                jointAxe.MinAngle = -PI / 4;
-                jointAxe.Position = positionAxe;
-                jointAxe.StartOffset = new Vector3(0f, 5f, 0f); // decalage de tête
-                jointAxe.Axis = new Vector3(1f, 0f, 0f);
-                joints.Add(jointAxe);
-            }
-            // calcul decalage
-            for (var i = 1; i < (joints.Count - 1); i++)
-            {
-                var current = joints[i];
-                var next = joints[i + 1];
-                var distance = Vector3.Distance(current.Position, next.Position);
-                current.StartOffset = new Vector3(0f, distance, 0f);
-            }
-
-            console.WriteLine($"Origin: {Console.RoundVector(origin,2)}");
-            console.WriteLine($"Header: {Console.RoundVector(headerPosition, 2)}");
-            console.WriteLine($"Target: {Target}");
-            var kinematic = new Kinematic(console);
-            kinematic.InverseKinematics(Target, joints);
-            foreach (var joint in joints)
-            {
-                console.WriteLine($"Item: {joint.Item.CustomName} Position: {Console.RoundVector(joint.Position, 2)} TargetAngle: {joint.TargetAngleDeg}");
-                joint.Apply();
-            }
-
-            
+            if (this.robot == null) return;
+            this.robot.Run();
         }
         
         private void DiplayGetType(string name)
@@ -331,7 +234,8 @@ namespace IngameScript
             Running,
             RotorZero,
             Waitting,
-            Quaternion
+            Quaternion,
+            TestRobotArm
         }
     }
 }
