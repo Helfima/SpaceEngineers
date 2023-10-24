@@ -133,7 +133,6 @@ namespace IngameScript
             }
             public void Display()
             {
-                Console.WriteLine($"Target: {Console.RoundVector(target, 2)}");
                 if (reperes != null && reperes.Count > 0)
                 {
                     Console.WriteLine($"Number of Reperes: {reperes.Count}");
@@ -143,7 +142,11 @@ namespace IngameScript
                         Console.WriteLine($"Repere: {repere.CustomName} Position: {Console.RoundVector(positionRepere, 2)}");
                     }
                 }
-                if(joints != null && joints.Count > 0)
+                //Console.WriteLine($"Up: {Console.RoundVector(Vector3.Up, 2)} Down: {Console.RoundVector(Vector3.Down, 2)}");
+                //Console.WriteLine($"Left: {Console.RoundVector(Vector3.Left, 2)} Right: {Console.RoundVector(Vector3.Right, 2)}");
+                //Console.WriteLine($"Forward: {Console.RoundVector(Vector3.Forward, 2)} Backward: {Console.RoundVector(Vector3.Backward, 2)}");
+                Console.WriteLine($"Target: {Console.RoundVector(target, 2)}");
+                if (joints != null && joints.Count > 0)
                 {
                     var header = this.joints.FirstOrDefault(x => x.IsHeader);
                     if(header != null)
@@ -154,7 +157,13 @@ namespace IngameScript
                     var distance = Vector3.Distance(header.PositionHeader, target);
                     Console.WriteLine($"Distance: {distance}");
                     Console.WriteLine($"Number of Axis: {joints.Count}");
-                    kinematic.SimpleRotation(target, joints[0]);
+
+                    var path = this.paths.Next();
+                    if (path != null)
+                    {
+                        Console.WriteLine($"Path Target: {Console.RoundVector(path.Target, 2)} Distance:{this.paths.Distance()} Paths:{this.paths.Count}");
+                    }
+
                     foreach (var joint in joints)
                     {
                         Console.WriteLine($"Joint: {joint.Pivot.CustomName} Angle: {Math.Round(joint.AngleDeg, 2)} TargetAngle: {Math.Round(joint.TargetAngleDeg, 2)} Position: {Console.RoundVector(joint.Position, 2)} Offset: {Console.RoundVector(joint.Offset, 2)}");
@@ -169,10 +178,11 @@ namespace IngameScript
             }
 
             private Vector3 target = Vector3.Zero;
+            private RobotPaths paths = new RobotPaths();
             public void Start(Vector3 target)
             {
                 this.target = target != null ? target : Vector3.Zero;
-                
+                this.paths.SetTarget(target, this.joints);
                 this.state = RobotState.Moving;
             }
             public void StartZero()
@@ -197,13 +207,20 @@ namespace IngameScript
                     joint.ApplyOrigin();
                 }
             }
+            
             private void RunMoving()
             {
                 if (state != RobotState.Moving) return;
-                kinematic.Compute(target, this.joints);
+                var path = this.paths.Next();
+                if(path == null)
+                {
+                    state = RobotState.Idle;
+                    return;
+                }
+                kinematic.Compute(path, this.joints);
                 foreach (var joint in this.joints)
                 {
-                    joint.Apply();
+                    joint.Apply(path.Speed);
                 }
             }
         }

@@ -30,7 +30,7 @@ namespace IngameScript
             var drawingSurface = Me.GetSurface(0);
             Console.Initialize(drawingSurface);
             
-            Runtime.UpdateFrequency = UpdateFrequency.Update100;
+            Runtime.UpdateFrequency = UpdateFrequency.Update10;
         }
 
         public void Save()
@@ -44,7 +44,7 @@ namespace IngameScript
             {
                 RunCommand(argument);
             }
-            if ((updateType & UpdateType.Update100) != 0)
+            if ((updateType & UpdateType.Update10) != 0)
             {
                 RunContinuousLogic();
             }
@@ -91,27 +91,11 @@ namespace IngameScript
                 this.robot.Display();
             }
         }
-        private void DisplayRepere()
-        {
-            if (base_stator.List.Count > 0)
-            {
-                var pivot = base_stator.List[0];
-                if (reperes.List.Count > 0)
-                {
-                    foreach (var repere in reperes.List)
-                    {
-                        var positionRepere = Vector3D.Transform(repere.GetPosition(), matrixInverse);
-                        Console.WriteLine($"Repere: {repere.CustomName} Position: {Console.RoundVector(positionRepere, 2)}");
-                    }
-                }
-            }
-        }
         void RunContinuousLogic()
         {
             if (search) Search();
             //ComputeMatrixInverse();
             Display();
-            //DisplayRepere();
             RunRobot();
             TestQuaternion();
         }

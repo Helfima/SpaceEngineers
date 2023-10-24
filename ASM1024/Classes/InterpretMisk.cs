@@ -22,15 +22,25 @@ namespace IngameScript
 {
     partial class Program
     {
-        public class InstructionDef : Instruction
+        public class InterpretMisk
         {
-            public const string Name = "Def";
-
-            public override void Execute()
+            public static void AppendWords(Dictionary<string, InstructionType> words)
             {
-                
-                NextIndex();
+                foreach (var item in Enum.GetValues(typeof(MiskWords)))
+                {
+                    words.Add(item.ToString(), InstructionType.Misc);
+                }
             }
+        }
+
+        
+
+        enum MiskWords
+        {
+            alias,
+            define,
+            yield,
+            move
         }
     }
 }

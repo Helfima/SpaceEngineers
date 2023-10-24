@@ -28,7 +28,7 @@ namespace IngameScript
 
             private List<Instruction> Instructions = new List<Instruction>();
 
-            private Dictionary<string, Object> Vars;
+            private Dictionary<string, object> Vars;
 
             private int Line = 0;
 

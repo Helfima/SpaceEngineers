@@ -30,14 +30,16 @@ namespace IngameScript
                 if (pivot is IMyMotorAdvancedStator)
                 {
                     this.MaxAngle = MathHelper.ToRadians(85);
-                    this.MinAngle = MathHelper.ToRadians(0);
-                    this.Axis = new Vector3(1f, 0f, 0f);
+                    this.MinAngle = MathHelper.ToRadians(-85);
+                    // vector X
+                    this.Axis = Vector3.Right;
                 }
                 else
                 {
                     this.MaxAngle = 2 * PI;
                     this.MinAngle = - 2 * PI;
-                    this.Axis = new Vector3(0f, -1f, 0f);
+                    // vector -Y
+                    this.Axis = Vector3.Down;
                     this.deltaAngle = 0;
                 }
                 if (parent != null)
@@ -196,6 +198,23 @@ namespace IngameScript
                     this.Offset = new Vector3(0, distance, 0);
                 }
             }
+            public void StatorRotation(Vector3 target)
+            {
+                var PI = (float)Math.PI;
+                var origin = this.Position;
+                // projection sur la vertical Y
+                var pointOnPlane = Vector3.ProjectOnPlane(ref target, ref Vector3.Up);
+                pointOnPlane.Normalize();
+                // angle avec le vecteur Z
+                var dot = Vector3.Dot(Vector3.Backward, pointOnPlane);
+                var angle = Math.Acos(dot);
+                if (dot > 0)
+                {
+                    angle = 2 * PI - angle;
+                }
+                Console.WriteLine($"Angle: {MathHelper.ToDegrees(angle)}, dot: {dot}");
+                this.TargetAngle = (float)angle;
+            }
             #endregion
 
             #region ====== Actions ======
@@ -203,21 +222,30 @@ namespace IngameScript
             {
                 Rotate(MathHelper.ToRadians(10));
             }
-            public void Apply()
+            public void Apply(float speed)
             {
-                Rotate(this.TargetAngle);
+                Rotate(this.TargetAngle, speed);
+            }
+            private void Rotate(float targetAngle, float speed)
+            {
+                var kp = 5f;
+                var error = targetAngle - Angle;
+                PreviousError = error;
+                var cmd = error * kp;
+                var velocity = MathHelper.Clamp(cmd, -speed, speed);
+                Pivot.TargetVelocityRPM = velocity;
             }
             public float PreviousError;
             private void Rotate(float targetAngle)
             {
                 var kp = 5f;
                 var maxRpm = 1f;
+                if(IsRoot) maxRpm = 5f;
                 var error = targetAngle - Angle;
                 PreviousError = error;
                 var cmd = error * kp;
                 var velocity = MathHelper.Clamp(cmd, -maxRpm, maxRpm);
                 Pivot.TargetVelocityRPM = velocity;
-                Console.WriteLine($"Rotate {pivot.CustomName} error={targetAngle}-{Angle}");
             }
             #endregion
         }

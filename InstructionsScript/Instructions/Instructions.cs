@@ -19,9 +19,7 @@ namespace IngameScript
 
             public List<Instruction> Children = new List<Instruction>();
 
-            private List<Instruction> WhileItems = new List<Instruction>();
-
-            public Dictionary<string, Object> Vars = new Dictionary<string, object>();
+            public Dictionary<string, object> Vars = new Dictionary<string, object>();
 
             public StateBasic State = StateBasic.None;
 
@@ -36,7 +34,6 @@ namespace IngameScript
                 Index = 0;
                 Vars.Clear();
                 Children.Clear();
-                WhileItems.Clear();
                 Parse(myProgram.Me.CustomData);
             }
 
@@ -177,16 +174,6 @@ namespace IngameScript
                         break;
                     case InstructionSet.Name:
                         instanciated = new InstructionSet();
-                        break;
-                    case InstructionWhile.Name:
-                        instanciated = new InstructionWhile();
-                        WhileItems.Add(instanciated);
-                        break;
-                    case InstructionEndWhile.Name:
-                        instanciated = new InstructionEndWhile();
-                        var whileItem = WhileItems.Pop();
-                        whileItem.ReturnIndex = index + 1;
-                        instanciated.ReturnIndex = whileItem.Index;
                         break;
                 }
                 instanciated.Deep = deep;

@@ -28,15 +28,9 @@ namespace IngameScript
             {
             }
 
-            private float DistanceThreshold = 0.05f;
-            private float SamplingDistance = 0.05f;
-            private float LearningRate = 0.01f;
-            private int limitLoop = 50;
-            private int loop = 0;
-            public int Loop
-            {
-                get { return this.loop; }
-            }
+            private float DistanceThreshold = 0.1f;
+            private float SamplingDistance = 0.025f;
+            private float LearningRate = 1f;
 
             private Vector3 ForwardKinematics(List<RobotJoint> joints)
             {
@@ -87,16 +81,10 @@ namespace IngameScript
 
             private void InverseKinematics(Vector3 target, List<RobotJoint> joints)
             {
-                if (this.loop > this.limitLoop) return;
                 if (DistanceFromTarget(target, joints) < this.DistanceThreshold) return;
                 for (int i = joints.Count - 1; i >= 0; i--)
                 {
                     var joint = joints[i];
-                    //if (joint.IsRoot)
-                    //{
-                    //    SimpleRotation(target, joint);
-                    //    continue;
-                    //}
                     // Gradient descent
                     // Update : Solution -= LearningRate * Gradient
                     float gradient = PartialGradient(target, joints, i);
@@ -108,34 +96,34 @@ namespace IngameScript
                     // Early termination
                     if (DistanceFromTarget(target, joints) < this.DistanceThreshold) return;
                 }
-                //this.loop++;
-                //InverseKinematics(target, joints);
             }
-            public void SimpleRotation(Vector3 target, RobotJoint joint)
-            {
-                var PI = (float) Math.PI;
-                var origin = joint.Position;
-                var vectorX = new Vector3(1, 0, 0);
-                var vectorY = new Vector3(0, 1, 0);
-                var vectorZ = new Vector3(0, 0, 1);
-                var pointOnPlane = Vector3.ProjectOnPlane(ref target, ref vectorY);
-                pointOnPlane.Normalize();
-                var dot = Vector3.Dot(vectorZ, pointOnPlane);
-                var angle = Math.Acos(dot);
-                if (dot > 0)
-                {
-                    angle = 2 * PI - angle;
-                }
-                Console.WriteLine($"Angle: {MathHelper.ToDegrees(angle)}, dot: {dot}");
-                //joint.TargetAngle = (float) angle;
-            }
+            
             public void Compute(Vector3 target, List<RobotJoint> joints)
             {
-                foreach(var joint in joints)
+                joints[0].StatorRotation(target);
+                var otherJoints = joints.Skip(1).ToList();
+                foreach (var joint in otherJoints)
                 {
                     joint.TargetAngle = joint.Angle;
                 }
-                InverseKinematics(target, joints);
+                InverseKinematics(target, otherJoints);
+            }
+            
+            // Vector3.Up = X:0 Y:1 Z:0
+            // Vector3.Down = X:0 Y:-1 Z:0
+            // Vector3.Right = X:1 Y:0 Z:0
+            // Vector3.Left = X:-1 Y:0 Z:0
+            // Vector3.Forward = X:0 Y:0 Z:-1
+            // Vector3.Backward = X:0 Y:0 Z:1
+            public void Compute(RobotPath path, List<RobotJoint> joints)
+            {
+                joints[0].StatorRotation(path.Target);
+                var otherJoints = joints.Skip(1).ToList();
+                foreach (var joint in otherJoints)
+                {
+                    joint.TargetAngle = joint.Angle;
+                }
+                InverseKinematics(path.Target, otherJoints);
             }
         }
     }
