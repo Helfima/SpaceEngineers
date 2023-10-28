@@ -77,7 +77,11 @@ namespace IngameScript
                 }
                 myProgram.drawingSurface.WriteText(String.Join("\n", logger));
             }
-
+            public void ExecuteLabel(string name)
+            {
+                var adress = Labels[name];
+                Index = adress;
+            }
             public void Start()
             {
                 State = StateBasic.Running;
@@ -149,6 +153,7 @@ namespace IngameScript
                 } catch (Exception ex)
                 {
                     Log($"Instruction error {Index}: {ex.Message}");
+                    Log(ex.StackTrace);
                     State = StateBasic.Completing;
                 }
             }

@@ -74,11 +74,9 @@ namespace IngameScript
                     case "infos":
                         GetInformation(commandLine.Argument(1));
                         break;
-                    case "get_actions":
-                        GetActions(commandLine.Argument(1));
-                        break;
-                    case "get_properties":
-                        GetProperties(commandLine.Argument(1));
+                    case "execute":
+                        instructions.Start();
+                        instructions.ExecuteLabel(commandLine.Argument(1));
                         break;
                     case "reset":
                         Init();
@@ -119,36 +117,6 @@ namespace IngameScript
                     infos.AppendLine($"{property.Id}: {property.TypeName}");
                 }
                 item.CustomData = infos.ToString();
-            }
-        }
-        private void GetActions(string filter)
-        {
-            BlockFilter<IMyTerminalBlock> block_filter = BlockFilter<IMyTerminalBlock>.Create(Me, filter);
-            var items = BlockSystem<IMyTerminalBlock>.SearchByFilter(this, block_filter);
-            if (items.IsEmpty == false)
-            {
-                var item = items.First;
-                List<ITerminalAction> actions = new List<ITerminalAction>();
-                item.GetActions(actions);
-                foreach (var action in actions)
-                {
-                    Echo($"{action.Id}: {action.Name}");
-                }
-            }
-        }
-        private void GetProperties(string filter)
-        {
-            BlockFilter<IMyTerminalBlock> block_filter = BlockFilter<IMyTerminalBlock>.Create(Me, filter);
-            var items = BlockSystem<IMyTerminalBlock>.SearchByFilter(this, block_filter);
-            if (items.IsEmpty == false)
-            {
-                var item = items.First;
-                List<ITerminalProperty> properties = new List<ITerminalProperty>();
-                item.GetProperties(properties);
-                foreach (var property in properties)
-                {
-                    Echo($"{property.Id}: {property.TypeName}");
-                }
             }
         }
         void RunContinuousLogic()

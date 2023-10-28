@@ -1,17 +1,8 @@
-device lamp lamp
-device hinge M:Charnière
-device rotor M:Rotor
-device piston M:Piston
+device hinge "M:Charnière Test"
+device lamp "M:Gyrophare"
 
 define max_angle 45
 define min_angle -45
-
-store piston UpperLimit 8
-store piston LowerLimit 2
-
-store rotor RotorLock 1
-store rotor UpperLimit max_angle
-store rotor LowerLimit min_angle
 
 store hinge UpperLimit max_angle
 store hinge LowerLimit min_angle
@@ -22,21 +13,31 @@ start:
 	yield
 	beqal stage 0 hinge_down
 	beqal stage 1 hinge_up
+	jal gyro_color
 j start
 
+gyro_color:
+	load temp hinge Angle 3
+	add temp temp 45
+	div temp temp 90
+	colorRainbow lamp Color temp
+j ra
+
 hinge_down:
-	store hinge Velocity -0.5
+	action lamp On 1
+	store hinge Velocity -2
 	load temp hinge Angle 3
 	print temp
-	bna temp -45 0.5 ra
+	bna temp min_angle 0.01 ra
 	move stage 1
 j ra
 
 hinge_up:
-	store hinge Velocity 0.5
+	action lamp On 1
+	store hinge Velocity 2
 	load temp hinge Angle 3
 	print temp
-	bna temp 45 0.5 ra
+	bna temp max_angle 0.01 ra
 	move stage 0
 j ra
 

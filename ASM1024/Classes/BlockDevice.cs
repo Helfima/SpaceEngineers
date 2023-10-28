@@ -18,6 +18,7 @@ using VRage.Game.ModAPI.Ingame.Utilities;
 using VRage.Game.ObjectBuilders.Definitions;
 using VRageMath;
 using static IngameScript.Program;
+using static VRage.Game.MyObjectBuilder_CurveDefinition;
 
 namespace IngameScript
 {
@@ -30,25 +31,21 @@ namespace IngameScript
             {
                 this.instruction = instruction;
             }
-
+            public void SetColor(BlockSystem<IMyTerminalBlock> devices, string name, int r, int g, int b, int a)
+            {
+                if (devices.IsEmpty) return;
+                foreach (IMyTerminalBlock block in devices.List)
+                {
+                    var color = new Color(r, g, b, a);
+                    block.SetValueColor(name, color);
+                }
+            }
             public void ApplyAction(BlockSystem<IMyTerminalBlock> devices, string name)
             {
                 if (devices.IsEmpty) return;
                 foreach (IMyTerminalBlock block in devices.List)
                 {
-                    switch (name)
-                    {
-                        case "Lock":
-                        case "Unlock":
-                            {
-                                block.SetValueBool("RotorLock", name == "Lock");
-                                block.SetValueBool("HingeLock", name == "Lock");
-                            }
-                            break;
-                        default:
-                            block.ApplyAction(name);
-                            break;
-                    }
+                    block.ApplyAction(name);
                 }
             }
             public void SetProperty(BlockSystem<IMyTerminalBlock> devices, string name, double value)
@@ -58,6 +55,11 @@ namespace IngameScript
                 {
                     switch (name)
                     {
+                        case "On":
+                            {
+                                block.SetValueBool("OnOff", value >= 1);
+                            }
+                            break;
                         case "Lock":
                             {
                                 block.SetValueBool("RotorLock", value >= 1);
@@ -66,22 +68,29 @@ namespace IngameScript
                             break;
                         default:
                             var property = block.GetProperty(name);
-                            instruction.Parent.Log($"Property: {property.Id} / {property.TypeName} / {value}");
-                            switch (property.TypeName)
+                            if (property != null)
                             {
-                                case "Boolean":
-                                    block.SetValueBool(property.Id, value >= 1);
-                                    break;
-                                case "Single":
-                                    block.SetValueFloat(property.Id, (float) value);
-                                    break;
-                                case "Color":
-                                    var r = 1;
-                                    var g = 1;
-                                    var b = 1;
-                                    var color = new Color(r, g, b);
-                                    block.SetValueColor(property.Id, color);
-                                    break;
+                                instruction.Parent.Log($"Property: {property.Id} / {property.TypeName} / {value}");
+                                switch (property.TypeName)
+                                {
+                                    case "Boolean":
+                                        block.SetValueBool(property.Id, value >= 1);
+                                        break;
+                                    case "Single":
+                                        block.SetValueFloat(property.Id, (float)value);
+                                        break;
+                                    case "Color":
+                                        var r = 1;
+                                        var g = 1;
+                                        var b = 1;
+                                        var color = new Color(r, g, b);
+                                        block.SetValueColor(property.Id, color);
+                                        break;
+                                }
+                            }
+                            else
+                            {
+                                throw new Exception("Wrong property name");
                             }
                             break;
                     }
@@ -95,9 +104,16 @@ namespace IngameScript
                 {
                     switch (name)
                     {
+                        case "On":
+                            {
+                                var valueBool = block.GetValueBool("OnOff");
+                                var value = valueBool ? 1d : 0d;
+                                values.Add(value);
+                            }
+                            break;
                         case "Angle":
                             {
-                                if(block is IMyMotorStator)
+                                if (block is IMyMotorStator)
                                 {
                                     var stator = (IMyMotorStator)block;
                                     var value = (double)stator.Angle;
@@ -107,7 +123,22 @@ namespace IngameScript
                                 {
                                     throw new Exception("Angle not a property");
                                 }
-                                
+
+                            }
+                            break;
+                        case "Position":
+                            {
+                                if (block is IMyPistonBase)
+                                {
+                                    var piston = (IMyPistonBase)block;
+                                    var value = (double)piston.CurrentPosition;
+                                    values.Add(value);
+                                }
+                                else
+                                {
+                                    throw new Exception("Position not a property");
+                                }
+
                             }
                             break;
                         case "Lock":
@@ -178,6 +209,45 @@ namespace IngameScript
                 }
                 return 0d;
             }
+            public double InventoryDevice(BlockSystem<IMyTerminalBlock> devices, int index, string property, AggregationType aggregation)
+            {
+                if (devices.IsEmpty) return 0;
+                var values = new List<double>();
+                foreach (IMyTerminalBlock block in devices.List)
+                {
+                    double count = 0;
+                    IMyInventory drill_inventory = block.GetInventory(index);
+                    List<MyInventoryItem> items = new List<MyInventoryItem>();
+                    drill_inventory.GetItems(items);
+                    //instruction.Parent.Log($"MyInventoryItem: {items.Count}");
+                    foreach (MyInventoryItem item in items)
+                    {
+                        switch (property)
+                        {
+                            case "Amount":
+                                double amount = 0;
+                                Double.TryParse(item.Amount.ToString(), out amount);
+                                count += amount;
+                                //instruction.Parent.Log($"Amount: {amount}");
+                                break;
+                        }
+                    }
+                    values.Add(count);
+                }
+                
+                switch (aggregation)
+                {
+                    case AggregationType.Average:
+                        return values.Average();
+                    case AggregationType.Sum:
+                        return values.Sum();
+                    case AggregationType.Maximum:
+                        return values.Max();
+                    case AggregationType.Minimum:
+                        return values.Min();
+                }
+                return 0d;
+            }
 
             public double LoadDevice(BlockSystem<IMyTerminalBlock> devices, string property, AggregationType aggregation)
             {
@@ -198,31 +268,20 @@ namespace IngameScript
                         break;
                 }
             }
-            public void ActionDevice(BlockSystem<IMyTerminalBlock> devices, string property, double value)
+            public void ActionDevice(BlockSystem<IMyTerminalBlock> devices, string property)
             {
                 switch (property)
                 {
-                    case "on":
-                        {
-                            var action = value >= 1 ? "OnOff_On" : "OnOff_Off";
-                            ApplyAction(devices, action);
-                        }
-                        break;
-                    case "lock":
-                        {
-                            var action = value >= 1 ? "Lock" : "Unlock";
-                            ApplyAction(devices, action);
-                        }
-                        break;
                     default:
                         {
                             var isAction = devices.First.HasAction(property);
                             if (isAction)
                             {
-                                if (value >= 1)
-                                {
-                                    ApplyAction(devices, property);
-                                }
+                                ApplyAction(devices, property);
+                            }
+                            else
+                            {
+                                throw new Exception("Wrong action name");
                             }
                         }
                         break;

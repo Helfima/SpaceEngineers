@@ -63,6 +63,19 @@ namespace IngameScript
                             //instruction.Parent.Log($"device: {device.List.Count} name:{a} mode:{b} {r}:{result}");
                         }
                         break;
+                    case DeviceWords.inventory:
+                        {
+                            var r = instruction.GetArgumentString(1);
+                            var device = instruction.GetArgumentDevice<IMyTerminalBlock>(2);
+                            var a = instruction.GetArgumentInt(3);
+                            var b = instruction.GetArgumentString(4);
+                            var c = instruction.GetArgumentInt(5);
+                            AggregationType aggregation = (AggregationType)c;
+                            var result = blockDevice.InventoryDevice(device, a, b, aggregation);
+                            instruction.SetVar(r, result);
+                            //instruction.Parent.Log($"device: {device.List.Count} name:{a} mode:{b} {r}:{result}");
+                        }
+                        break;
                     case DeviceWords.store:
                         {
                             var device = instruction.GetArgumentDevice<IMyTerminalBlock>(1);
@@ -76,9 +89,30 @@ namespace IngameScript
                         {
                             var device = instruction.GetArgumentDevice<IMyTerminalBlock>(1);
                             var a = instruction.GetArgumentString(2);
-                            var b = instruction.GetArgumentDouble(3);
-                            blockDevice.ActionDevice(device, a, b);
+                            blockDevice.ActionDevice(device, a);
                             //instruction.Parent.Log($"device: {device.List.Count} action:{a} value:{b}");
+                        }
+                        break;
+                    case DeviceWords.color:
+                        {
+                            var device = instruction.GetArgumentDevice<IMyTerminalBlock>(1);
+                            var name = instruction.GetArgumentString(2);
+                            var r = instruction.GetArgumentInt(3);
+                            var g = instruction.GetArgumentInt(4);
+                            var b = instruction.GetArgumentInt(5);
+                            var a = instruction.GetArgumentInt(6);
+                            blockDevice.SetColor(device, name, r, g, b, a);
+                            //instruction.Parent.Log($"device: {device.List.Count} action:{a} value:{b}");
+                        }
+                        break;
+                    case DeviceWords.colorrainbow:
+                        {
+                            var device = instruction.GetArgumentDevice<IMyTerminalBlock>(1);
+                            var name = instruction.GetArgumentString(2);
+                            var r = instruction.GetArgumentDouble(3);
+                            var color = ColorHelper.Rainbow(r);
+                            blockDevice.SetColor(device, name, color.R, color.G, color.B, color.A);
+                            instruction.Parent.Log($"device: {device.List.Count} rainbow:{r} color:{color}");
                         }
                         break;
                 }
@@ -92,7 +126,10 @@ namespace IngameScript
             device,
             load,
             store,
-            action
+            action,
+            color,
+            colorrainbow,
+            inventory
         }
     }
 }

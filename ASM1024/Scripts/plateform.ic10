@@ -1,0 +1,181 @@
+device block_fixes "MG:Bloc de fusion Fixes"
+device block_mobiles "MG:Bloc de fusion Mobiles"
+
+device hinge_fixes "MG:Charnière Fixes"
+device hinge_mobiles "MG:Charnière Mobiles"
+
+device pistons_elevator "MG:Pistons Elevateur"
+
+device connector_mobile "M:Connecteur Mobile"
+
+device drills "MG:Drills"
+device hinge_drills "M:Charnière Drills"
+
+define min_angle 0
+define max_angle 80
+
+mul delta_piston 0.15 2
+sub min_piston 2.5 delta_piston
+div min_piston min_piston 2
+
+sub max_piston 20 2.5
+div max_piston max_piston 2
+add max_piston max_piston min_piston
+
+store hinge_fixes UpperLimit max_angle
+store hinge_fixes LowerLimit min_angle
+store hinge_mobiles UpperLimit max_angle
+store hinge_mobiles LowerLimit min_angle
+store pistons_elevator UpperLimit max_piston
+store pistons_elevator LowerLimit min_piston
+
+define min_hinge_drill -15
+define max_hinge_drill 15
+store hinge_drills UpperLimit max_hinge_drill
+store hinge_drills LowerLimit min_hinge_drill
+
+move stage 0
+move drill_velocity 1
+
+start:
+	yield
+#	beqal stage 0 hinge_down
+#	beqal stage 1 hinge_up
+	inventory temp drills 0 Amount 1
+	print temp
+j start
+
+fixes_lock:
+	store block_fixes On 1
+	store hinge_fixes Velocity -1
+	load temp hinge_fixes Angle 3
+	print temp
+	bna temp min_angle 0.01 ra
+	move stage 1
+j ra
+
+fixes_unlock:
+	store block_fixes On 0
+	store hinge_fixes Velocity 1
+	load temp hinge_fixes Angle 3
+	print temp
+	bna temp max_angle 0.01 ra
+	move stage 1
+j ra
+
+mobiles_lock:
+	store block_mobiles On 1
+	store hinge_mobiles Velocity -1
+	load temp hinge_mobiles Angle 3
+	print temp
+	bge temp 1 ra
+	action connector_mobile Lock
+	move stage 1
+j ra
+
+mobiles_unlock:
+	action connector_mobile Unlock
+	store block_mobiles On 0
+	store hinge_mobiles Velocity 1
+	load temp hinge_mobiles Angle 3
+	print temp
+	bna temp max_angle 0.01 ra
+	move stage 1
+j ra
+
+pistons_up:
+	store pistons_elevator Velocity 1
+	load temp pistons_elevator Position 3
+	print temp
+	bna temp max_piston 0.01 ra
+	move stage 1
+j ra
+
+pistons_down:
+	store pistons_elevator Velocity -0.1
+	load temp pistons_elevator Position 3
+	print temp
+	bna temp min_piston 0.01 ra
+	move stage 1
+j ra
+
+execute_fixes_lock:
+	yield
+	move stage 0
+	jal fixes_lock
+	beq stage 0 execute_fixes_lock
+j end
+
+execute_fixes_unlock:
+	yield
+	move stage 0
+	jal fixes_unlock
+	beq stage 0 execute_fixes_unlock
+j end
+
+execute_mobiles_lock:
+	yield
+	move stage 0
+	jal mobiles_lock
+	beq stage 0 execute_mobiles_lock
+j end
+
+execute_mobiles_unlock:
+	yield
+	move stage 0
+	jal mobiles_unlock
+	beq stage 0 execute_mobiles_unlock
+j end
+
+execute_pistons_up:
+	yield
+	move stage 0
+	jal pistons_up
+	jal stop_drills
+	beq stage 0 execute_pistons_up
+j end
+
+execute_pistons_down:
+	yield
+	move stage 0
+	jal pistons_down
+	jal move_drills
+	beq stage 0 execute_pistons_down
+j end
+
+move_drills:
+	store drills On 1
+	store hinge_drills Velocity drill_velocity
+	sge temp drill_velocity 0
+	select limit_hinge_drill temp max_hinge_drill min_hinge_drill
+	load temp hinge_drills Angle 3
+	bna temp limit_hinge_drill 0.01 ra
+	mul drill_velocity drill_velocity -1
+j ra
+
+stop_drills:
+	load temp hinge_drills Velocity 3
+	beq temp 0 ra
+	load angle hinge_drills Angle 3
+	sgt temp angle 0
+	select drill_velocity temp -1 1
+	store hinge_drills Velocity drill_velocity
+	abs temp angle
+	bgt temp 1 ra
+	store hinge_drills Velocity 0
+	store drills On 0
+j ra
+
+execute_drills_start:
+	yield
+	store hinge_drills Velocity -1
+	load temp hinge_drills Angle 3
+	bna temp min_hinge_drill 0.01 execute_drills_start
+execute_drills_start2:
+	yield
+	store hinge_drills Velocity 1
+	load temp hinge_drills Angle 3
+	bna temp max_hinge_drill 0.01 execute_drills_start2
+j execute_drills_start
+
+end:

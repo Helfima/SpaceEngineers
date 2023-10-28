@@ -39,6 +39,7 @@
   <Import Project="MDK/MDK.paths.props" Condition="exists('MDK/MDK.paths.props')" />
   <ItemGroup>
     <Compile Include="Classes\BlockDevice.cs" />
+    <Compile Include="Classes\ColorHelper.cs" />
     <Compile Include="Classes\Instruction.cs" />
     <Compile Include="Classes\Instructions.cs" />
     <Compile Include="Classes\InterpretJump.cs" />
