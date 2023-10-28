@@ -391,7 +391,6 @@ namespace IngameScript
                 }
             }
         }
-
         public class BlockFilter<T> where T : class
         {
             public string Value;

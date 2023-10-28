@@ -17,6 +17,7 @@ using VRage.Game.ModAPI.Ingame;
 using VRage.Game.ModAPI.Ingame.Utilities;
 using VRage.Game.ObjectBuilders.Definitions;
 using VRageMath;
+using static System.Collections.Specialized.BitVector32;
 
 namespace IngameScript
 {
@@ -26,7 +27,7 @@ namespace IngameScript
         MyCommandLine commandLine = new MyCommandLine();
         private IMyTextSurface drawingSurface;
 
-        private Basic basic;
+        private Instructions instructions;
 
         public Program()
         {
@@ -34,7 +35,7 @@ namespace IngameScript
             drawingSurface = Me.GetSurface(0);
             drawingSurface.ContentType = ContentType.TEXT_AND_IMAGE;
 
-            basic = new Basic(this);
+            instructions = new Instructions(this);
 
             Init();
         }
@@ -70,20 +71,89 @@ namespace IngameScript
 
                 switch (command)
                 {
+                    case "infos":
+                        GetInformation(commandLine.Argument(1));
+                        break;
+                    case "get_actions":
+                        GetActions(commandLine.Argument(1));
+                        break;
+                    case "get_properties":
+                        GetProperties(commandLine.Argument(1));
+                        break;
                     case "reset":
                         Init();
                         break;
                     default:
                         drawingSurface.WriteText("Program started", false);
-                        basic.Init();
-                        basic.Start();
+                        instructions.Init();
+                        instructions.Start();
                         break;
+                }
+            }
+        }
+        private void GetInformation(string filter)
+        {
+            BlockFilter<IMyTerminalBlock> block_filter = BlockFilter<IMyTerminalBlock>.Create(Me, filter);
+            var items = BlockSystem<IMyTerminalBlock>.SearchByFilter(this, block_filter);
+            if (items.IsEmpty == false)
+            {
+                var infos = new StringBuilder();
+                var item = items.First;
+                
+                List<ITerminalAction> actions = new List<ITerminalAction>();
+                item.GetActions(actions);
+                actions.Sort(new TerminalActionComparer());
+                infos.AppendLine("Actions:");
+                foreach (var action in actions)
+                {
+                    infos.AppendLine($"{action.Id}: {action.Name}");
+                }
+
+                List<ITerminalProperty> properties = new List<ITerminalProperty>();
+                item.GetProperties(properties);
+                properties.Sort(new TerminalPropertyComparer());
+                infos.AppendLine();
+                infos.AppendLine("Properties:");
+                foreach (var property in properties)
+                {
+                    infos.AppendLine($"{property.Id}: {property.TypeName}");
+                }
+                item.CustomData = infos.ToString();
+            }
+        }
+        private void GetActions(string filter)
+        {
+            BlockFilter<IMyTerminalBlock> block_filter = BlockFilter<IMyTerminalBlock>.Create(Me, filter);
+            var items = BlockSystem<IMyTerminalBlock>.SearchByFilter(this, block_filter);
+            if (items.IsEmpty == false)
+            {
+                var item = items.First;
+                List<ITerminalAction> actions = new List<ITerminalAction>();
+                item.GetActions(actions);
+                foreach (var action in actions)
+                {
+                    Echo($"{action.Id}: {action.Name}");
+                }
+            }
+        }
+        private void GetProperties(string filter)
+        {
+            BlockFilter<IMyTerminalBlock> block_filter = BlockFilter<IMyTerminalBlock>.Create(Me, filter);
+            var items = BlockSystem<IMyTerminalBlock>.SearchByFilter(this, block_filter);
+            if (items.IsEmpty == false)
+            {
+                var item = items.First;
+                List<ITerminalProperty> properties = new List<ITerminalProperty>();
+                item.GetProperties(properties);
+                foreach (var property in properties)
+                {
+                    Echo($"{property.Id}: {property.TypeName}");
                 }
             }
         }
         void RunContinuousLogic()
         {
-            basic.Execute();
+            instructions.Execute();
         }
 
         public enum StateMachine

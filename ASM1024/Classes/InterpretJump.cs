@@ -7,7 +7,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
-using System.Reflection;
 using System.Text;
 using VRage;
 using VRage.Collections;
@@ -23,58 +22,48 @@ namespace IngameScript
 {
     partial class Program
     {
-        public class InterpretMisk
+        public class InterpretJump
         {
             public static void AppendWords(Dictionary<string, InstructionType> words)
             {
-                foreach (MiskWords item in Enum.GetValues(typeof(MiskWords)))
+                foreach (JumpWords item in Enum.GetValues(typeof(JumpWords)))
                 {
-                    if (item != MiskWords.label)
-                    {
-                        words.Add(item.ToString(), InstructionType.Misc);
-                    }
+                    words.Add(item.ToString(), InstructionType.Jump);
                 }
             }
 
             public static void Interpret(Instruction instruction)
             {
-                MiskWords word;
+                JumpWords word;
                 Enum.TryParse(instruction.Name, out word);
-                var r = instruction.GetArgumentString(1);
-                var a = instruction.GetArgumentDouble(2);
                 switch (word)
                 {
-                    case MiskWords.define:
+                    case JumpWords.j:
+                    case JumpWords.jal:
                         {
-                            instruction.Parent.SetVar(r, a);
+                            var address = instruction.GetArgumentAdress(1);
+                            instruction.NextIndex = address;
+                            if (word == JumpWords.jal)
+                            {
+                                instruction.SetVar("ra", instruction.Index + 1);
+                            }
                         }
                         break;
-                    case MiskWords.yield:
-                        break;
-                    case MiskWords.move:
+                    case JumpWords.jr:
                         {
-                            instruction.Parent.SetVar(r, a);
+                            int address = instruction.GetArgumentInt(1);
+                            instruction.NextIndex = address;
                         }
                         break;
-                    case MiskWords.print:
-                        {
-                            a = instruction.GetArgumentDouble(1);
-                            instruction.Parent.Log($"{r}: {a}");
-                        }
-                        break;
+
                 }
             }
         }
-
-        
-
-        enum MiskWords
+        enum JumpWords
         {
-            define,
-            yield,
-            move,
-            print,
-            label
+            j,
+            jal,
+            jr
         }
     }
 }
