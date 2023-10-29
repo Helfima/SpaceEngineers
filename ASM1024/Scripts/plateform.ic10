@@ -11,6 +11,13 @@ device connector_mobile "M:Connecteur Mobile"
 device drills "MG:Drills"
 device hinge_drills "M:Charnière Drills"
 
+device wellders "MG:Chalumeaux"
+device projector "M:Projecteur"
+
+device grinders "MG:Meuleuses"
+device hinge_grinders "M:Charnière Meuleuses"
+
+define kp 0.1
 define min_angle 0
 define max_angle 80
 
@@ -39,109 +46,140 @@ move drill_velocity 1
 
 start:
 	yield
-#	beqal stage 0 hinge_down
-#	beqal stage 1 hinge_up
 	inventory temp drills 0 Amount 1
 	print temp
 j start
 
+up_step:
+	load temp block_mobiles IsConnected 3
+	print temp
+	beq temp 0 end
+	move stage_up 0
+loop_up_step:
+	yield
+	seq isOn stage_up 4
+	beqal stage_up 0 fixes_unlock 
+	beqal stage_up 1 pistons_up
+	beqal stage_up 2 fixes_lock
+	beqal stage_up 3 mobiles_unlock 
+	beqal stage_up 4 pistons_down
+	beqal stage_up 4 grinder_on
+	beqal stage_up 5 mobiles_lock
+	beqal stage_up 5 grinder_off
+	beq stage_up 6 end
+j loop_up_step
+
+down_step:
+	load temp block_fixes IsConnected 3
+	print temp
+	beq temp 0 end
+	move stage_down 0
+loop_down_step:
+	yield
+	seq isOn stage_down 1
+	store wellders On isOn
+	store projector On isOn
+	beqal stage_down 0 mobiles_unlock 
+	beqal stage_down 1 pistons_up
+	beqal stage_down 2 mobiles_lock 
+	beqal stage_down 3 fixes_unlock
+	beqal stage_down 4 pistons_down
+	beqal stage_down 4 move_drills
+	beqal stage_down 5 fixes_lock
+	beqal stage_down 5 stop_drills
+	beq stage_down 6 end
+j loop_down_step
+
+grinder_on:
+	store grinders On 1
+	load angle hinge_grinders Angle 3
+	sub err 0 angle
+	mul err err kp
+	min err err -1
+	store hinge_grinders Velocity err
+j ra
+
+grinder_off:
+	store grinders On 0
+	load angle hinge_grinders Angle 3
+	sub err 90 angle
+	mul err err kp
+	min err err 1
+	store hinge_grinders Velocity err
+j ra
+
 fixes_lock:
 	store block_fixes On 1
-	store hinge_fixes Velocity -1
-	load temp hinge_fixes Angle 3
-	print temp
-	bna temp min_angle 0.01 ra
-	move stage 1
+	load angle hinge_fixes Angle 3
+	sub err 0 angle
+	mul err err kp
+	min err err -1
+	store hinge_fixes Velocity err
+	print angle
+	bge angle 1 ra
+	move stage_up 3
+	move stage_down 6
 j ra
 
 fixes_unlock:
 	store block_fixes On 0
-	store hinge_fixes Velocity 1
+	yield
+	store hinge_fixes Velocity 5
 	load temp hinge_fixes Angle 3
 	print temp
 	bna temp max_angle 0.01 ra
-	move stage 1
+	move stage_up 1
+	move stage_down 4
 j ra
 
 mobiles_lock:
 	store block_mobiles On 1
-	store hinge_mobiles Velocity -1
-	load temp hinge_mobiles Angle 3
-	print temp
-	bge temp 1 ra
+	load angle hinge_mobiles Angle 3
+	sub err 0 angle
+	mul err err kp
+	min err err -1
+	store hinge_mobiles Velocity err
+	print angle
+	bge angle 1 ra
 	action connector_mobile Lock
-	move stage 1
+	move stage_up 6
+	move stage_down 3
 j ra
 
 mobiles_unlock:
-	action connector_mobile Unlock
 	store block_mobiles On 0
-	store hinge_mobiles Velocity 1
+	yield
+	action connector_mobile Unlock
+	store hinge_mobiles Velocity 5
 	load temp hinge_mobiles Angle 3
 	print temp
 	bna temp max_angle 0.01 ra
-	move stage 1
+	move stage_up 4
+	move stage_down 1
 j ra
 
 pistons_up:
-	store pistons_elevator Velocity 1
-	load temp pistons_elevator Position 3
-	print temp
-	bna temp max_piston 0.01 ra
-	move stage 1
+	load position pistons_elevator Position 3
+	sub err max_piston position
+	mul err err kp
+	min err err 0.4
+	max err err 0.1
+	store pistons_elevator Velocity err
+	print position
+	bna position max_piston 0.01 ra
+	store projector On 0
+	move stage_up 2
+	move stage_down 2
 j ra
 
 pistons_down:
-	store pistons_elevator Velocity -0.1
+	store pistons_elevator Velocity -0.08
 	load temp pistons_elevator Position 3
 	print temp
 	bna temp min_piston 0.01 ra
-	move stage 1
+	move stage_up 5
+	move stage_down 5
 j ra
-
-execute_fixes_lock:
-	yield
-	move stage 0
-	jal fixes_lock
-	beq stage 0 execute_fixes_lock
-j end
-
-execute_fixes_unlock:
-	yield
-	move stage 0
-	jal fixes_unlock
-	beq stage 0 execute_fixes_unlock
-j end
-
-execute_mobiles_lock:
-	yield
-	move stage 0
-	jal mobiles_lock
-	beq stage 0 execute_mobiles_lock
-j end
-
-execute_mobiles_unlock:
-	yield
-	move stage 0
-	jal mobiles_unlock
-	beq stage 0 execute_mobiles_unlock
-j end
-
-execute_pistons_up:
-	yield
-	move stage 0
-	jal pistons_up
-	jal stop_drills
-	beq stage 0 execute_pistons_up
-j end
-
-execute_pistons_down:
-	yield
-	move stage 0
-	jal pistons_down
-	jal move_drills
-	beq stage 0 execute_pistons_down
-j end
 
 move_drills:
 	store drills On 1
@@ -165,6 +203,50 @@ stop_drills:
 	store hinge_drills Velocity 0
 	store drills On 0
 j ra
+
+execute_fixes_lock:
+	yield
+	move stage_down 0
+	jal fixes_lock
+	beq stage_down 0 execute_fixes_lock
+j end
+
+execute_fixes_unlock:
+	yield
+	move stage_down 0
+	jal fixes_unlock
+	beq stage_down 0 execute_fixes_unlock
+j end
+
+execute_mobiles_lock:
+	yield
+	move stage_down 0
+	jal mobiles_lock
+	beq stage_down 0 execute_mobiles_lock
+j end
+
+execute_mobiles_unlock:
+	yield
+	move stage_down 0
+	jal mobiles_unlock
+	beq stage_down 0 execute_mobiles_unlock
+j end
+
+execute_pistons_up:
+	yield
+	move stage_down 0
+	jal pistons_up
+	jal stop_drills
+	beq stage_down 0 execute_pistons_up
+j end
+
+execute_pistons_down:
+	yield
+	move stage_down 0
+	jal pistons_down
+	jal move_drills
+	beq stage_down 0 execute_pistons_down
+j end
 
 execute_drills_start:
 	yield

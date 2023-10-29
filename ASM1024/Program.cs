@@ -75,7 +75,7 @@ namespace IngameScript
                         GetInformation(commandLine.Argument(1));
                         break;
                     case "execute":
-                        instructions.Start();
+                        instructions.Init();
                         instructions.ExecuteLabel(commandLine.Argument(1));
                         break;
                     case "reset":

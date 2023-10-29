@@ -60,12 +60,6 @@ namespace IngameScript
                                 block.SetValueBool("OnOff", value >= 1);
                             }
                             break;
-                        case "Lock":
-                            {
-                                block.SetValueBool("RotorLock", value >= 1);
-                                block.SetValueBool("HingeLock", value >= 1);
-                            }
-                            break;
                         default:
                             var property = block.GetProperty(name);
                             if (property != null)
@@ -141,21 +135,17 @@ namespace IngameScript
 
                             }
                             break;
-                        case "Lock":
+                        case "IsConnected":
                             {
-                                var property = block.GetProperty("RotorLock");
-                                if(property != null)
+                                if (block is IMyShipMergeBlock)
                                 {
-                                    var valueBool = block.GetValueBool("RotorLock");
-                                    var value = valueBool ? 1d : 0d;
-                                    //instruction.Parent.Log($"RotorLock {valueBool} {value}");
+                                    var piston = (IMyShipMergeBlock)block;
+                                    var value = piston.IsConnected ? 1d : 0d;
                                     values.Add(value);
                                 }
                                 else
                                 {
-                                    var valueBool = block.GetValueBool("HingeLock");
-                                    var value = valueBool ? 1d : 0d;
-                                    values.Add(value);
+                                    throw new Exception("IsConnected not a property");
                                 }
                             }
                             break;

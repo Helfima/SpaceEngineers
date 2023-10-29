@@ -48,7 +48,8 @@ namespace IngameScript
                 Vars.Clear();
                 Items.Clear();
                 Words.Clear();
-                
+                Labels.Clear();
+
                 SetVar("PY", Math.PI);
 
                 InterpretBranch.AppendWords(Words);
@@ -72,83 +73,122 @@ namespace IngameScript
                         Log("Program completed");
                         break;
                     case StateBasic.Running:
-                        ExecuteInstruction();
+                        ExecuteProgram();
                         break;
                 }
                 myProgram.drawingSurface.WriteText(String.Join("\n", logger));
             }
             public void ExecuteLabel(string name)
             {
-                var adress = Labels[name];
-                Index = adress;
-            }
-            public void Start()
-            {
-                State = StateBasic.Running;
-            }
-
-            public void ExecuteInstruction()
-            {
                 try
                 {
-                    var loop = 0;
-                    var wait = true;
                     if (Items.Count == 0 || Index >= Items.Count)
                     {
                         State = StateBasic.Completing;
                     }
                     else
                     {
-                        while (wait) {
-                            var instruction = Items[Index];
-                            if(instruction == null)
+                        ExecuteInstructions(true);
+                    }
+                    var adress = Labels[name];
+                    Index = adress;
+                    State = StateBasic.Running;
+                }
+                catch (Exception ex)
+                {
+                    Log($"Execution Label error {Index}: {ex.Message}");
+                    Log(ex.StackTrace);
+                    State = StateBasic.Completing;
+                }
+            }
+            public void Start()
+            {
+                State = StateBasic.Running;
+            }
+
+            public void ExecuteProgram()
+            {
+                try
+                {
+                    if (Items.Count == 0 || Index >= Items.Count)
+                    {
+                        State = StateBasic.Completing;
+                    }
+                    else
+                    {
+                        ExecuteInstructions();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Log($"Program error {Index}: {ex.Message}");
+                    Log(ex.StackTrace);
+                    State = StateBasic.Completing;
+                }
+            }
+
+            public void ExecuteInstructions(bool isSettings = false)
+            {
+                try
+                {
+                    var loop = 0;
+                    var wait = true;
+                    while (wait) {
+                        var instruction = Items[Index];
+                        if(instruction == null)
+                        {
+                            Index++;
+                            if (Index >= Items.Count)
                             {
-                                Index++;
-                                if (Index >= Items.Count)
-                                {
-                                    wait = false;
-                                }
+                                wait = false;
+                            }
+                        }
+                        else
+                        {
+                            Log($"Execute {instruction.Command} at {Index}");
+                            switch (instruction.Type)
+                            {
+                                case InstructionType.Branch:
+                                    InterpretBranch.Interpret(instruction);
+                                    break;
+                                case InstructionType.Device:
+                                    InterpretDevice.Interpret(instruction);
+                                    break;
+                                case InstructionType.Jump:
+                                    InterpretJump.Interpret(instruction);
+                                    break;
+                                case InstructionType.Logic:
+                                    InterpretLogic.Interpret(instruction);
+                                    break;
+                                case InstructionType.Math:
+                                    InterpretMath.Interpret(instruction);
+                                    break;
+                                case InstructionType.Misc:
+                                    InterpretMisk.Interpret(instruction);
+                                    break;
+                                case InstructionType.Selection:
+                                    InterpretSelection.Interpret(instruction);
+                                    break;
+                            }
+                            Index = instruction.NextIndex;
+                            if (instruction.Name == MiskWords.yield.ToString() || Index >= Items.Count)
+                            {
+                                wait = false;
                             }
                             else
                             {
-                                Log($"Execute {instruction.Command} at {Index}");
-                                switch (instruction.Type)
-                                {
-                                    case InstructionType.Branch:
-                                        InterpretBranch.Interpret(instruction);
-                                        break;
-                                    case InstructionType.Device:
-                                        InterpretDevice.Interpret(instruction);
-                                        break;
-                                    case InstructionType.Jump:
-                                        InterpretJump.Interpret(instruction);
-                                        break;
-                                    case InstructionType.Logic:
-                                        InterpretLogic.Interpret(instruction);
-                                        break;
-                                    case InstructionType.Math:
-                                        InterpretMath.Interpret(instruction);
-                                        break;
-                                    case InstructionType.Misc:
-                                        InterpretMisk.Interpret(instruction);
-                                        break;
-                                    case InstructionType.Selection:
-                                        InterpretSelection.Interpret(instruction);
-                                        break;
-                                }
-                                Index = instruction.NextIndex;
-                                if (instruction.Name == MiskWords.yield.ToString() || Index >= Items.Count)
+                                loop++;
+                                wait = loop < 512;
+                            }
+                            if (isSettings)
+                            {
+                                if(instruction.Type == InstructionType.Label)
                                 {
                                     wait = false;
                                 }
-                                else
-                                {
-                                    loop++;
-                                    wait = loop < 512;
-                                }
                             }
-                            
                         }
+
                     }
                 } catch (Exception ex)
                 {
