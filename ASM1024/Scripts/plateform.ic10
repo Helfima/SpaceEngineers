@@ -6,7 +6,8 @@ device hinge_mobiles "MG:Charnière Mobiles"
 
 device pistons_elevator "MG:Pistons Elevateur"
 
-device connector_mobile "M:Connecteur Mobile"
+device connector_fusion "M:Connecteur Fusion"
+device hinge_fusion "M:Charnière Fusion"
 
 device drills "MG:Drills"
 device hinge_drills "M:Charnière Drills"
@@ -14,12 +15,18 @@ device hinge_drills "M:Charnière Drills"
 device wellders "MG:Chalumeaux"
 device projector "M:Projecteur"
 
-device grinders "MG:Meuleuses"
-device hinge_grinders "M:Charnière Meuleuses"
+device top_grinders "MG:Meuleuses"
+device top_hinge_grinders "M:Charnière Meuleuses"
+
+device sensor "M:Capteur Mobile"
 
 define kp 0.1
-define min_angle 0
-define max_angle 80
+define min_angle_fixes 0
+define max_angle_fixes 80
+define min_angle_mobiles -90
+define max_angle_mobiles -45
+define min_angle_connector -90
+define max_angle_connector 0
 
 mul delta_piston 0.15 2
 sub min_piston 2.5 delta_piston
@@ -29,10 +36,12 @@ sub max_piston 20 2.5
 div max_piston max_piston 2
 add max_piston max_piston min_piston
 
-store hinge_fixes UpperLimit max_angle
-store hinge_fixes LowerLimit min_angle
-store hinge_mobiles UpperLimit max_angle
-store hinge_mobiles LowerLimit min_angle
+store hinge_fixes UpperLimit max_angle_fixes
+store hinge_fixes LowerLimit min_angle_fixes
+store hinge_mobiles UpperLimit max_angle_mobiles
+store hinge_mobiles LowerLimit min_angle_mobiles
+store hinge_fusion UpperLimit max_angle_connector
+store hinge_fusion LowerLimit min_angle_connector
 store pistons_elevator UpperLimit max_piston
 store pistons_elevator LowerLimit min_piston
 
@@ -41,13 +50,24 @@ define max_hinge_drill 15
 store hinge_drills UpperLimit max_hinge_drill
 store hinge_drills LowerLimit min_hinge_drill
 
+store sensor "Detect Players" 0
+store sensor "Detect Subgrids" 1
+store sensor Bottom 0.1
+store sensor Top 0.1
+store sensor Back 0.1
+store sensor Front 5
+store sensor Left 0.1
+store sensor Right 0.1
+
 move stage 0
 move drill_velocity 1
 
 start:
 	yield
-	inventory temp drills 0 Amount 1
-	print temp
+	inventory amount drills 0 Amount 1
+	print amount
+	load isActive sensor IsActive 3
+	print isActive
 j start
 
 up_step:
@@ -61,12 +81,14 @@ loop_up_step:
 	beqal stage_up 0 fixes_unlock 
 	beqal stage_up 1 pistons_up
 	beqal stage_up 2 fixes_lock
-	beqal stage_up 3 mobiles_unlock 
-	beqal stage_up 4 pistons_down
-	beqal stage_up 4 grinder_on
-	beqal stage_up 5 mobiles_lock
-	beqal stage_up 5 grinder_off
-	beq stage_up 6 end
+	beqal stage_up 3 connector_unlock
+	beqal stage_up 4 mobiles_unlock 
+	beqal stage_up 5 pistons_down
+	beqal stage_up 5 grinder_top_on
+	beqal stage_up 6 mobiles_lock
+	beqal stage_up 7 connector_lock
+	beqal stage_up 7 grinder_top_off
+	beq stage_up 8 end
 j loop_up_step
 
 down_step:
@@ -74,38 +96,44 @@ down_step:
 	print temp
 	beq temp 0 end
 	move stage_down 0
+	load isActive sensor IsActive 3
+	seq activeDrill isActive 1
 loop_down_step:
 	yield
-	seq isOn stage_down 1
+	seq isOn stage_down 2
 	store wellders On isOn
 	store projector On isOn
-	beqal stage_down 0 mobiles_unlock 
-	beqal stage_down 1 pistons_up
-	beqal stage_down 2 mobiles_lock 
-	beqal stage_down 3 fixes_unlock
-	beqal stage_down 4 pistons_down
-	beqal stage_down 4 move_drills
-	beqal stage_down 5 fixes_lock
-	beqal stage_down 5 stop_drills
-	beq stage_down 6 end
+	beqal stage_down 0 connector_unlock
+	beqal stage_down 1 mobiles_unlock 
+	beqal stage_down 2 pistons_up
+	beqal stage_down 3 mobiles_lock 
+	beqal stage_down 4 connector_lock
+	beqal stage_down 5 fixes_unlock
+	beqal stage_down 6 pistons_down
+	beqal stage_down 6 move_drills
+	beqal stage_down 7 fixes_lock
+	beqal stage_down 7 stop_drills
+	beq stage_down 8 end
 j loop_down_step
 
-grinder_on:
-	store grinders On 1
-	load angle hinge_grinders Angle 3
+grinder_top_on:
+	store top_grinders On 1
+	load angle top_hinge_grinders Angle 3
 	sub err 0 angle
 	mul err err kp
 	min err err -1
-	store hinge_grinders Velocity err
+	store top_hinge_grinders Velocity err
 j ra
 
-grinder_off:
-	store grinders On 0
-	load angle hinge_grinders Angle 3
+grinder_top_off:
+	load angle top_hinge_grinders Angle 3
+	print angle
+	slt isOn angle 30
+	store top_grinders On isOn
 	sub err 90 angle
 	mul err err kp
-	min err err 1
-	store hinge_grinders Velocity err
+	max err err 1
+	store top_hinge_grinders Velocity err
 j ra
 
 fixes_lock:
@@ -118,44 +146,69 @@ fixes_lock:
 	print angle
 	bge angle 1 ra
 	move stage_up 3
-	move stage_down 6
+	move stage_down 8
 j ra
 
 fixes_unlock:
+	load temp block_mobiles IsConnected 3
+	beq temp 0 ra
 	store block_fixes On 0
 	yield
 	store hinge_fixes Velocity 5
 	load temp hinge_fixes Angle 3
 	print temp
-	bna temp max_angle 0.01 ra
+	bna temp max_angle_fixes 0.01 ra
 	move stage_up 1
-	move stage_down 4
+	move stage_down 6
+j ra
+
+connector_lock:
+	load angle hinge_fusion Angle 3
+	sub err min_angle_connector angle
+	mul err err kp
+	min err err -1
+	store hinge_fusion Velocity err
+	print angle
+	blt err -1 ra
+	action connector_fusion Attach
+	move stage_up 8
+	move stage_down 5
+j ra
+
+connector_unlock:
+	action connector_fusion Detach
+	store hinge_fusion Velocity 5
+	load temp hinge_fusion Angle 3
+	print temp
+	bna temp max_angle_connector 0.01 ra
+	move stage_up 4
+	move stage_down 1
 j ra
 
 mobiles_lock:
 	store block_mobiles On 1
 	load angle hinge_mobiles Angle 3
-	sub err 0 angle
+	sub err min_angle_mobiles angle
 	mul err err kp
 	min err err -1
 	store hinge_mobiles Velocity err
 	print angle
-	bge angle 1 ra
-	action connector_mobile Lock
-	move stage_up 6
-	move stage_down 3
+	blt err -1 ra
+	move stage_up 7
+	move stage_down 4
 j ra
 
 mobiles_unlock:
+	load temp block_fixes IsConnected 3
+	beq temp 0 ra
 	store block_mobiles On 0
 	yield
-	action connector_mobile Unlock
 	store hinge_mobiles Velocity 5
 	load temp hinge_mobiles Angle 3
 	print temp
-	bna temp max_angle 0.01 ra
-	move stage_up 4
-	move stage_down 1
+	bna temp max_angle_mobiles 0.01 ra
+	move stage_up 5
+	move stage_down 2
 j ra
 
 pistons_up:
@@ -169,7 +222,7 @@ pistons_up:
 	bna position max_piston 0.01 ra
 	store projector On 0
 	move stage_up 2
-	move stage_down 2
+	move stage_down 3
 j ra
 
 pistons_down:
@@ -177,11 +230,12 @@ pistons_down:
 	load temp pistons_elevator Position 3
 	print temp
 	bna temp min_piston 0.01 ra
-	move stage_up 5
-	move stage_down 5
+	move stage_up 6
+	move stage_down 7
 j ra
 
 move_drills:
+	beq activeDrill 0 ra
 	store drills On 1
 	store hinge_drills Velocity drill_velocity
 	sge temp drill_velocity 0
@@ -248,16 +302,18 @@ execute_pistons_down:
 	beq stage_down 0 execute_pistons_down
 j end
 
-execute_drills_start:
+execute_grinder_on:
 	yield
-	store hinge_drills Velocity -1
-	load temp hinge_drills Angle 3
-	bna temp min_hinge_drill 0.01 execute_drills_start
-execute_drills_start2:
+	load angle top_hinge_grinders Angle 3
+	bap angle 0 0.01 end
+	jal grinder_top_on
+j execute_grinder_on
+
+execute_grinder_off:
 	yield
-	store hinge_drills Velocity 1
-	load temp hinge_drills Angle 3
-	bna temp max_hinge_drill 0.01 execute_drills_start2
-j execute_drills_start
+	load angle top_hinge_grinders Angle 3
+	bap angle 90 0.01 end
+	jal grinder_top_off
+j execute_grinder_off
 
 end:

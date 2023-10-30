@@ -149,6 +149,20 @@ namespace IngameScript
                                 }
                             }
                             break;
+                        case "IsActive":
+                            {
+                                if (block is IMySensorBlock)
+                                {
+                                    var piston = (IMySensorBlock)block;
+                                    var value = piston.IsActive ? 1d : 0d;
+                                    values.Add(value);
+                                }
+                                else
+                                {
+                                    throw new Exception("IsActive not a property");
+                                }
+                            }
+                            break;
                         default:
                             {
                                 var property = block.GetProperty(name);

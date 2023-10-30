@@ -97,10 +97,13 @@ namespace IngameScript
             {
                 var infos = new StringBuilder();
                 var item = items.First;
-                
+                var type = item.GetType();
+                infos.AppendLine($"Type:{type.Name}");
+
                 List<ITerminalAction> actions = new List<ITerminalAction>();
                 item.GetActions(actions);
                 actions.Sort(new TerminalActionComparer());
+                infos.AppendLine();
                 infos.AppendLine("Actions:");
                 foreach (var action in actions)
                 {
@@ -116,6 +119,7 @@ namespace IngameScript
                 {
                     infos.AppendLine($"{property.Id}: {property.TypeName}");
                 }
+
                 item.CustomData = infos.ToString();
             }
         }
