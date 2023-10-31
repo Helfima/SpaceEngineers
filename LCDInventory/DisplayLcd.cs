@@ -24,7 +24,7 @@ namespace IngameScript
         public class DisplayLcd
         {
             public Program program;
-            public IMyTextPanel lcd;
+            public IMyTerminalBlock Block { get; private set; }
 
             private DisplayInventory DisplayInventory;
             private DisplayDrill DisplayDrill;
@@ -34,10 +34,10 @@ namespace IngameScript
             private DisplayTank DisplayTank;
             private int cleanup;
 
-            public DisplayLcd(Program program, IMyTextPanel lcd)
+            public DisplayLcd(Program program, IMyTerminalBlock block)
             {
                 this.program = program;
-                this.lcd = lcd;
+                this.Block = block;
 
                 this.DisplayInventory = new DisplayInventory(this);
                 this.DisplayDrill = new DisplayDrill(this);
@@ -56,33 +56,32 @@ namespace IngameScript
                 DisplayPower.Load(MyIni);
                 DisplayShip.Load(MyIni);
                 DisplayTank.Load(MyIni);
-                if (lcd.CustomData.Trim().Equals("prepare") || program.ForceUpdate)
+                if (Block.CustomData.Trim().Equals("prepare") || program.ForceUpdate)
                 {
-                    program.drawingSurface.WriteText($"Prepare:{lcd.CustomName}\n", true);
+                    program.drawingSurface.WriteText($"Prepare:{Block.CustomName}\n", true);
                     DisplayInventory.Save(MyIni);
                     DisplayDrill.Save(MyIni);
                     DisplayMachine.Save(MyIni);
                     DisplayPower.Save(MyIni);
                     DisplayShip.Save(MyIni);
                     DisplayTank.Save(MyIni);
-                    lcd.CustomData = MyIni.ToString();
+                    Block.CustomData = MyIni.ToString();
                 }
             }
             public void Draw()
             {
                 cleanup++;
-                Drawing drawing = new Drawing(lcd);
-                lcd.ScriptBackgroundColor = Color.Black;
-                Vector2 position = drawing.viewport.Position;
+                Drawing drawing = new Drawing(Block);
+                TestViewport(drawing);
 
                 if (cleanup < 100)
                 {
-                    position = DisplayInventory.Draw(drawing, position);
-                    position = DisplayDrill.Draw(drawing, position);
-                    position = DisplayMachine.Draw(drawing, position);
-                    position = DisplayPower.Draw(drawing, position);
-                    position = DisplayShip.Draw(drawing, position);
-                    position = DisplayTank.Draw(drawing, position);
+                    DisplayInventory.Draw(drawing);
+                    DisplayDrill.Draw(drawing);
+                    DisplayMachine.Draw(drawing);
+                    DisplayPower.Draw(drawing);
+                    DisplayShip.Draw(drawing);
+                    DisplayTank.Draw(drawing);
                 }
                 else
                 {
@@ -91,6 +90,17 @@ namespace IngameScript
                 }
 
                 drawing.Dispose();
+            }
+            private void TestViewport(Drawing drawing)
+            {
+                var surface = drawing.GetSurfaceDrawing(3);
+                if (surface == null) return;
+                surface.Initialize();
+                program.Echo($"Position {surface.Position}");
+                program.Echo($"TextureSize {surface.Surface.TextureSize}");
+                program.Echo($"SurfaceSize {surface.Surface.SurfaceSize}");
+                program.Echo($"Viewport {surface.Viewport}");
+                program.Echo($"Viewport.Position {surface.Viewport.Position}");
             }
         }
     }

@@ -74,55 +74,63 @@ up_step:
 	load temp block_mobiles IsConnected 3
 	print temp
 	beq temp 0 end
-	move stage_up 0
+	move stage 0
 loop_up_step:
 	yield
-	seq isOn stage_up 4
-	beqal stage_up 0 fixes_unlock 
-	beqal stage_up 1 pistons_up
-	beqal stage_up 2 fixes_lock
-	beqal stage_up 3 connector_unlock
-	beqal stage_up 4 mobiles_unlock 
-	beqal stage_up 5 pistons_down
-	beqal stage_up 5 grinder_top_on
-	beqal stage_up 6 mobiles_lock
-	beqal stage_up 7 connector_lock
-	beqal stage_up 7 grinder_top_off
-	beq stage_up 8 end
+	move stage_next 1
+	seq isOn stage 4
+	beqal stage 0 fixes_unlock 
+	beqal stage 1 pistons_up
+	beqal stage 2 fixes_lock
+	beqal stage 3 connector_unlock
+	beqal stage 4 mobiles_unlock 
+	beqal stage 5 pistons_down
+	beqal stage 5 grinder_top_on
+	beqal stage 6 mobiles_lock
+	beqal stage 7 connector_lock
+	beqal stage 7 grinder_top_off
+	beq stage 8 end
+	add stage stage stage_next
 j loop_up_step
 
 down_step:
 	load temp block_fixes IsConnected 3
 	print temp
 	beq temp 0 end
-	move stage_down 0
-	load isActive sensor IsActive 3
-	seq activeDrill isActive 1
+	move stage 0
 loop_down_step:
 	yield
-	seq isOn stage_down 2
+	#load isActive sensor IsActive 3
+	#seq activeDrill isActive 1
+	move stage_next 1
+	seq isOn stage 2
 	store wellders On isOn
 	store projector On isOn
-	beqal stage_down 0 connector_unlock
-	beqal stage_down 1 mobiles_unlock 
-	beqal stage_down 2 pistons_up
-	beqal stage_down 3 mobiles_lock 
-	beqal stage_down 4 connector_lock
-	beqal stage_down 5 fixes_unlock
-	beqal stage_down 6 pistons_down
-	beqal stage_down 6 move_drills
-	beqal stage_down 7 fixes_lock
-	beqal stage_down 7 stop_drills
-	beq stage_down 8 end
+	
+	beqal stage 0 connector_unlock
+	beqal stage 1 mobiles_unlock 
+	beqal stage 2 pistons_up
+	beqal stage 3 mobiles_lock 
+	beqal stage 4 connector_lock
+	beqal stage 5 fixes_unlock
+	beqal stage 6 pistons_down
+	beqal stage 6 move_drills
+	beqal stage 7 fixes_lock
+	beqal stage 7 stop_drills
+	beq stage 8 end
+	add stage stage stage_next
 j loop_down_step
 
 grinder_top_on:
 	store top_grinders On 1
 	load angle top_hinge_grinders Angle 3
 	sub err 0 angle
-	mul err err kp
-	min err err -1
-	store top_hinge_grinders Velocity err
+	mul cmd err kp
+	min cmd cmd -1
+	store top_hinge_grinders Velocity cmd
+	abs err err
+	sle state err 1
+	mul stage_next stage_next state
 j ra
 
 grinder_top_off:
@@ -131,22 +139,25 @@ grinder_top_off:
 	slt isOn angle 30
 	store top_grinders On isOn
 	sub err 90 angle
-	mul err err kp
-	max err err 1
-	store top_hinge_grinders Velocity err
+	mul cmd err kp
+	max cmd cmd 1
+	store top_hinge_grinders Velocity cmd
+	abs err err
+	sle state err 1
+	mul stage_next stage_next state
 j ra
 
 fixes_lock:
 	store block_fixes On 1
 	load angle hinge_fixes Angle 3
-	sub err 0 angle
-	mul err err kp
-	min err err -1
-	store hinge_fixes Velocity err
+	sub err min_angle_fixes angle
+	mul cmd err kp
+	min cmd cmd -1
+	store hinge_fixes Velocity cmd
 	print angle
-	bge angle 1 ra
-	move stage_up 3
-	move stage_down 8
+	abs err err
+	sle state err 1
+	mul stage_next stage_next state
 j ra
 
 fixes_unlock:
@@ -154,48 +165,55 @@ fixes_unlock:
 	beq temp 0 ra
 	store block_fixes On 0
 	yield
-	store hinge_fixes Velocity 5
-	load temp hinge_fixes Angle 3
-	print temp
-	bna temp max_angle_fixes 0.01 ra
-	move stage_up 1
-	move stage_down 6
+	load angle hinge_fixes Angle 3
+	sub err max_angle_fixes angle
+	mul cmd err kp
+	max cmd cmd 1
+	store hinge_fixes Velocity cmd
+	print angle
+	abs err err
+	sle state err 1
+	mul stage_next stage_next state
 j ra
 
 connector_lock:
 	load angle hinge_fusion Angle 3
 	sub err min_angle_connector angle
-	mul err err kp
-	min err err -1
-	store hinge_fusion Velocity err
+	mul cmd err kp
+	min cmd cmd -1
+	store hinge_fusion Velocity cmd
 	print angle
-	blt err -1 ra
+	abs err err
+	sle state err 1
+	mul stage_next stage_next state
+	beq state 0 ra
 	action connector_fusion Attach
-	move stage_up 8
-	move stage_down 5
 j ra
 
 connector_unlock:
 	action connector_fusion Detach
-	store hinge_fusion Velocity 5
-	load temp hinge_fusion Angle 3
-	print temp
-	bna temp max_angle_connector 0.01 ra
-	move stage_up 4
-	move stage_down 1
+	load angle hinge_fusion Angle 3
+	sub err max_angle_connector angle
+	mul cmd err kp
+	max cmd cmd 1
+	store hinge_fusion Velocity cmd
+	print angle
+	abs err err
+	sle state err 1
+	mul stage_next stage_next state
 j ra
 
 mobiles_lock:
 	store block_mobiles On 1
 	load angle hinge_mobiles Angle 3
 	sub err min_angle_mobiles angle
-	mul err err kp
-	min err err -1
-	store hinge_mobiles Velocity err
+	mul cmd err kp
+	min cmd cmd -1
+	store hinge_mobiles Velocity cmd
 	print angle
-	blt err -1 ra
-	move stage_up 7
-	move stage_down 4
+	abs err err
+	sle state err 1
+	mul stage_next stage_next state
 j ra
 
 mobiles_unlock:
@@ -203,39 +221,42 @@ mobiles_unlock:
 	beq temp 0 ra
 	store block_mobiles On 0
 	yield
-	store hinge_mobiles Velocity 5
-	load temp hinge_mobiles Angle 3
-	print temp
-	bna temp max_angle_mobiles 0.01 ra
-	move stage_up 5
-	move stage_down 2
+	load angle hinge_mobiles Angle 3
+	sub err max_angle_mobiles angle
+	mul cmd err kp
+	max cmd cmd 1
+	store hinge_mobiles Velocity cmd
+	print angle
+	abs err err
+	sle state err 1
+	mul stage_next stage_next state
 j ra
 
 pistons_up:
 	load position pistons_elevator Position 3
 	sub err max_piston position
-	mul err err kp
-	min err err 0.4
-	max err err 0.1
-	store pistons_elevator Velocity err
+	mul cmd err kp
+	min cmd cmd 0.4
+	max cmd cmd 0.1
+	store pistons_elevator Velocity cmd
 	print position
-	bna position max_piston 0.01 ra
-	store projector On 0
-	move stage_up 2
-	move stage_down 3
+	abs err err
+	sle state err 0.1
+	mul stage_next stage_next state
 j ra
 
 pistons_down:
+	load position pistons_elevator Position 3
+	sub err min_piston position
 	store pistons_elevator Velocity -0.08
-	load temp pistons_elevator Position 3
-	print temp
-	bna temp min_piston 0.01 ra
-	move stage_up 6
-	move stage_down 7
+	print position
+	abs err err
+	sle state err 0.1
+	mul stage_next stage_next state
 j ra
 
 move_drills:
-	beq activeDrill 0 ra
+	#beq activeDrill 0 ra
 	store drills On 1
 	store hinge_drills Velocity drill_velocity
 	sge temp drill_velocity 0
@@ -260,60 +281,63 @@ j ra
 
 execute_fixes_lock:
 	yield
-	move stage_down 0
+	move stage_next 1
 	jal fixes_lock
-	beq stage_down 0 execute_fixes_lock
-j end
+	beq stage_next 1 end
+j execute_fixes_lock
 
 execute_fixes_unlock:
 	yield
-	move stage_down 0
+	move stage_next 1
 	jal fixes_unlock
-	beq stage_down 0 execute_fixes_unlock
-j end
+	beq stage_next 1 end
+j execute_fixes_unlock
 
 execute_mobiles_lock:
 	yield
-	move stage_down 0
+	move stage_next 1
 	jal mobiles_lock
-	beq stage_down 0 execute_mobiles_lock
-j end
+	jal connector_lock
+	beq stage_next 1 end
+j execute_mobiles_lock
 
 execute_mobiles_unlock:
 	yield
-	move stage_down 0
+	move stage_next 1
 	jal mobiles_unlock
-	beq stage_down 0 execute_mobiles_unlock
-j end
+	jal connector_unlock
+	beq stage_next 1 end
+j execute_mobiles_unlock
 
 execute_pistons_up:
 	yield
-	move stage_down 0
+	move stage_next 1
 	jal pistons_up
 	jal stop_drills
-	beq stage_down 0 execute_pistons_up
-j end
+	beq stage_next 1 end
+j execute_pistons_up
 
 execute_pistons_down:
 	yield
-	move stage_down 0
+	move activeDrill 0
+	move stage_next 1
 	jal pistons_down
 	jal move_drills
-	beq stage_down 0 execute_pistons_down
-j end
+	beq stage_next 1 end
+j execute_pistons_down
 
 execute_grinder_on:
 	yield
-	load angle top_hinge_grinders Angle 3
-	bap angle 0 0.01 end
+	move stage_next 1
 	jal grinder_top_on
+	beq stage_next 1 end
 j execute_grinder_on
 
 execute_grinder_off:
 	yield
-	load angle top_hinge_grinders Angle 3
-	bap angle 90 0.01 end
+	move stage_next 1
 	jal grinder_top_off
+	beq stage_next 1 end
 j execute_grinder_off
 
 end:

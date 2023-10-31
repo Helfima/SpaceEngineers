@@ -28,8 +28,7 @@ namespace IngameScript
         MyCommandLine commandLine = new MyCommandLine();
         private IMyTextSurface drawingSurface;
 
-        private BlockSystem<IMyTextPanel> lcds = null;
-        private BlockSystem<IMyCockpit> cockpits = null;
+        private BlockSystem<IMyTerminalBlock> blocks = null;
 
         private bool ForceUpdate = false;
         private bool search = true;
@@ -52,11 +51,22 @@ namespace IngameScript
 
         private void Search()
         {
+            blocks = new BlockSystem<IMyTerminalBlock>();
             BlockFilter<IMyTextPanel> block_filter = BlockFilter<IMyTextPanel>.Create(Me, MyProperty.lcd_filter);
-            lcds = BlockSystem<IMyTextPanel>.SearchByFilter(this, block_filter);
+            BlockSystem<IMyTextPanel> lcds = BlockSystem<IMyTextPanel>.SearchByFilter(this, block_filter);
 
-            //BlockFilter<IMyCockpit> cockpit_filter = BlockFilter<IMyCockpit>.Create(Me, MyProperty.lcd_filter);
-            //cockpits = BlockSystem<IMyCockpit>.SearchByFilter(this, cockpit_filter);
+            if (lcds.IsEmpty == false)
+            {
+                blocks.List.AddRange(lcds.List.Cast<IMyTerminalBlock>().ToList());
+            }
+
+            BlockFilter<IMyCockpit> cockpit_filter = BlockFilter<IMyCockpit>.Create(Me, MyProperty.lcd_filter);
+            BlockSystem<IMyCockpit> cockpits = BlockSystem<IMyCockpit>.SearchByFilter(this, cockpit_filter);
+
+            if (cockpits.IsEmpty == false)
+            {
+                blocks.List.AddRange(cockpits.List.Cast<IMyTerminalBlock>().ToList());
+            }
 
             search = false;
         }
@@ -101,8 +111,9 @@ namespace IngameScript
                         IMyTextPanel lcd = (IMyTextPanel)GridTerminalSystem.GetBlockWithName(commandLine.Argument(1));
                         lcd.ScriptBackgroundColor = Color.Black;
                         Drawing drawing = new Drawing(lcd);
-                        drawing.Test();
-                        drawing.Dispose();
+                        var surfaceDrawing = drawing.GetSurfaceDrawing();
+                        surfaceDrawing.Test();
+                        surfaceDrawing.Dispose();
                         break;
                     case "getname":
                         int index = 0;
@@ -155,29 +166,29 @@ namespace IngameScript
         }
         private void Display()
         {
-            drawingSurface.WriteText($"LCD list size:{lcds.List.Count}\n", false);
+            drawingSurface.WriteText($"LCD list size:{blocks.List.Count}\n", false);
             //drawingSurface.WriteText($"Cockpit list size:{cockpits.List.Count}\n", true);
         }
 
         private void RunLcd()
         {
-            lcds.List.ForEach(delegate (IMyTextPanel lcd) {
-                if (lcd.CustomData != null && !lcd.CustomData.Equals(""))
+            blocks.List.ForEach(delegate (IMyTerminalBlock block) {
+                if (block.CustomData != null && !block.CustomData.Equals(""))
                 {
                     MyIniParseResult result;
                     MyIni MyIni = new MyIni();
-                    MyIni.TryParse(lcd.CustomData, out result);
-                    if (MyIni.ContainsSection("Inventory") || lcd.CustomData.Trim().Equals("prepare"))
+                    MyIni.TryParse(block.CustomData, out result);
+                    if (MyIni.ContainsSection("Inventory") || block.CustomData.Trim().Equals("prepare"))
                     {
                         DisplayLcd displayLcd;
-                        if (displayLcds.ContainsKey(lcd.EntityId))
+                        if (displayLcds.ContainsKey(block.EntityId))
                         {
-                            displayLcd = displayLcds[lcd.EntityId];
+                            displayLcd = displayLcds[block.EntityId];
                         }
                         else
                         {
-                            displayLcd = new DisplayLcd(this, lcd);
-                            displayLcds.Add(lcd.EntityId, displayLcd);
+                            displayLcd = new DisplayLcd(this, block);
+                            displayLcds.Add(block.EntityId, displayLcd);
                         }
                         displayLcd.Load(MyIni);
                         displayLcd.Draw();

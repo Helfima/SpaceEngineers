@@ -119,7 +119,7 @@ namespace IngameScript
                     }
                 }
                 catch { }
-                program.Echo(String.Format("List<{0}>:{1}", filter.Value, list.Count));
+                program.Echo(String.Format("List<{0}>({1}):{2}", typeof(T).Name, filter.Value, list.Count));
                 return new BlockSystem<T>()
                 {
                     program = program,

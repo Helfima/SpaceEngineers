@@ -61,6 +61,11 @@ namespace IngameScript
                         // xor r? a(r ?| num) b(r ?| num)
                         value = a ^ b;
                         break;
+                    case LogicWords.not:
+                        // negation
+                        // not r? a(r ?| num)
+                        value = !a;
+                        break;
 
                 }
                 if (value)
@@ -80,7 +85,8 @@ namespace IngameScript
            and,
            nor,
            or,
-           xor
+           xor,
+           not
         }
 }
 }

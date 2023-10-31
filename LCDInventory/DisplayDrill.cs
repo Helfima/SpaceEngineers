@@ -25,6 +25,7 @@ namespace IngameScript
         {
             protected DisplayLcd DisplayLcd;
 
+            private int panel = 0;
             private bool enable = false;
 
             public bool search = true;
@@ -47,6 +48,7 @@ namespace IngameScript
             }
             public void Load(MyIni MyIni)
             {
+                panel = MyIni.Get("Drills", "panel").ToInt32(0);
                 enable = MyIni.Get("Drills", "on").ToBoolean(false);
                 filter = MyIni.Get("Drills", "filter").ToString("GM:Drills");
                 drills_orientation = MyIni.Get("Drills", "orientation").ToString("y");
@@ -61,6 +63,7 @@ namespace IngameScript
 
             public void Save(MyIni MyIni)
             {
+                MyIni.Set("Drills", "panel", panel);
                 MyIni.Set("Drills", "on", enable);
                 MyIni.Set("Drills", "filter", filter);
                 MyIni.Set("Drills", "orientation", drills_orientation);
@@ -75,14 +78,21 @@ namespace IngameScript
 
             private void Search()
             {
-                BlockFilter<IMyShipDrill> block_filter = BlockFilter<IMyShipDrill>.Create(DisplayLcd.lcd, filter);
+                BlockFilter<IMyShipDrill> block_filter = BlockFilter<IMyShipDrill>.Create(DisplayLcd.Block, filter);
                 drill_inventories = BlockSystem<IMyShipDrill>.SearchByFilter(DisplayLcd.program, block_filter);
 
                 search = false;
             }
-            public Vector2 Draw(Drawing drawing, Vector2 position)
+            public void Draw(Drawing drawing)
             {
-                if (!enable) return position;
+                if (!enable) return;
+                var surface = drawing.GetSurfaceDrawing(panel);
+                surface.Initialize();
+                Draw(surface);
+            }
+            public void Draw(SurfaceDrawing surface)
+            {
+                if (!enable) return;
                 if (search) Search();
 
                 float width = drills_size;
@@ -102,24 +112,25 @@ namespace IngameScript
                     Padding = new StylePadding(0),
                     Round = false,
                     RotationOrScale = 0.5f,
-                    Percent= drills_size > 49 ? true : false
+                    Percent= drills_size > 49 ? true : false,
+                    Thresholds = this.DisplayLcd.program.MyProperty.ChestThresholds
                 };
 
                 if (drills_info)
                 {
-                    drawing.AddSprite(new MySprite()
+                    surface.AddSprite(new MySprite()
                     {
                         Type = SpriteType.TEXT,
                         Data = $"Drill Number:{drill_inventories.List.Count} ({filter})",
                         Size = new Vector2(width, width),
                         Color = Color.DimGray,
-                        Position = position + new Vector2(0, 0),
+                        Position = surface.Position + new Vector2(0, 0),
                         RotationOrScale = 0.5f,
-                        FontId = drawing.Font,
+                        FontId = surface.Font,
                         Alignment = TextAlignment.LEFT
 
                     });
-                    position += new Vector2(0, 20);
+                    surface.Position += new Vector2(0, 20);
                 }
                 drill_inventories.ForEach(delegate (IMyShipDrill drill)
                 {
@@ -175,10 +186,8 @@ namespace IngameScript
                     //drawingSurface.WriteText($"Volume [{x},{y}]:{volume}/{maxVolume}\n", true);
                     Vector2 position_relative = drills_rotate ? new Vector2(y * (width + padding), x * (width + padding)) : new Vector2(x * (width + padding), y * (width + padding));
 
-                    drawing.DrawGauge(position + position_relative + padding_screen, volume, maxVolume, style);
+                    surface.DrawGauge(surface.Position + position_relative + padding_screen, volume, maxVolume, style);
                 });
-
-                return position;
             }
         }
     }

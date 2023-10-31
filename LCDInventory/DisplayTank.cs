@@ -25,6 +25,7 @@ namespace IngameScript
         {
             protected DisplayLcd DisplayLcd;
 
+            private int panel = 0;
             private bool enable = false;
 
             private bool tank_h2 = false;
@@ -36,6 +37,7 @@ namespace IngameScript
 
             public void Load(MyIni MyIni)
             {
+                panel = MyIni.Get("Tank", "panel").ToInt32(0);
                 enable = MyIni.Get("Tank", "on").ToBoolean(false);
                 tank_h2 = MyIni.Get("Tank", "H2").ToBoolean(false);
                 tank_o2 = MyIni.Get("Tank", "O2").ToBoolean(false);
@@ -43,13 +45,21 @@ namespace IngameScript
 
             public void Save(MyIni MyIni)
             {
+                MyIni.Set("Tank", "panel", panel);
                 MyIni.Set("Tank", "on", enable);
                 MyIni.Set("Tank", "H2", tank_h2);
                 MyIni.Set("Tank", "O2", tank_o2);
             }
-            public Vector2 Draw(Drawing drawing, Vector2 position)
+            public void Draw(Drawing drawing)
             {
-                if (!enable) return position;
+                if (!enable) return;
+                var surface = drawing.GetSurfaceDrawing(panel);
+                surface.Initialize();
+                Draw(surface);
+            }
+            public void Draw(SurfaceDrawing surface)
+            {
+                if (!enable) return;
                 List<string> types = new List<string>();
                 if (tank_h2) types.Add("Hydrogen");
                 if (tank_o2) types.Add("Oxygen");
@@ -57,7 +67,7 @@ namespace IngameScript
                 {
                     foreach (string type in types)
                     {
-                        BlockSystem<IMyGasTank> tanks = BlockSystem<IMyGasTank>.SearchBlocks(DisplayLcd.program, block => block.BlockDefinition.SubtypeName.Contains(type));
+                        BlockSystem<IMyGasTank> tanks = BlockSystem<IMyGasTank>.SearchBlocks(DisplayLcd.program, block => String.IsNullOrEmpty(block.BlockDefinition.SubtypeName) ? block.BlockDefinition.TypeIdString.Contains(type) : block.BlockDefinition.SubtypeName.Contains(type));
                         float volumes = 0f;
                         float capacity = 0f;
                         float width = 50f;
@@ -69,16 +79,17 @@ namespace IngameScript
                             Height = width,
                             Padding = new StylePadding(0),
                             Round = false,
-                            RotationOrScale = 0.5f
+                            RotationOrScale = 0.5f,
+                            Thresholds = this.DisplayLcd.program.MyProperty.TankThresholds
                         };
 
                         MySprite text = new MySprite()
                         {
                             Type = SpriteType.TEXT,
                             Color = Color.DimGray,
-                            Position = position + new Vector2(0, 0),
+                            Position = surface.Position + new Vector2(0, 0),
                             RotationOrScale = 1f,
-                            FontId = drawing.Font,
+                            FontId = surface.Font,
                             Alignment = TextAlignment.LEFT
 
                         };
@@ -89,8 +100,8 @@ namespace IngameScript
                             capacity += block.Capacity;
                         });
 
-                        drawing.DrawGauge(position, volumes, capacity, style);
-                        position += new Vector2(0, 60);
+                        surface.DrawGauge(surface.Position, volumes, capacity, style);
+                        surface.Position += new Vector2(0, 60);
                         switch (type)
                         {
                             case "Hydrogen":
@@ -100,12 +111,11 @@ namespace IngameScript
                                 text.Data = $"O2: {Math.Round(volumes, 2)}L / {Math.Round(capacity, 2)}L";
                                 break;
                         }
-                        text.Position = position;
-                        drawing.AddSprite(text);
-                        position += new Vector2(0, 60);
+                        text.Position = surface.Position;
+                        surface.AddSprite(text);
+                        surface.Position += new Vector2(0, 60);
                     }
                 }
-                return position;
             }
         }
     }

@@ -21,37 +21,50 @@ namespace IngameScript
 {
     partial class Program
     {
-        
         public class Drawing
         {
-            public float Padding_x = 10f;
-            public float Padding_y = 10f;
-            public string Font = "Monospace";
-
-            private IMyTextPanel surfaceProvider;
-            private MySpriteDrawFrame frame;
-            public RectangleF viewport;
-
-            private MySprite icon;
-
+            private IMyTextSurface surface;
+            private IMyTextSurfaceProvider provider;
+            private List<SurfaceDrawing> surfaces = new List<SurfaceDrawing>();
             public Dictionary<string, string> Symbol = new Dictionary<string, string>();
-
-            public Drawing(IMyTextPanel lcd)
+            public Drawing(IMyTerminalBlock block)
             {
-                surfaceProvider = lcd;
+                if(block is IMyTextSurfaceProvider)
+                {
+                    Initialize(block as IMyTextSurfaceProvider);
+                }
+                else
+                {
+                    Initialize(block as IMyTextSurface);
+                }
                 Initialize();
             }
-
+            public IMyTerminalBlock TerminalBlock
+            {
+                get {
+                    if(this.provider != null)
+                    {
+                        return this.provider as IMyTerminalBlock;
+                    }    
+                    return this.surface as IMyTerminalBlock;
+                }
+            }
+            private void Initialize(IMyTextSurface surface)
+            {
+                this.surface = surface;
+                this.surfaces.Add(new SurfaceDrawing(this, surface));
+            }
+            private void Initialize(IMyTextSurfaceProvider provider)
+            {
+                this.provider = provider;
+                for (int i = 0; i < provider.SurfaceCount; i++)
+                {
+                    var surface = provider.GetSurface(i);
+                    this.surfaces.Add(new SurfaceDrawing(this, surface));
+                }
+            }
             private void Initialize()
             {
-                // Set the sprite display mode
-                surfaceProvider.ContentType = ContentType.SCRIPT;
-                // Make sure no built-in script has been selected
-                surfaceProvider.Script = "";
-                // Calculate the viewport by centering the surface size onto the texture size
-                this.viewport = new RectangleF((surfaceProvider.TextureSize - surfaceProvider.SurfaceSize) / 2f, surfaceProvider.SurfaceSize);
-                // Retrieve the Large Display, which is the first surface
-                this.frame = surfaceProvider.DrawFrame();
                 Symbol.Add("Cobalt", "Co");
                 Symbol.Add("Nickel", "Ni");
                 Symbol.Add("Magnesium", "Mg");
@@ -64,15 +77,92 @@ namespace IngameScript
                 Symbol.Add("Uranium", "U");
                 Symbol.Add("Ice", "Ice");
             }
-
+            public SurfaceDrawing GetSurfaceDrawing(int index = 0)
+            {
+                if(index < surfaces.Count)
+                {
+                    return surfaces[index];
+                }
+                return null;
+            }
             public void Dispose()
             {
-                // We are done with the frame, send all the sprites to the text panel
-                this.frame.Dispose();
+                foreach (var surface in this.surfaces)
+                {
+                    surface.Dispose();
+                }
             }
             public void Clean()
             {
-                AddForm(new Vector2(), SpriteForm.SquareSimple, viewport.Width, viewport.Height, Color.Black);
+                foreach (var surface in this.surfaces)
+                {
+                    surface.Clean();
+                }
+            }
+        }
+
+
+        public class SurfaceDrawing
+        {
+            public float Padding_x = 10f;
+            public float Padding_y = 10f;
+            public string Font = "Monospace";
+
+            public IMyTextSurface Surface;
+            private MySpriteDrawFrame frame;
+            public RectangleF Viewport;
+
+            private MySprite icon;
+            private bool initialized = false;
+
+
+            public SurfaceDrawing(Drawing parent, IMyTextSurface surface)
+            {
+                this.parent = parent;
+                this.Surface = surface;
+            }
+            private Drawing parent;
+            public Drawing Parent {
+                get { return this.parent; }
+            }
+            private Vector2 position;
+            public Vector2 Position
+            {
+                get { return this.position; }   
+                set { this.position = value; }
+            }
+
+            public void Initialize()
+            {
+                if (this.initialized) return;
+                initialized = true;
+                // Set the sprite display mode
+                Surface.ContentType = ContentType.SCRIPT;
+                // Make sure no built-in script has been selected
+                Surface.Script = "";
+                // background color
+                Surface.ScriptBackgroundColor = Color.Black;
+                // Calculate the viewport by centering the surface size onto the texture size
+                this.Viewport = new RectangleF((Surface.TextureSize - Surface.SurfaceSize) / 2f, Surface.SurfaceSize);
+                this.position = this.Viewport.Position;
+                // Retrieve the Large Display, which is the first surface
+                this.frame = Surface.DrawFrame();
+            }
+
+            public void Dispose()
+            {
+                if (this.initialized)
+                {
+                    // We are done with the frame, send all the sprites to the text panel
+                    this.frame.Dispose();
+                }
+            }
+            public void Clean()
+            {
+                if (this.initialized)
+                {
+                    AddForm(new Vector2(), SpriteForm.SquareSimple, Viewport.Width, Viewport.Height, Color.Black);
+                }
             }
 
             public MySprite AddSprite(MySprite sprite)
@@ -129,7 +219,8 @@ namespace IngameScript
                     Width = width * 2,
                     Height = width / 3,
                     Padding = new StylePadding(0),
-                    RotationOrScale = Math.Max(0.3f, (float)Math.Round(0.6f * (style_icon.Height / 80f), 1))
+                    RotationOrScale = Math.Max(0.3f, (float)Math.Round(0.6f * (style_icon.Height / 80f), 1)),
+                    Thresholds = style_icon.Thresholds
                 };
                 DrawGauge(position2 + new Vector2(width + style_icon.Margin.X, style_icon.Height / 2), (float)amount, limit, style);
 
@@ -193,8 +284,8 @@ namespace IngameScript
                 float width = style.Width;
                 float height = style.Height;
                 
-                if (style.Fullscreen && style.Orientation.Equals(SpriteOrientation.Horizontal)) width = viewport.Width;
-                if (style.Fullscreen && style.Orientation.Equals(SpriteOrientation.Vertical)) height = viewport.Height;
+                if (style.Fullscreen && style.Orientation.Equals(SpriteOrientation.Horizontal)) width = Viewport.Width;
+                if (style.Fullscreen && style.Orientation.Equals(SpriteOrientation.Vertical)) height = Viewport.Height;
 
                 width += - 2 * style.Padding.X;
                 height += - 2 * style.Padding.X;
@@ -207,11 +298,8 @@ namespace IngameScript
                 // Gauge quantity
                 float percent = Math.Min(1f, amount / limit);
                 Color color = Color.Green;
-                if (percent > 0.5 && !invert) color = new Color(180, 130, 0, 128);
-                if (percent > 0.75 && !invert) color = new Color(180, 0, 0, 128);
-
-                if (percent < 0.5 && invert) color = new Color(180, 130, 0, 128);
-                if (percent < 0.25 && invert) color = new Color(180, 0, 0, 128);
+                var threshold = style.Thresholds.GetGaugeThreshold(percent);
+                color = threshold.Color;
 
                 if (style.Orientation.Equals(SpriteOrientation.Horizontal))
                 {
@@ -253,17 +341,17 @@ namespace IngameScript
                 //Sandbox.ModAPI.Ingame.IMyTextSurface#GetSprites
                 //Gets a list of available sprites
                 var names = new List<string>();
-                this.surfaceProvider.GetSprites(names);
+                this.Surface.GetSprites(names);
                 int count = -1;
                 float width = 40;
                 bool auto = false;
                 if (auto)
                 {
-                    float delta = 100 - 4 * (viewport.Width - 100) * viewport.Height / names.Count;
+                    float delta = 100 - 4 * (Viewport.Width - 100) * Viewport.Height / names.Count;
                     width = (-10 + (float)Math.Sqrt(Math.Abs(delta))) / 2f;
                 }
                 float height = width + 10f;
-                int limit = (int)Math.Floor(viewport.Height/height);
+                int limit = (int)Math.Floor(Viewport.Height/height);
                 Vector2 position = new Vector2(0, 0);
 
                 foreach (string name in names)
@@ -351,6 +439,7 @@ namespace IngameScript
         public class StyleIcon : Style
         {
             public string path;
+            public GaugeThresholds Thresholds = new GaugeThresholds();
         }
         public class StyleGauge : Style
         {
@@ -359,6 +448,42 @@ namespace IngameScript
             public bool Percent = true;
             public bool Round = true;
             public float RotationOrScale = 0.6f;
+            public GaugeThresholds Thresholds = new GaugeThresholds();
+        }
+        public class GaugeThresholds
+        {
+            public List<GaugeThreshold> Thresholds = new List<GaugeThreshold>();
+            public GaugeThreshold GetGaugeThreshold(float value)
+            {
+                GaugeThreshold gaugeThreshold = Thresholds.First();
+                foreach (var threshold in Thresholds)
+                {
+                    if (value >= threshold.Value)
+                    {
+                        gaugeThreshold = threshold;
+                    }
+                }
+                return gaugeThreshold;
+            }
+        }
+        public class GaugeThreshold
+        {
+            public GaugeThreshold()
+            {
+
+            }
+            public GaugeThreshold(float value, Color color)
+            {
+                Value = value;
+                Color = color;
+            }
+            public float Value;
+            public Color Color;
+
+            public override string ToString()
+            {
+                return $"{Value}:{Color.R},{Color.G},{Color.B},{Color.A}";
+            }
         }
 
         public class Item : IComparable<Item>

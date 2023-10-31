@@ -556,9 +556,10 @@ namespace IngameScript
                 }
             }
 
-            private void DrawNormalControl(IMyTextPanel block)
+            private void DrawNormalControl(IMyTerminalBlock block)
             {
                 Drawing drawing = new Drawing(block);
+                var surface = drawing.GetSurfaceDrawing();
 
                 StyleGauge style = new StyleGauge()
                 {
@@ -571,9 +572,9 @@ namespace IngameScript
                     Percent = false
                 };
 
-                Vector2 position = new Vector2(drawing.viewport.Width / 2 - 100 + style.Padding.X, drawing.viewport.Height / 2 - 50 + style.Padding.Y);
+                Vector2 position = new Vector2(surface.Viewport.Width / 2 - 100 + style.Padding.X, surface.Viewport.Height / 2 - 50 + style.Padding.Y);
 
-                drawing.AddSprite(new MySprite()
+                surface.AddSprite(new MySprite()
                 {
                     Type = SpriteType.TEXT,
                     Data = $"Airlock",
@@ -585,11 +586,11 @@ namespace IngameScript
                 });
 
                 position += new Vector2(0, 60);
-                drawing.DrawGauge(position, OxygenRate, 100, style, true);
+                surface.DrawGauge(position, OxygenRate, 100, style, true);
 
                 string icon = "No Entry";
                 if (OxygenRate < 1 - Epsilon) icon = "Danger";
-                drawing.AddSprite(new MySprite()
+                surface.AddSprite(new MySprite()
                 {
                     Type = SpriteType.TEXTURE,
                     Data = $"{icon}",
@@ -602,7 +603,7 @@ namespace IngameScript
 
                 if (Sleep > 0)
                 {
-                    drawing.AddSprite(new MySprite()
+                    surface.AddSprite(new MySprite()
                     {
                         Type = SpriteType.TEXT,
                         Data = $"{Sleep}",
@@ -613,13 +614,15 @@ namespace IngameScript
 
                     });
                 }
-                drawing.Dispose();
+                surface.Dispose();
             }
 
-            private void DrawSmallControl(IMyTextPanel block)
+            private void DrawSmallControl(IMyTerminalBlock block)
             {
                 Drawing drawing = new Drawing(block);
-                bool horizontal = drawing.viewport.Height < drawing.viewport.Width;
+                var surface = drawing.GetSurfaceDrawing();
+
+                bool horizontal = surface.Viewport.Height < surface.Viewport.Width;
                 float gauge_width = 60f;
                 float gauge_height = 300f;
                 float icon_size = 80f;
@@ -639,7 +642,7 @@ namespace IngameScript
                 Vector2 delta = horizontal ? new Vector2(10, icon_size - 18) : new Vector2(22, icon_size / 2);
                 string icon = "No Entry";
                 if (OxygenRate < 1 - Epsilon) icon = "Danger";
-                drawing.AddSprite(new MySprite()
+                surface.AddSprite(new MySprite()
                 {
                     Type = SpriteType.TEXTURE,
                     Data = $"{icon}",
@@ -650,14 +653,14 @@ namespace IngameScript
 
                 });
 
-                delta = horizontal ? new Vector2((drawing.viewport.Width - gauge_height) / 2, 32) : new Vector2(32, (drawing.viewport.Height - gauge_height) / 2);
-                drawing.DrawGauge(position + delta, OxygenRate, 100, style, true);
+                delta = horizontal ? new Vector2((surface.Viewport.Width - gauge_height) / 2, 32) : new Vector2(32, (surface.Viewport.Height - gauge_height) / 2);
+                surface.DrawGauge(position + delta, OxygenRate, 100, style, true);
 
 
-                delta = horizontal ? new Vector2(drawing.viewport.Width - 60, drawing.viewport.Height / 2) : new Vector2(22 + drawing.viewport.Width / 2, drawing.viewport.Height - 80);
+                delta = horizontal ? new Vector2(surface.Viewport.Width - 60, surface.Viewport.Height / 2) : new Vector2(22 + surface.Viewport.Width / 2, surface.Viewport.Height - 80);
                 if (Sleep > 0)
                 {
-                    drawing.AddSprite(new MySprite()
+                    surface.AddSprite(new MySprite()
                     {
                         Type = SpriteType.TEXT,
                         Data = $"{Sleep}",
@@ -668,7 +671,7 @@ namespace IngameScript
 
                     });
                 }
-                drawing.Dispose();
+                surface.Dispose();
             }
 
             public enum StateMachine

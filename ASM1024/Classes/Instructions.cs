@@ -96,7 +96,7 @@ namespace IngameScript
                 }
                 catch (Exception ex)
                 {
-                    Log($"Execution Label error {Index}: {ex.Message}");
+                    Log($"Execution Label error {Index + 1}: {ex.Message}");
                     Log(ex.StackTrace);
                     State = StateBasic.Completing;
                 }
@@ -121,7 +121,7 @@ namespace IngameScript
                 }
                 catch (Exception ex)
                 {
-                    Log($"Program error {Index}: {ex.Message}");
+                    Log($"Program error {Index + 1}: {ex.Message}");
                     Log(ex.StackTrace);
                     State = StateBasic.Completing;
                 }
@@ -145,7 +145,7 @@ namespace IngameScript
                         }
                         else
                         {
-                            Log($"Execute {instruction.Command} at {Index}");
+                            Log($"Execute {instruction.Command} at {Index + 1}");
                             switch (instruction.Type)
                             {
                                 case InstructionType.Branch:
@@ -192,7 +192,7 @@ namespace IngameScript
                     }
                 } catch (Exception ex)
                 {
-                    Log($"Instruction error {Index}: {ex.Message}");
+                    Log($"Instruction error {Index + 1}: {ex.Message}");
                     Log(ex.StackTrace);
                     State = StateBasic.Completing;
                 }
@@ -256,7 +256,7 @@ namespace IngameScript
                     {
                         name = name.ToLower();
                     }
-                    Log($"try instanciate {line} at {index}");
+                    Log($"try instanciate {line} at {index + 1}");
                     var instanciated = InstanciateInstruction(line, name, index, values);
                     return instanciated;
                 }

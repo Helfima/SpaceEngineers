@@ -24,8 +24,10 @@ namespace IngameScript
         public class DisplayShip
         {
             protected DisplayLcd DisplayLcd;
+            private int panel = 0;
 
             private bool enable = false;
+            private double scale = 1d;
 
             public bool search = true;
 
@@ -44,12 +46,16 @@ namespace IngameScript
 
             public void Load(MyIni MyIni)
             {
+                panel = MyIni.Get("Ship", "panel").ToInt32(0);
                 enable = MyIni.Get("Ship", "on").ToBoolean(false);
+                scale = MyIni.Get("Ship", "scale").ToDouble(1d);
             }
 
             public void Save(MyIni MyIni)
             {
+                MyIni.Set("Ship", "panel", panel);
                 MyIni.Set("Ship", "on", enable);
+                MyIni.Set("Ship", "scale", scale);
             }
             private void Search()
             {
@@ -63,9 +69,16 @@ namespace IngameScript
 
                 search = false;
             }
-            public Vector2 Draw(Drawing drawing, Vector2 position)
+            public void Draw(Drawing drawing)
             {
-                if (!enable) return position;
+                if (!enable) return;
+                var surface = drawing.GetSurfaceDrawing(panel);
+                surface.Initialize();
+                Draw(surface);
+            }
+            public void Draw(SurfaceDrawing surface)
+            {
+                if (!enable) return;
                 if (search) Search();
 
                 float force = 0f;
@@ -118,56 +131,54 @@ namespace IngameScript
                 {
                     Type = SpriteType.TEXT,
                     Color = Color.DimGray,
-                    Position = position + new Vector2(0, 0),
-                    RotationOrScale = 1f,
-                    FontId = drawing.Font,
-                    Alignment = TextAlignment.LEFT
-
+                    Position = surface.Position + new Vector2(0, 0),
+                    RotationOrScale = (float)scale,
+                    FontId = surface.Font,
+                    Alignment = TextAlignment.LEFT,
                 };
+                float offset_y = 40f * (float)scale;
                 // Up
                 force = 0f;
                 forces.TryGetValue("Up", out force);
                 text.Data = $"Up: {force / 1000}kN / {Math.Round(force / mass, 1)}m/s²";
-                drawing.AddSprite(text);
+                surface.AddSprite(text);
                 // Down
-                position += new Vector2(0, 40);
+                surface.Position += new Vector2(0, offset_y);
                 force = 0f;
                 forces.TryGetValue("Down", out force);
                 text.Data = $"Down: {force / 1000}kN / {Math.Round(force / mass, 1)}m/s²";
-                text.Position = position;
-                drawing.AddSprite(text);
+                text.Position = surface.Position;
+                surface.AddSprite(text);
                 // Forward
-                position += new Vector2(0, 40);
+                surface.Position += new Vector2(0, offset_y);
                 force = 0f;
                 forces.TryGetValue("Forward", out force);
                 text.Data = $"Forward: {force / 1000}kN / {Math.Round(force / mass, 1)}m/s²";
-                text.Position = position;
-                drawing.AddSprite(text);
+                text.Position = surface.Position;
+                surface.AddSprite(text);
                 // Backward
-                position += new Vector2(0, 40);
+                surface.Position += new Vector2(0, offset_y);
                 force = 0f;
                 forces.TryGetValue("Backward", out force);
                 text.Data = $"Backward: {force / 1000}kN / {Math.Round(force / mass, 1)}m/s²";
-                text.Position = position;
-                drawing.AddSprite(text);
+                text.Position = surface.Position;
+                surface.AddSprite(text);
                 // Right
-                position += new Vector2(0, 40);
+                surface.Position += new Vector2(0, offset_y);
                 force = 0f;
                 forces.TryGetValue("Right", out force);
                 text.Data = $"Right: {force / 1000}kN / {Math.Round(force / mass, 1)}m/s²";
-                text.Position = position;
-                drawing.AddSprite(text);
+                text.Position = surface.Position;
+                surface.AddSprite(text);
                 // Left
-                position += new Vector2(0, 40);
+                surface.Position += new Vector2(0, offset_y);
                 force = 0f;
                 forces.TryGetValue("Left", out force);
                 text.Data = $"Left: {force / 1000}kN / {Math.Round(force / mass, 1)}m/s²";
-                text.Position = position;
-                drawing.AddSprite(text);
+                text.Position = surface.Position;
+                surface.AddSprite(text);
 
-                position += new Vector2(0, 40);
-
-                return position;
+                surface.Position += new Vector2(0, offset_y);
             }
         }
     }

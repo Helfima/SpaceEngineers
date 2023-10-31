@@ -25,6 +25,7 @@ namespace IngameScript
         {
             protected DisplayLcd DisplayLcd;
 
+            private int panel = 0;
             private bool enable = false;
 
             public bool search = true;
@@ -47,6 +48,7 @@ namespace IngameScript
 
             public void Load(MyIni MyIni)
             {
+                panel = MyIni.Get("Machine", "panel").ToInt32(0);
                 enable = MyIni.Get("Machine", "on").ToBoolean(false);
                 filter = MyIni.Get("Machine", "filter").ToString("*");
                 machine_refinery = MyIni.Get("Machine", "refinery").ToBoolean(true);
@@ -55,6 +57,7 @@ namespace IngameScript
 
             public void Save(MyIni MyIni)
             {
+                MyIni.Set("Machine", "panel", panel);
                 MyIni.Set("Machine", "on", enable);
                 MyIni.Set("Machine", "filter", filter);
                 MyIni.Set("Machine", "refinery", machine_refinery);
@@ -63,15 +66,21 @@ namespace IngameScript
 
             private void Search()
             {
-                BlockFilter<IMyProductionBlock> block_filter = BlockFilter<IMyProductionBlock>.Create(DisplayLcd.lcd, filter);
+                BlockFilter<IMyProductionBlock> block_filter = BlockFilter<IMyProductionBlock>.Create(DisplayLcd.Block, filter);
                 producers = BlockSystem<IMyProductionBlock>.SearchByFilter(DisplayLcd.program, block_filter);
 
                 search = false;
             }
-
-            public Vector2 Draw(Drawing drawing, Vector2 position)
+            public void Draw(Drawing drawing)
             {
-                if (!enable) return position;
+                if (!enable) return;
+                var surface = drawing.GetSurfaceDrawing(panel);
+                surface.Initialize();
+                Draw(surface);
+            }
+            public void Draw(SurfaceDrawing surface)
+            {
+                if (!enable) return;
                 if (search) Search();
                 List<string> types = new List<string>();
                 int limit = 0;
@@ -103,17 +112,15 @@ namespace IngameScript
                         {
                             if (block.GetType().Name.Contains(type))
                             {
-                                Vector2 position2 = position + new Vector2(style.Width * (count / limit), style.Height * (count - (count / limit) * limit));
+                                Vector2 position2 = surface.Position + new Vector2(style.Width * (count / limit), style.Height * (count - (count / limit) * limit));
                                 List<Item> items = TraversalMachine(block);
-                                DrawMachine(drawing, position2, block, items, style);
+                                DrawMachine(surface, position2, block, items, style);
                                 count += 1;
                             }
                         });
-                        position += new Vector2(0, style.Height) * limit;
+                        surface.Position += new Vector2(0, style.Height) * limit;
                     }
                 }
-
-                return position;
             }
 
             public List<Item> TraversalMachine(IMyProductionBlock block)
@@ -216,7 +223,7 @@ namespace IngameScript
                 last_machine_amount[block.EntityId] = last_amount;
                 return items;
             }
-            public void DrawMachine(Drawing drawing, Vector2 position, IMyProductionBlock block, List<Item> items, Style style)
+            public void DrawMachine(SurfaceDrawing surface, Vector2 position, IMyProductionBlock block, List<Item> items, Style style)
             {
                 float size_icon = style.Height - 10;
                 Color color_title = new Color(100, 100, 100, 128);
@@ -231,13 +238,13 @@ namespace IngameScript
 
                 float x = 0f;
 
-                drawing.AddForm(position + new Vector2(0, 0), SpriteForm.SquareSimple, form_width, form_height, new Color(5, 5, 5, 125));
+                surface.AddForm(position + new Vector2(0, 0), SpriteForm.SquareSimple, form_width, form_height, new Color(5, 5, 5, 125));
 
                 foreach (Item item in items)
                 {
                     
                     // icon
-                    drawing.AddSprite(new MySprite()
+                    surface.AddSprite(new MySprite()
                     {
                         Type = SpriteType.TEXTURE,
                         Data = item.Icon,
@@ -247,19 +254,19 @@ namespace IngameScript
 
                     });
 
-                    if (drawing.Symbol.Keys.Contains(item.Name))
+                    if (surface.Parent.Symbol.Keys.Contains(item.Name))
                     {
                         // symbol
                         Vector2 positionSymbol = position + new Vector2(x, 20);
-                        drawing.AddForm(positionSymbol, SpriteForm.SquareSimple, size_icon, 15f, new Color(10, 10, 10, 200));
-                        drawing.AddSprite(new MySprite()
+                        surface.AddForm(positionSymbol, SpriteForm.SquareSimple, size_icon, 15f, new Color(10, 10, 10, 200));
+                        surface.AddSprite(new MySprite()
                         {
                             Type = SpriteType.TEXT,
-                            Data = drawing.Symbol[item.Name],
+                            Data = surface.Parent.Symbol[item.Name],
                             Color = color_text,
                             Position = positionSymbol,
                             RotationOrScale = RotationOrScale,
-                            FontId = drawing.Font,
+                            FontId = surface.Font,
                             Alignment = TextAlignment.LEFT
                         });
                     }
@@ -269,15 +276,15 @@ namespace IngameScript
                     Color mask_color = new Color(0, 0, 20, 200);
                     if (item.Variance == 2) mask_color = new Color(20, 0, 0, 200);
                     if (item.Variance == 3) mask_color = new Color(0, 20, 0, 200);
-                    drawing.AddForm(positionQuantity, SpriteForm.SquareSimple, size_icon, 15f, mask_color);
-                    drawing.AddSprite(new MySprite()
+                    surface.AddForm(positionQuantity, SpriteForm.SquareSimple, size_icon, 15f, mask_color);
+                    surface.AddSprite(new MySprite()
                     {
                         Type = SpriteType.TEXT,
                         Data = Util.GetKiloFormat(item.Amount),
                         Color = color_text,
                         Position = positionQuantity,
                         RotationOrScale = RotationOrScale,
-                        FontId = drawing.Font,
+                        FontId = surface.Font,
                         Alignment = TextAlignment.LEFT
                     });
                     x += style.Height;
@@ -291,11 +298,11 @@ namespace IngameScript
                     Color = color_title,
                     Position = position + new Vector2(style.Margin.X, 0),
                     RotationOrScale = 0.6f,
-                    FontId = drawing.Font,
+                    FontId = surface.Font,
                     Alignment = TextAlignment.LEFT
 
                 };
-                drawing.AddSprite(icon);
+                surface.AddSprite(icon);
             }
         }
     }
