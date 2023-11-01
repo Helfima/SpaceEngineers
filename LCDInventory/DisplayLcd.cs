@@ -72,7 +72,7 @@ namespace IngameScript
             {
                 cleanup++;
                 Drawing drawing = new Drawing(Block);
-                TestViewport(drawing);
+                //TestViewport(drawing);
 
                 if (cleanup < 100)
                 {

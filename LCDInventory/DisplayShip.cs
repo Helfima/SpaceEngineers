@@ -16,6 +16,8 @@ using VRage.Game.ObjectBuilders.Definitions;
 using VRage.Game;
 using VRage;
 using VRageMath;
+using static System.Net.Mime.MediaTypeNames;
+using static VRage.Render11.Shader.CacheGenerator;
 
 namespace IngameScript
 {
@@ -28,15 +30,11 @@ namespace IngameScript
 
             private bool enable = false;
             private double scale = 1d;
+            private bool oneLine = false;
 
             public bool search = true;
 
-            private BlockSystem<IMyThrust> thrusts_up = null;
-            private BlockSystem<IMyThrust> thrusts_down = null;
-            private BlockSystem<IMyThrust> thrusts_left = null;
-            private BlockSystem<IMyThrust> thrusts_right = null;
-            private BlockSystem<IMyThrust> thrusts_forward = null;
-            private BlockSystem<IMyThrust> thrusts_backward = null;
+            private BlockSystem<IMyThrust> thrusts = null;
             private BlockSystem<IMyCockpit> cockpit = null;
 
             public DisplayShip(DisplayLcd DisplayLcd)
@@ -49,6 +47,7 @@ namespace IngameScript
                 panel = MyIni.Get("Ship", "panel").ToInt32(0);
                 enable = MyIni.Get("Ship", "on").ToBoolean(false);
                 scale = MyIni.Get("Ship", "scale").ToDouble(1d);
+                oneLine = MyIni.Get("Ship", "one_line").ToBoolean(false);
             }
 
             public void Save(MyIni MyIni)
@@ -56,17 +55,12 @@ namespace IngameScript
                 MyIni.Set("Ship", "panel", panel);
                 MyIni.Set("Ship", "on", enable);
                 MyIni.Set("Ship", "scale", scale);
+                MyIni.Set("Ship", "one_line", oneLine);
             }
             private void Search()
             {
                 cockpit = BlockSystem<IMyCockpit>.SearchBlocks(DisplayLcd.program);
-                thrusts_up = BlockSystem<IMyThrust>.SearchByGroup(DisplayLcd.program, "Thrusters Up");
-                thrusts_down = BlockSystem<IMyThrust>.SearchByGroup(DisplayLcd.program, "Thrusters Down");
-                thrusts_left = BlockSystem<IMyThrust>.SearchByGroup(DisplayLcd.program, "Thrusters Left");
-                thrusts_right = BlockSystem<IMyThrust>.SearchByGroup(DisplayLcd.program, "Thrusters Right");
-                thrusts_forward = BlockSystem<IMyThrust>.SearchByGroup(DisplayLcd.program, "Thrusters Forward");
-                thrusts_backward = BlockSystem<IMyThrust>.SearchByGroup(DisplayLcd.program, "Thrusters Backward");
-
+                thrusts = BlockSystem<IMyThrust>.SearchBlocks(DisplayLcd.program);
                 search = false;
             }
             public void Draw(Drawing drawing)
@@ -81,103 +75,79 @@ namespace IngameScript
                 if (!enable) return;
                 if (search) Search();
 
-                float force = 0f;
                 float mass = 0f;
                 if (!cockpit.IsEmpty)
                 {
                     MyShipMass shipMass = cockpit.First.CalculateShipMass();
                     mass = shipMass.TotalMass;
                 }
-                string direction = "none";
+                Dictionary<string, List<IMyThrust>> forces = new Dictionary<string, List<IMyThrust>>();
 
-                Dictionary<string, float> forces = new Dictionary<string, float>();
-                thrusts_up.ForEach(delegate (IMyThrust block)
-                {
-                    direction = "Up";
-                    if (forces.ContainsKey(direction)) forces[direction] += block.MaxThrust;
-                    else forces.Add(direction, block.MaxThrust);
-                });
-                thrusts_down.ForEach(delegate (IMyThrust block)
-                {
-                    direction = "Down";
-                    if (forces.ContainsKey(direction)) forces[direction] += block.MaxThrust;
-                    else forces.Add(direction, block.MaxThrust);
-                });
-                thrusts_left.ForEach(delegate (IMyThrust block)
-                {
-                    direction = "Left";
-                    if (forces.ContainsKey(direction)) forces[direction] += block.MaxThrust;
-                    else forces.Add(direction, block.MaxThrust);
-                });
-                thrusts_right.ForEach(delegate (IMyThrust block)
-                {
-                    direction = "Right";
-                    if (forces.ContainsKey(direction)) forces[direction] += block.MaxThrust;
-                    else forces.Add(direction, block.MaxThrust);
-                });
-                thrusts_forward.ForEach(delegate (IMyThrust block)
-                {
-                    direction = "Forward";
-                    if (forces.ContainsKey(direction)) forces[direction] += block.MaxThrust;
-                    else forces.Add(direction, block.MaxThrust);
-                });
-                thrusts_backward.ForEach(delegate (IMyThrust block)
-                {
-                    direction = "Backward";
-                    if (forces.ContainsKey(direction)) forces[direction] += block.MaxThrust;
-                    else forces.Add(direction, block.MaxThrust);
-                });
+                var valueUp = thrusts.List.Where(x => x.GridThrustDirection == Vector3I.Down).ToList();
+                forces.Add("Up", valueUp);
+
+                var valueDown = thrusts.List.Where(x => x.GridThrustDirection == Vector3I.Up).ToList();
+                forces.Add("Down", valueDown);
+
+                var valueLeft = thrusts.List.Where(x => x.GridThrustDirection == Vector3I.Right).ToList();
+                forces.Add("Left", valueLeft);
+
+                var valueRight = thrusts.List.Where(x => x.GridThrustDirection == Vector3I.Left).ToList();
+                forces.Add("Right", valueRight);
+
+                var valueForward = thrusts.List.Where(x => x.GridThrustDirection == Vector3I.Backward).ToList();
+                forces.Add("Forward", valueForward);
+
+                var valueBackward = thrusts.List.Where(x => x.GridThrustDirection == Vector3I.Forward).ToList();
+                forces.Add("Backward", valueBackward);
+
                 MySprite text = new MySprite()
                 {
                     Type = SpriteType.TEXT,
-                    Color = Color.DimGray,
                     Position = surface.Position + new Vector2(0, 0),
                     RotationOrScale = (float)scale,
                     FontId = surface.Font,
                     Alignment = TextAlignment.LEFT,
                 };
                 float offset_y = 40f * (float)scale;
-                // Up
-                force = 0f;
-                forces.TryGetValue("Up", out force);
-                text.Data = $"Up: {force / 1000}kN / {Math.Round(force / mass, 1)}m/s²";
-                surface.AddSprite(text);
-                // Down
-                surface.Position += new Vector2(0, offset_y);
-                force = 0f;
-                forces.TryGetValue("Down", out force);
-                text.Data = $"Down: {force / 1000}kN / {Math.Round(force / mass, 1)}m/s²";
+                foreach ( var item in forces)
+                {
+                    if (oneLine)
+                    {
+                        Draw1Line(surface, item, text, mass, offset_y);
+                    }
+                    else
+                    {
+                        Draw2Line(surface, item, text, mass, offset_y);
+                    }
+                }
+            }
+            private void Draw2Line(SurfaceDrawing surface, KeyValuePair<string, List<IMyThrust>> item, MySprite text, float mass, float offset_y)
+            {
+                var force = item.Value.Select(x => x.MaxThrust).Sum();
+                var speed = Math.Round(force / mass, 1);
+                var count = item.Value.Count();
+                text.Data = $"Thrusts {item.Key}: {count}";
+                text.Color = Color.DimGray;
                 text.Position = surface.Position;
                 surface.AddSprite(text);
-                // Forward
                 surface.Position += new Vector2(0, offset_y);
-                force = 0f;
-                forces.TryGetValue("Forward", out force);
-                text.Data = $"Forward: {force / 1000}kN / {Math.Round(force / mass, 1)}m/s²";
-                text.Position = surface.Position;
-                surface.AddSprite(text);
-                // Backward
-                surface.Position += new Vector2(0, offset_y);
-                force = 0f;
-                forces.TryGetValue("Backward", out force);
-                text.Data = $"Backward: {force / 1000}kN / {Math.Round(force / mass, 1)}m/s²";
-                text.Position = surface.Position;
-                surface.AddSprite(text);
-                // Right
-                surface.Position += new Vector2(0, offset_y);
-                force = 0f;
-                forces.TryGetValue("Right", out force);
-                text.Data = $"Right: {force / 1000}kN / {Math.Round(force / mass, 1)}m/s²";
-                text.Position = surface.Position;
-                surface.AddSprite(text);
-                // Left
-                surface.Position += new Vector2(0, offset_y);
-                force = 0f;
-                forces.TryGetValue("Left", out force);
-                text.Data = $"Left: {force / 1000}kN / {Math.Round(force / mass, 1)}m/s²";
-                text.Position = surface.Position;
-                surface.AddSprite(text);
 
+                text.Data = $"{force / 1000,8}kN {speed,8}m/s²";
+                text.Color = Color.LightGreen;
+                text.Position = surface.Position;
+                surface.AddSprite(text);
+                surface.Position += new Vector2(0, offset_y);
+            }
+            private void Draw1Line(SurfaceDrawing surface, KeyValuePair<string, List<IMyThrust>> item, MySprite text, float mass, float offset_y)
+            {
+                var force = item.Value.Select(x => x.MaxThrust).Sum();
+                var speed = Math.Round(force / mass, 1);
+                var count = item.Value.Count();
+                text.Data = $"{force / 1000,6}kN {speed,6}m/s² {item.Key}";
+                text.Color = Color.LightGreen;
+                text.Position = surface.Position;
+                surface.AddSprite(text);
                 surface.Position += new Vector2(0, offset_y);
             }
         }
