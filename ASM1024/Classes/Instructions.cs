@@ -37,6 +37,7 @@ namespace IngameScript
             public StateBasic State = StateBasic.None;
 
             public int Index = 0;
+            public bool FirstStarted = false;
             public Instructions(Program program)
             {
                 myProgram = program;
@@ -104,6 +105,7 @@ namespace IngameScript
             public void Start()
             {
                 State = StateBasic.Running;
+                FirstStarted = true;
             }
 
             public void ExecuteProgram()

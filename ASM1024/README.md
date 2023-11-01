@@ -4,6 +4,55 @@ Assembler language for Space Engineer.
 
 # Syntax
 
+## Device IO
+
+<table>
+  <tr>
+    <th>Instruction</th>
+    <th>Description</th>
+  </tr>
+  <tr>
+    <td>device r? Filter</td>
+    <td>Creation a device (d?) with a filter, see filter section. a device is a list of "ITerminalBlock"</td>
+  </tr>
+  <tr>
+    <td>load r? d? Property AgregationMode</td>
+    <td>Load device property to register, AgregationMode:Average (0), Sum (1), Minimum (2), Maximum (3)</td>
+  </tr>
+  <tr>
+    <td>inventory r? d? int Property AgregationMode</td>
+    <td>Load from a device inventory, the content property to register, AgregationMode:Average (0), Sum (1), Minimum (2), Maximum (3)</td>
+  </tr>
+  <tr>
+    <td>store d? Property a(r?|num)</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>action r? ActionName</td>
+    <td>Execute action on device with name "ActionName"</td>
+  </tr>
+  <tr>
+    <td>color r(r?|num)	g(r?|num)	b(r?|num)	a(r?|num)</td>
+    <td>Store rgba color, values are integer [0-255]</td>
+  </tr>
+  <tr>
+    <td>colorrainbow r? a(r?|num)</td>
+    <td>Store color from interpolation value a</td>
+  </tr>
+</table>
+
+### Device Filter
+
+Sample intruction for create a device
+
+```device plates_fixes "MG:Patins Fixes"```
+
+Filter characters:
+
+* C=Search By Contains
+* G=Search Group
+* M=Search on Multi Grid
+
 ## Jump
 
 <table>
@@ -12,15 +61,15 @@ Assembler language for Space Engineer.
     <th>Description</th>
   </tr>
   <tr>
-<td>j	int	 	 	 </td>
+<td>j int</td>
 <td>Jump execution to line a</td>
   </tr>
   <tr>
-<td>jal	int	 	 	 </td>
+<td>jal int</td>
 <td>Jump execution to line a and store next line number in ra</td>
   </tr>
   <tr>
-<td>jr	int	 	 	 </td>
+<td>jr int</td>
 <td>Relative jump to line a</td>
   </tr>
 </table>

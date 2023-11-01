@@ -125,6 +125,11 @@ namespace IngameScript
         }
         void RunContinuousLogic()
         {
+            if(instructions.FirstStarted == false)
+            {
+                instructions.Init();
+                instructions.Start();
+            }
             instructions.Execute();
         }
 

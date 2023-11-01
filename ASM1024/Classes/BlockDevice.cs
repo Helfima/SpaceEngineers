@@ -3,6 +3,7 @@ using Sandbox.ModAPI.Ingame;
 using Sandbox.ModAPI.Interfaces;
 using SpaceEngineers.Game.ModAPI.Ingame;
 using System;
+using System.CodeDom;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -55,11 +56,6 @@ namespace IngameScript
                 {
                     switch (name)
                     {
-                        case "On":
-                            {
-                                block.SetValueBool("OnOff", value >= 1);
-                            }
-                            break;
                         default:
                             var property = block.GetProperty(name);
                             if (property != null)
@@ -98,13 +94,6 @@ namespace IngameScript
                 {
                     switch (name)
                     {
-                        case "On":
-                            {
-                                var valueBool = block.GetValueBool("OnOff");
-                                var value = valueBool ? 1d : 0d;
-                                values.Add(value);
-                            }
-                            break;
                         case "Angle":
                             {
                                 if (block is IMyMotorStator)
@@ -155,6 +144,20 @@ namespace IngameScript
                                 {
                                     var piston = (IMySensorBlock)block;
                                     var value = piston.IsActive ? 1d : 0d;
+                                    values.Add(value);
+                                }
+                                else
+                                {
+                                    throw new Exception("IsActive not a property");
+                                }
+                            }
+                            break;
+                        case "LockMode":
+                            {
+                                if(block is IMyLandingGear)
+                                {
+                                    var piston = (IMyLandingGear)block;
+                                    var value = (double)piston.LockMode;
                                     values.Add(value);
                                 }
                                 else
@@ -255,7 +258,6 @@ namespace IngameScript
 
             public double LoadDevice(BlockSystem<IMyTerminalBlock> devices, string property, AggregationType aggregation)
             {
-                //property = StringHelper.FirstCharToUpper(property);
                 switch (property)
                 {
                     default:
@@ -264,7 +266,6 @@ namespace IngameScript
             }
             public void StoreDevice(BlockSystem<IMyTerminalBlock> devices, string property, double value)
             {
-                //property = StringHelper.FirstCharToUpper(property);
                 switch (property)
                 {
                     default:

@@ -18,7 +18,7 @@ device projector "M:Projecteur"
 device top_grinders "MG:Meuleuses"
 device top_hinge_grinders "M:Charnière Meuleuses"
 
-device sensor "M:Capteur Mobile"
+device sensor "M:Capteur Mineuse"
 
 define kp 0.1
 define min_angle_fixes 0
@@ -45,8 +45,8 @@ store hinge_fusion LowerLimit min_angle_connector
 store pistons_elevator UpperLimit max_piston
 store pistons_elevator LowerLimit min_piston
 
-define min_hinge_drill -15
-define max_hinge_drill 15
+define min_hinge_drill -30
+define max_hinge_drill 30
 store hinge_drills UpperLimit max_hinge_drill
 store hinge_drills LowerLimit min_hinge_drill
 
@@ -60,7 +60,7 @@ store sensor Left 0.1
 store sensor Right 0.1
 
 move stage 0
-move drill_velocity 1
+move drill_velocity 2
 
 define stage_limit 2
 
@@ -107,12 +107,12 @@ down_step:
 	move stage_count 0
 loop_down_step:
 	yield
-	#load isActive sensor IsActive 3
-	#seq activeDrill isActive 1
+	load isActive sensor IsActive 3
+	seq activeDrill isActive 1
 	move stage_next 1
 	seq isOn stage 2
-	store wellders On isOn
-	store projector On isOn
+	store wellders OnOff isOn
+	store projector OnOff isOn
 	
 	beqal stage 0 connector_unlock
 	beqal stage 1 mobiles_unlock 
@@ -132,7 +132,7 @@ loop_down_step:
 j loop_down_step
 
 grinder_top_on:
-	store top_grinders On 1
+	store top_grinders OnOff 1
 	load angle top_hinge_grinders Angle 3
 	sub err 0 angle
 	mul cmd err kp
@@ -147,7 +147,7 @@ grinder_top_off:
 	load angle top_hinge_grinders Angle 3
 	print angle
 	slt isOn angle 30
-	store top_grinders On isOn
+	store top_grinders OnOff isOn
 	sub err 90 angle
 	mul cmd err kp
 	max cmd cmd 1
@@ -158,7 +158,7 @@ grinder_top_off:
 j ra
 
 fixes_lock:
-	store block_fixes On 1
+	store block_fixes OnOff 1
 	load angle hinge_fixes Angle 3
 	sub err min_angle_fixes angle
 	mul cmd err kp
@@ -173,7 +173,7 @@ j ra
 fixes_unlock:
 	load temp block_mobiles IsConnected 3
 	beq temp 0 ra
-	store block_fixes On 0
+	store block_fixes OnOff 0
 	yield
 	load angle hinge_fixes Angle 3
 	sub err max_angle_fixes angle
@@ -214,7 +214,7 @@ connector_unlock:
 j ra
 
 mobiles_lock:
-	store block_mobiles On 1
+	store block_mobiles OnOff 1
 	load angle hinge_mobiles Angle 3
 	sub err min_angle_mobiles angle
 	mul cmd err kp
@@ -229,7 +229,7 @@ j ra
 mobiles_unlock:
 	load temp block_fixes IsConnected 3
 	beq temp 0 ra
-	store block_mobiles On 0
+	store block_mobiles OnOff 0
 	yield
 	load angle hinge_mobiles Angle 3
 	sub err max_angle_mobiles angle
@@ -266,8 +266,8 @@ pistons_down:
 j ra
 
 move_drills:
-	#beq activeDrill 0 ra
-	store drills On 1
+	beq activeDrill 0 ra
+	store drills OnOff 1
 	store hinge_drills Velocity drill_velocity
 	sge temp drill_velocity 0
 	select limit_hinge_drill temp max_hinge_drill min_hinge_drill
@@ -286,7 +286,7 @@ stop_drills:
 	abs temp angle
 	bgt temp 1 ra
 	store hinge_drills Velocity 0
-	store drills On 0
+	store drills OnOff 0
 j ra
 
 execute_fixes_lock:
