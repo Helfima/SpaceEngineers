@@ -12,31 +12,31 @@ Assembler language for Space Engineer.
     <th>Description</th>
   </tr>
   <tr>
-    <td>device r? Filter</td>
+    <td>device d? Filter</td>
     <td>Creation a device (d?) with a filter, see filter section. a device is a list of "ITerminalBlock"</td>
   </tr>
   <tr>
-    <td>load r? d? Property AgregationMode</td>
-    <td>Load device property to register, AgregationMode:Average (0), Sum (1), Minimum (2), Maximum (3)</td>
+    <td>get v? d? Property AgregationMode</td>
+    <td>Get device property to variable, see AgregationMode</td>
   </tr>
   <tr>
-    <td>inventory r? d? int Property AgregationMode</td>
-    <td>Load from a device inventory, the content property to register, AgregationMode:Average (0), Sum (1), Minimum (2), Maximum (3)</td>
+    <td>items v? d? int Property AgregationMode</td>
+    <td>get from a device inventory, the content property to variable, see AgregationMode</td>
   </tr>
   <tr>
-    <td>store d? Property a(r?|num)</td>
-    <td></td>
+    <td>set d? Property a(v?|num)</td>
+    <td>Set variable value to property on device</td>
   </tr>
   <tr>
-    <td>action r? ActionName</td>
+    <td>action v? ActionName</td>
     <td>Execute action on device with name "ActionName"</td>
   </tr>
   <tr>
-    <td>color r(r?|num)	g(r?|num)	b(r?|num)	a(r?|num)</td>
+    <td>color r(v?|num)	g(v?|num)	b(v?|num)	a(v?|num)</td>
     <td>Store rgba color, values are integer [0-255]</td>
   </tr>
   <tr>
-    <td>colorrainbow r? a(r?|num)</td>
+    <td>colorrainbow v? a(v?|num)</td>
     <td>Store color from interpolation value a</td>
   </tr>
 </table>
@@ -49,9 +49,18 @@ Sample intruction for create a device
 
 Filter characters:
 
-* C=Search By Contains
-* G=Search Group
-* M=Search on Multi Grid
+* C = Search By Contains
+* G = Search Group
+* M = Search on Multi Grid
+
+### AgregationMode
+
+Calcul agregation:
+
+* 0 = Average
+* 1 = Sum
+* 2 = Minimum
+* 3 = Maximum
 
 ## Jump
 
@@ -82,195 +91,195 @@ Filter characters:
     <th>Description</th>
   </tr>
   <tr>
-<td>bap	a(r?|num)	b(r?|num)	c(r?|num)	d(r?|num)</td>
+<td>bap	a(v?|num)	b(v?|num)	c(v?|num)	d(v?|num)</td>
 <td>Branch to line d if abs(a - b) <= max(c * max(abs(a), abs(b)), float.epsilon * 8)</td>
   </tr>
   <tr>
-<td>bapal	a(r?|num)	b(r?|num)	c(r?|num)	d(r?|num)</td>
+<td>bapal	a(v?|num)	b(v?|num)	c(v?|num)	d(v?|num)</td>
 <td>Branch to line c if a != b and store next line number in ra</td>
   </tr>
   <tr>
-<td>bapz	a(r?|num)	b(r?|num)	c(r?|num)	 </td>
+<td>bapz	a(v?|num)	b(v?|num)	c(v?|num)	 </td>
 <td>Branch to line c if abs(a) <= float.epsilon * 8</td>
   </tr>
   <tr>
-<td>bapzal	a(r?|num)	b(r?|num)	c(r?|num)	 </td>
+<td>bapzal	a(v?|num)	b(v?|num)	c(v?|num)	 </td>
 <td>Branch to line c if abs(a) <= float.epsilon * 8</td>
   </tr>
   <tr>
-<td>beq	a(r?|num)	b(r?|num)	c(r?|num)	 </td>
+<td>beq	a(v?|num)	b(v?|num)	c(v?|num)	 </td>
 <td>Branch to line c if a == b</td>
   </tr>
   <tr>
-<td>beqal	a(r?|num)	b(r?|num)	c(r?|num)	 </td>
+<td>beqal	a(v?|num)	b(v?|num)	c(v?|num)	 </td>
 <td>Branch to line c if a == b and store next line number in ra</td>
   </tr>
   <tr>
-<td>beqz	a(r?|num)	b(r?|num)	 	 </td>
+<td>beqz	a(v?|num)	b(v?|num)	 	 </td>
 <td>Branch to line b if a == 0</td>
   </tr>
   <tr>
-<td>beqzal	a(r?|num)	b(r?|num)	 	 </td>
+<td>beqzal	a(v?|num)	b(v?|num)	 	 </td>
 <td>Branch to line b if a == 0 and store next line number in ra</td>
   </tr>
   <tr>
-<td>bge	a(r?|num)	b(r?|num)	c(r?|num)	 </td>
+<td>bge	a(v?|num)	b(v?|num)	c(v?|num)	 </td>
 <td>Branch to line c if a >= b</td>
   </tr>
   <tr>
-<td>bgeal	a(r?|num)	b(r?|num)	c(r?|num)	 </td>
+<td>bgeal	a(v?|num)	b(v?|num)	c(v?|num)	 </td>
 <td>Branch to line c if a >= b and store next line number in ra</td>
   </tr>
   <tr>
-<td>bgez	a(r?|num)	b(r?|num)	 	 </td>
+<td>bgez	a(v?|num)	b(v?|num)	 	 </td>
 <td>Branch to line b if a >= 0</td>
   </tr>
   <tr>
-<td>bgezal	a(r?|num)	b(r?|num)	 	 </td>
+<td>bgezal	a(v?|num)	b(v?|num)	 	 </td>
 <td>Branch to line b if a >= 0 and store next line number in ra</td>
   </tr>
   <tr>
-<td>bgt	a(r?|num)	b(r?|num)	c(r?|num)	 </td>
+<td>bgt	a(v?|num)	b(v?|num)	c(v?|num)	 </td>
 <td>Branch to line c if a > b</td>
   </tr>
   <tr>
-<td>bgtal	a(r?|num)	b(r?|num)	c(r?|num)	 </td>
+<td>bgtal	a(v?|num)	b(v?|num)	c(v?|num)	 </td>
 <td>Branch to line c if a > b and store next line number in ra</td>
   </tr>
   <tr>
-<td>bgtz	a(r?|num)	b(r?|num)	 	 </td>
+<td>bgtz	a(v?|num)	b(v?|num)	 	 </td>
 <td>Branch to line b if a > 0</td>
   </tr>
   <tr>
-<td>bgtzal	a(r?|num)	b(r?|num)	 	 </td>
+<td>bgtzal	a(v?|num)	b(v?|num)	 	 </td>
 <td>Branch to line b if a > 0 and store next line number in ra</td>
   </tr>
   <tr>
-<td>ble	a(r?|num)	b(r?|num)	c(r?|num)	 </td>
+<td>ble	a(v?|num)	b(v?|num)	c(v?|num)	 </td>
 <td>Branch to line c if a <= b</td>
   </tr>
   <tr>
-<td>bleal	a(r?|num)	b(r?|num)	c(r?|num)	 </td>
+<td>bleal	a(v?|num)	b(v?|num)	c(v?|num)	 </td>
 <td>Branch to line c if a <= b and store next line number in ra</td>
   </tr>
   <tr>
-<td>blez	a(r?|num)	b(r?|num)	 	 </td>
+<td>blez	a(v?|num)	b(v?|num)	 	 </td>
 <td>Branch to line b if a <= 0</td>
   </tr>
   <tr>
-<td>blezal	a(r?|num)	b(r?|num)	 	 </td>
+<td>blezal	a(v?|num)	b(v?|num)	 	 </td>
 <td>Branch to line b if a <= 0 and store next line number in ra</td>
   </tr>
   <tr>
-<td>blt	a(r?|num)	b(r?|num)	c(r?|num)	 </td>
+<td>blt	a(v?|num)	b(v?|num)	c(v?|num)	 </td>
 <td>Branch to line c if a < b</td>
   </tr>
   <tr>
-<td>bltal	a(r?|num)	b(r?|num)	c(r?|num)	 </td>
+<td>bltal	a(v?|num)	b(v?|num)	c(v?|num)	 </td>
 <td>Branch to line c if a < b and store next line number in ra</td>
   </tr>
   <tr>
-<td>bltz	a(r?|num)	b(r?|num)	 	 </td>
+<td>bltz	a(v?|num)	b(v?|num)	 	 </td>
 <td>Branch to line b if a < 0</td>
   </tr>
   <tr>
-<td>bltzal	a(r?|num)	b(r?|num)	 	 </td>
+<td>bltzal	a(v?|num)	b(v?|num)	 	 </td>
 <td>Branch to line b if a < 0 and store next line number in ra</td>
   </tr>
   <tr>
-<td>bna	a(r?|num)	b(r?|num)	c(r?|num)	d(r?|num)</td>
+<td>bna	a(v?|num)	b(v?|num)	c(v?|num)	d(v?|num)</td>
 <td>Branch to line d if abs(a - b) > max(c * max(abs(a), abs(b)), float.epsilon * 8)</td>
   </tr>
   <tr>
-<td>bnaal	a(r?|num)	b(r?|num)	c(r?|num)	d(r?|num)</td>
+<td>bnaal	a(v?|num)	b(v?|num)	c(v?|num)	d(v?|num)</td>
 <td>Branch to line d if abs(a - b) <= max(c * max(abs(a), abs(b)), float.epsilon * 8) and store next line number in ra</td>
   </tr>
   <tr>
-<td>bnaz	a(r?|num)	b(r?|num)	c(r?|num)	 </td>
+<td>bnaz	a(v?|num)	b(v?|num)	c(v?|num)	 </td>
 <td>Branch to line c if abs(a) > float.epsilon * 8</td>
   </tr>
   <tr>
-<td>bnazal	a(r?|num)	b(r?|num)	c(r?|num)	 </td>
+<td>bnazal	a(v?|num)	b(v?|num)	c(v?|num)	 </td>
 <td>Branch to line c if abs(a) > float.epsilon * 8</td>
   </tr>
   <tr>
-<td>bne	a(r?|num)	b(r?|num)	c(r?|num)	 </td>
+<td>bne	a(v?|num)	b(v?|num)	c(v?|num)	 </td>
 <td>Branch to line c if a != b</td>
   </tr>
   <tr>
-<td>bneal	a(r?|num)	b(r?|num)	c(r?|num)	 </td>
+<td>bneal	a(v?|num)	b(v?|num)	c(v?|num)	 </td>
 <td>Branch to line c if a != b and store next line number in ra</td>
   </tr>
   <tr>
-<td>bnez	a(r?|num)	b(r?|num)	 	 </td>
+<td>bnez	a(v?|num)	b(v?|num)	 	 </td>
 <td>branch to line b if a != 0</td>
   </tr>
   <tr>
-<td>bnezal	a(r?|num)	b(r?|num)	 	 </td>
+<td>bnezal	a(v?|num)	b(v?|num)	 	 </td>
 <td>Branch to line b if a != 0 and store next line number in ra</td>
   </tr>
   <tr>
-<td>brap	a(r?|num)	b(r?|num)	c(r?|num)	d(r?|num)</td>
+<td>brap	a(v?|num)	b(v?|num)	c(v?|num)	d(v?|num)</td>
 <td>Relative branch to line d if abs(a - b) <= max(c * max(abs(a), abs(b)), float.epsilon * 8)</td>
   </tr>
   <tr>
-<td>brapz	a(r?|num)	b(r?|num)	c(r?|num)	 </td>
+<td>brapz	a(v?|num)	b(v?|num)	c(v?|num)	 </td>
 <td>Relative branch to line c if abs(a) <= float.epsilon * 8</td>
   </tr>
   <tr>
-<td>breq	a(r?|num)	b(r?|num)	c(r?|num)	 </td>
+<td>breq	a(v?|num)	b(v?|num)	c(v?|num)	 </td>
 <td>Relative branch to line c if a == b</td>
   </tr>
   <tr>
-<td>breqz	a(r?|num)	b(r?|num)	 	 </td>
+<td>breqz	a(v?|num)	b(v?|num)	 	 </td>
 <td>Relative branch to line b if a == 0</td>
   </tr>
   <tr>
-<td>brge	a(r?|num)	b(r?|num)	c(r?|num)	 </td>
+<td>brge	a(v?|num)	b(v?|num)	c(v?|num)	 </td>
 <td>Relative jump to line c if a >= b</td>
   </tr>
   <tr>
-<td>brgez	a(r?|num)	b(r?|num)	 	 </td>
+<td>brgez	a(v?|num)	b(v?|num)	 	 </td>
 <td>Relative branch to line b if a >= 0</td>
   </tr>
   <tr>
-<td>brgt	a(r?|num)	b(r?|num)	c(r?|num)	 </td>
+<td>brgt	a(v?|num)	b(v?|num)	c(v?|num)	 </td>
 <td>relative jump to line c if a > b</td>
   </tr>
   <tr>
-<td>brgtz	a(r?|num)	b(r?|num)	 	 </td>
+<td>brgtz	a(v?|num)	b(v?|num)	 	 </td>
 <td>Relative branch to line b if a > 0</td>
   </tr>
   <tr>
-<td>brle	a(r?|num)	b(r?|num)	c(r?|num)	 </td>
+<td>brle	a(v?|num)	b(v?|num)	c(v?|num)	 </td>
 <td>Relative jump to line c if a <= b</td>
   </tr>
   <tr>
-<td>brlez	a(r?|num)	b(r?|num)	 	 </td>
+<td>brlez	a(v?|num)	b(v?|num)	 	 </td>
 <td>Relative branch to line b if a <= 0</td>
   </tr>
   <tr>
-<td>brlt	a(r?|num)	b(r?|num)	c(r?|num)	 </td>
+<td>brlt	a(v?|num)	b(v?|num)	c(v?|num)	 </td>
 <td>Relative jump to line c if a < b</td>
   </tr>
   <tr>
-<td>brltz	a(r?|num)	b(r?|num)	 	 </td>
+<td>brltz	a(v?|num)	b(v?|num)	 	 </td>
 <td>Relative branch to line b if a < 0</td>
   </tr>
   <tr>
-<td>brna	a(r?|num)	b(r?|num)	c(r?|num)	d(r?|num)</td>
+<td>brna	a(v?|num)	b(v?|num)	c(v?|num)	d(v?|num)</td>
 <td>Relative branch to line d if abs(a - b) > max(c * max(abs(a), abs(b)), float.epsilon * 8)</td>
   </tr>
   <tr>
-<td>brnaz	a(r?|num)	b(r?|num)	c(r?|num)	 </td>
+<td>brnaz	a(v?|num)	b(v?|num)	c(v?|num)	 </td>
 <td>Relative branch to line c if abs(a) > float.epsilon * 8</td>
   </tr>
   <tr>
-<td>brne	a(r?|num)	b(r?|num)	c(r?|num)	 </td>
+<td>brne	a(v?|num)	b(v?|num)	c(v?|num)	 </td>
 <td>Relative branch to line c if a != b</td>
   </tr>
   <tr>
-<td>brnez	a(r?|num)	b(r?|num)	 	 </td>
+<td>brnez	a(v?|num)	b(v?|num)	 	 </td>
 <td>Relative branch to line b if a != 0</td>
   </tr>
 </table>
@@ -283,71 +292,71 @@ Filter characters:
     <th>Description</th>
   </tr>
   <tr>
-    <td>sapz	r?	a(r?|num)	b(r?|num)	</td>
+    <td>sapz	v?	a(v?|num)	b(v?|num)	</td>
     <td>Register = 1 if abs(a - b) <= max(c * max(abs(a), abs(b)), float.epsilon * 8), otherwise 0</td>
   </tr>
   <tr>
-    <td>sapz	r?	a(r?|num)	b(r?|num)</td>
+    <td>sapz	v?	a(v?|num)	b(v?|num)</td>
     <td>Register = 1 if |a| <= float.epsilon * 8, otherwise 0</td>
   </tr>
   <tr>
-    <td>select	r?	a(r?|num)	b(r?|num)	c(r?|num)</td>
+    <td>select	v?	a(v?|num)	b(v?|num)	c(v?|num)</td>
     <td>Register = b if a is non-zero, otherwise c</td>
   </tr>
   <tr>
-    <td>seq	r?	a(r?|num)	b(r?|num)	</td>
+    <td>seq	v?	a(v?|num)	b(v?|num)	</td>
     <td>Register = 1 if a == b, otherwise 0</td>
   </tr>
   <tr>
-    <td>seqz	r?	a(r?|num)	</td>
+    <td>seqz	v?	a(v?|num)	</td>
     <td>Register = 1 if a == 0, otherwise 0</td>
   </tr>
   <tr>
-    <td>sge	r?	a(r?|num)	b(r?|num)	</td>
+    <td>sge	v?	a(v?|num)	b(v?|num)	</td>
     <td>Register = 1 if a >= b, otherwise 0</td>
   </tr>
   <tr>
-    <td>sgez	r?	a(r?|num)</td>
+    <td>sgez	v?	a(v?|num)</td>
     <td>Register = 1 if a >= 0, otherwise 0</td>
   </tr>
   <tr>
-    <td>sgt	r?	a(r?|num)	b(r?|num)</td>
+    <td>sgt	v?	a(v?|num)	b(v?|num)</td>
     <td>Register = 1 if a > b, otherwise 0</td>
   </tr>
   <tr>
-    <td>sgtz	r?	a(r?|num)	</td>
+    <td>sgtz	v?	a(v?|num)	</td>
     <td>Register = 1 if a > 0, otherwise 0</td>
   </tr>
   <tr>
-    <td>sle	r?	a(r?|num)	b(r?|num)</td>
+    <td>sle	v?	a(v?|num)	b(v?|num)</td>
     <td>Register = 1 if a <= b, otherwise 0</td>
   </tr>
   <tr>
-    <td>slez	r?	a(r?|num)	 </td>
+    <td>slez	v?	a(v?|num)	 </td>
     <td>Register = 1 if a <= 0, otherwise 0</td>
   </tr>
   <tr>
-    <td>slt	r?	a(r?|num)	b(r?|num)</td>
+    <td>slt	v?	a(v?|num)	b(v?|num)</td>
     <td>Register = 1 if a < b, otherwise 0</td>
   </tr>
   <tr>
-    <td>sltz	r?	a(r?|num)</td>
+    <td>sltz	v?	a(v?|num)</td>
     <td>Register = 1 if a < 0, otherwise 0</td>
   </tr>
   <tr>
-    <td>sna	r?	a(r?|num)	b(r?|num)	c(r?|num)</td>
+    <td>sna	v?	a(v?|num)	b(v?|num)	c(v?|num)</td>
     <td>Register = 1 if abs(a - b) > max(c * max(abs(a), abs(b)), float.epsilon * 8), otherwise 0</td>
   </tr>
   <tr>
-    <td>snaz	r?	a(r?|num)	b(r?|num)	</td>
+    <td>snaz	v?	a(v?|num)	b(v?|num)	</td>
     <td>Register = 1 if |a| > float.epsilon, otherwise 0</td>
   </tr>
   <tr>
-    <td>sne	r?	a(r?|num)	b(r?|num)</td>
+    <td>sne	v?	a(v?|num)	b(v?|num)</td>
     <td>Register = 1 if a != b, otherwise 0</td>
   </tr>
   <tr>
-    <td>snez	r?	a(r?|num)</td>
+    <td>snez	v?	a(v?|num)</td>
     <td>Register = 1 if a != 0, otherwise 0</td>
   </tr>
 </table>
@@ -360,91 +369,91 @@ Filter characters:
     <th>Description</th>
   </tr>
   <tr>
-    <td>abs	r?	a(r?|num)</td>
+    <td>abs	v?	a(v?|num)</td>
     <td>Register = the absolute value of a</td>
   </tr>
   <tr>
-    <td>acos	r?	a(r?|num)	</td>
+    <td>acos	v?	a(v?|num)	</td>
     <td>Returns the cosine of the specified angle</td>
   </tr>
   <tr>
-    <td>add	r?	a(r?|num)	b(r?|num)	</td>
+    <td>add	v?	a(v?|num)	b(v?|num)	</td>
     <td>Register = a + b.</td>
   </tr>
   <tr>
-    <td>asin	r?	a(r?|num)	</td>
+    <td>asin	v?	a(v?|num)	</td>
     <td>Returns the angle whos sine is the specified value</td>
   </tr>
   <tr>
-    <td>atan	r?	a(r?|num)</td>
+    <td>atan	v?	a(v?|num)</td>
     <td>Returns the angle whos tan is the specified value</td>
   </tr>
   <tr>
-    <td>ceil	r?	a(r?|num)</td>
+    <td>ceil	v?	a(v?|num)</td>
     <td>Register = smallest integer greater than a</td>
   </tr>
   <tr>
-    <td>cos	r?	a(r?|num)</td>
+    <td>cos	v?	a(v?|num)</td>
     <td>Returns the cosine of the specified angle</td>
   </tr>
   <tr>
-    <td>div	r?	a(r?|num)	b(r?|num)</td>
+    <td>div	v?	a(v?|num)	b(v?|num)</td>
     <td>Register = a / b</td>
   </tr>
   <tr>
-    <td>exp	r?	a(r?|num)</td>
+    <td>exp	v?	a(v?|num)</td>
     <td>Register = exp(a)</td>
   </tr>
   <tr>
-    <td>floor	r?	a(r?|num)</td>
+    <td>floor	v?	a(v?|num)</td>
     <td>Register = largest integer less than a</td>
   </tr>
   <tr>
-    <td>log	r?	a(r?|num)</td>
+    <td>log	v?	a(v?|num)</td>
     <td>Register = log(a)</td>
   </tr>
   <tr>
-    <td>max	r?	a(r?|num)	b(r?|num)</td>
+    <td>max	v?	a(v?|num)	b(v?|num)</td>
     <td>Register = max of a or b</td>
   </tr>
   <tr>
-    <td>min	r?	a(r?|num)	b(r?|num)</td>
+    <td>min	v?	a(v?|num)	b(v?|num)</td>
     <td>Register = min of a or b</td>
   </tr>
   <tr>
-    <td>mod	r?	a(r?|num)	b(r?|num)</td>
+    <td>mod	v?	a(v?|num)	b(v?|num)</td>
     <td>Register = a mod b (note: NOT a % b)</td>
   </tr>
   <tr>
-    <td>mul	r?	a(r?|num)	b(r?|num)</td>
+    <td>mul	v?	a(v?|num)	b(v?|num)</td>
     <td>Register = a * b</td>
   </tr>
   <tr>
-    <td>rand	r?</td>
+    <td>rand	v?</td>
     <td>Register = a random value x with 0 <= x < 1</td>
   </tr>
   <tr>
-    <td>round	r?	a(r?|num)</td>
+    <td>round	v?	a(v?|num)</td>
     <td>Register = a rounded to nearest integer</td>
   </tr>
   <tr>
-    <td>sin	r?	a(r?|num)</td>
+    <td>sin	v?	a(v?|num)</td>
     <td>Returns the sine of the specified angle</td>
   </tr>
   <tr>
-    <td>sqrt	r?	a(r?|num)</td>
+    <td>sqrt	v?	a(v?|num)</td>
     <td>Register = square root of a</td>
   </tr>
   <tr>
-    <td>sub	r?	a(r?|num)	b(r?|num)</td>
+    <td>sub	v?	a(v?|num)	b(v?|num)</td>
     <td>Register = a - b.</td>
   </tr>
   <tr>
-    <td>tan	r?	a(r?|num)	</td>
+    <td>tan	v?	a(v?|num)	</td>
     <td>Returns the tan of the specified angle</td>
   </tr>
   <tr>
-    <td>trunc	r?	a(r?|num)</td>
+    <td>trunc	v?	a(v?|num)</td>
     <td>Register = a with fractional part removed</td>
   </tr>
 </table>
@@ -457,19 +466,19 @@ Filter characters:
     <th>Description</th>
   </tr>
   <tr>
-    <td>and	r?	a(r?|num)	b(r?|num)</td>
+    <td>and	v?	a(v?|num)	b(v?|num)</td>
     <td>Register = 1 if a and b not zero, otherwise 0</td>
   </tr>
   <tr>
-    <td>nor	r?	a(r?|num)	b(r?|num)</td>
+    <td>nor	v?	a(v?|num)	b(v?|num)</td>
     <td>Register = 1 if a and b are 0, otherwise 0</td>
   </tr>
   <tr>
-    <td>or	r?	a(r?|num)	b(r?|num)</td>
+    <td>or	v?	a(v?|num)	b(v?|num)</td>
     <td>Register = 1 if a and/or b not 0, otherwise 0</td>
   </tr>
   <tr>
-    <td>xor	r?	a(r?|num)	b(r?|num)</td>
+    <td>xor	v?	a(v?|num)	b(v?|num)</td>
     <td>Register = 1 if either a or b not 0, otherwise 0</td>
   </tr>
 </table>
@@ -486,7 +495,7 @@ Filter characters:
     <td>Creates a label that will be replaced throughout the program with the provided value.</td>    
   </tr>
   <tr>
-    <td>move	r?	a(r?|num)</td>    
+    <td>move	v?	a(v?|num)</td>    
     <td>Register = provided num or register value.</td>    
   </tr>
   <tr>
@@ -494,7 +503,7 @@ Filter characters:
     <td>Pauses execution for 1 tick</td>    
   </tr>
   <tr>
-    <td>print r?</td>    
+    <td>print v?</td>    
     <td>Print register in the console</td>    
   </tr>
 </table>

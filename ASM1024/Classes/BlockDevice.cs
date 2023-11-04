@@ -54,35 +54,30 @@ namespace IngameScript
                 if (devices.IsEmpty) return;
                 foreach (IMyTerminalBlock block in devices.List)
                 {
-                    switch (name)
+                    var property = block.GetProperty(name);
+                    if (property != null)
                     {
-                        default:
-                            var property = block.GetProperty(name);
-                            if (property != null)
-                            {
-                                instruction.Parent.Log($"Property: {property.Id} / {property.TypeName} / {value}");
-                                switch (property.TypeName)
-                                {
-                                    case "Boolean":
-                                        block.SetValueBool(property.Id, value >= 1);
-                                        break;
-                                    case "Single":
-                                        block.SetValueFloat(property.Id, (float)value);
-                                        break;
-                                    case "Color":
-                                        var r = 1;
-                                        var g = 1;
-                                        var b = 1;
-                                        var color = new Color(r, g, b);
-                                        block.SetValueColor(property.Id, color);
-                                        break;
-                                }
-                            }
-                            else
-                            {
-                                throw new Exception("Wrong property name");
-                            }
-                            break;
+                        //instruction.Parent.Log($"Property: {property.Id} / {property.TypeName} / {value}");
+                        switch (property.TypeName)
+                        {
+                            case "Boolean":
+                                block.SetValueBool(property.Id, value >= 1);
+                                break;
+                            case "Single":
+                                block.SetValueFloat(property.Id, (float)value);
+                                break;
+                            case "Color":
+                                var r = 1;
+                                var g = 1;
+                                var b = 1;
+                                var color = new Color(r, g, b);
+                                block.SetValueColor(property.Id, color);
+                                break;
+                        }
+                    }
+                    else
+                    {
+                        throw new Exception("Wrong property name");
                     }
                 }
             }
@@ -92,115 +87,65 @@ namespace IngameScript
                 var values = new List<double>();
                 foreach (IMyTerminalBlock block in devices.List)
                 {
-                    switch (name)
+                    var property = block.GetProperty(name);
+                    if (property != null)
                     {
-                        case "Angle":
-                            {
-                                if (block is IMyMotorStator)
+                        switch (property.TypeName)
+                        {
+                            case "Boolean":
                                 {
-                                    var stator = (IMyMotorStator)block;
-                                    var value = (double)stator.Angle;
-                                    values.Add(value * 180 / Math.PI);
-                                }
-                                else
-                                {
-                                    throw new Exception("Angle not a property");
-                                }
-
-                            }
-                            break;
-                        case "Position":
-                            {
-                                if (block is IMyPistonBase)
-                                {
-                                    var piston = (IMyPistonBase)block;
-                                    var value = (double)piston.CurrentPosition;
+                                    var valueBool = block.GetValueBool(property.Id);
+                                    var value = valueBool ? 1d : 0d;
                                     values.Add(value);
                                 }
-                                else
+                                break;
+                            case "Single":
                                 {
-                                    throw new Exception("Position not a property");
-                                }
-
-                            }
-                            break;
-                        case "IsConnected":
-                            {
-                                if (block is IMyShipMergeBlock)
-                                {
-                                    var piston = (IMyShipMergeBlock)block;
-                                    var value = piston.IsConnected ? 1d : 0d;
+                                    var valueFloat = block.GetValueFloat(property.Id);
+                                    var value = (double)valueFloat;
                                     values.Add(value);
                                 }
-                                else
+                                break;
+                            case "Color":
                                 {
-                                    throw new Exception("IsConnected not a property");
+                                    var valueColor = block.GetValueColor(property.Id);
+                                    throw new Exception("Color Not Implemented");
                                 }
-                            }
-                            break;
-                        case "IsActive":
+                                break;
+                        }
+                    }
+                    else
+                    {
+                        var reflectionProperty = block.GetReflectionProperty(name);
+                        if (reflectionProperty != null)
+                        {
+                            switch (reflectionProperty.TypeName)
                             {
-                                if (block is IMySensorBlock)
-                                {
-                                    var piston = (IMySensorBlock)block;
-                                    var value = piston.IsActive ? 1d : 0d;
-                                    values.Add(value);
-                                }
-                                else
-                                {
-                                    throw new Exception("IsActive not a property");
-                                }
-                            }
-                            break;
-                        case "LockMode":
-                            {
-                                if(block is IMyLandingGear)
-                                {
-                                    var piston = (IMyLandingGear)block;
-                                    var value = (double)piston.LockMode;
-                                    values.Add(value);
-                                }
-                                else
-                                {
-                                    throw new Exception("IsActive not a property");
-                                }
-                            }
-                            break;
-                        default:
-                            {
-                                var property = block.GetProperty(name);
-                                if (property != null)
-                                {
-                                    switch (property.TypeName)
+                                case "Boolean":
                                     {
-                                        case "Boolean":
-                                            {
-                                                var valueBool = block.GetValueBool(property.Id);
-                                                var value = valueBool ? 1d : 0d;
-                                                values.Add(value);
-                                            }
-                                            break;
-                                        case "Single":
-                                            {
-                                                var valueFloat = block.GetValueFloat(property.Id);
-                                                var value = (double)valueFloat;
-                                                values.Add(value);
-                                            }
-                                            break;
-                                        case "Color":
-                                            {
-                                                var valueColor = block.GetValueColor(property.Id);
-                                                throw new Exception("Color Not Implemented");
-                                            }
-                                            break;
+                                        var valueBool = block.GetReflectionValue<bool>(reflectionProperty.Id);
+                                        var value = valueBool ? 1d : 0d;
+                                        values.Add(value);
                                     }
-                                }
-                                else
-                                {
-                                    throw new Exception("Wrong property name");
-                                }
+                                    break;
+                                case "Single":
+                                    {
+                                        var valueFloat = block.GetReflectionValue<double>(reflectionProperty.Id);
+                                        var value = (double)valueFloat;
+                                        values.Add(value);
+                                    }
+                                    break;
+                                case "Color":
+                                    {
+                                        var valueColor = block.GetReflectionValue<Color>(reflectionProperty.Id);
+                                        throw new Exception("Color Not Implemented");
+                                    }
                             }
-                            break;
+                        }
+                        else
+                        {
+                            throw new Exception("Wrong property name");
+                        }
                     }
                 }
                 switch (aggregation)
@@ -223,23 +168,61 @@ namespace IngameScript
                 foreach (IMyTerminalBlock block in devices.List)
                 {
                     double count = 0;
-                    IMyInventory drill_inventory = block.GetInventory(index);
-                    List<MyInventoryItem> items = new List<MyInventoryItem>();
-                    drill_inventory.GetItems(items);
-                    //instruction.Parent.Log($"MyInventoryItem: {items.Count}");
-                    foreach (MyInventoryItem item in items)
+                    IMyInventory inventory = block.GetInventory(index);
+                    switch (property)
                     {
-                        switch (property)
-                        {
-                            case "Amount":
-                                double amount = 0;
-                                Double.TryParse(item.Amount.ToString(), out amount);
-                                count += amount;
-                                //instruction.Parent.Log($"Amount: {amount}");
-                                break;
-                        }
+                        case "Amount":
+                            List<MyInventoryItem> items = new List<MyInventoryItem>();
+                            inventory.GetItems(items);
+                            //instruction.Parent.Log($"MyInventoryItem: {items.Count}");
+                            foreach (MyInventoryItem item in items)
+                            {
+                                switch (property)
+                                {
+                                    case "Amount":
+                                        double amount = 0;
+                                        Double.TryParse(item.Amount.ToString(), out amount);
+                                        count += amount;
+                                        //instruction.Parent.Log($"Amount: {amount}");
+                                        break;
+                                }
+                            }
+                            values.Add(count);
+                            break;
+                        default:
+                            var reflectionProperty = inventory.GetReflectionProperty(property);
+                            if (reflectionProperty != null)
+                            {
+                                switch (reflectionProperty.TypeName)
+                                {
+                                    case "Boolean":
+                                        {
+                                            var valueBool = inventory.GetReflectionValue<bool>(reflectionProperty.Id);
+                                            var value = valueBool ? 1d : 0d;
+                                            values.Add(value);
+                                        }
+                                        break;
+                                    case "Single":
+                                        {
+                                            var valueFloat = inventory.GetReflectionValue<double>(reflectionProperty.Id);
+                                            var value = (double)valueFloat;
+                                            values.Add(value);
+                                        }
+                                        break;
+                                    case "Color":
+                                        {
+                                            var valueColor = inventory.GetReflectionValue<Color>(reflectionProperty.Id);
+                                            throw new Exception("Color Not Implemented");
+                                        }
+                                }
+                            }
+                            else
+                            {
+                                throw new Exception("Wrong property name");
+                            }
+                            break;
                     }
-                    values.Add(count);
+                    
                 }
                 
                 switch (aggregation)

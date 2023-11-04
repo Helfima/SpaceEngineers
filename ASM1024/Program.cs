@@ -28,6 +28,7 @@ namespace IngameScript
         private IMyTextSurface drawingSurface;
 
         private Instructions instructions;
+        private string version = "0.1";
 
         public Program()
         {
@@ -42,7 +43,7 @@ namespace IngameScript
 
         private void Init()
         {
-
+            
         }
 
         public void Save()
@@ -100,16 +101,6 @@ namespace IngameScript
                 var type = item.GetType();
                 infos.AppendLine($"Type:{type.Name}");
 
-                List<ITerminalAction> actions = new List<ITerminalAction>();
-                item.GetActions(actions);
-                actions.Sort(new TerminalActionComparer());
-                infos.AppendLine();
-                infos.AppendLine("Actions:");
-                foreach (var action in actions)
-                {
-                    infos.AppendLine($"{action.Id}: {action.Name}");
-                }
-
                 List<ITerminalProperty> properties = new List<ITerminalProperty>();
                 item.GetProperties(properties);
                 properties.Sort(new TerminalPropertyComparer());
@@ -120,6 +111,28 @@ namespace IngameScript
                     infos.AppendLine($"{property.Id}: {property.TypeName}");
                 }
 
+                List<IReflectionProperty> reflectionProperties = new List<IReflectionProperty>();
+                item.GetReflectionProperties(reflectionProperties);
+                if (reflectionProperties.Count > 0)
+                {
+                    properties.Sort(new TerminalPropertyComparer());
+                    infos.AppendLine();
+                    infos.AppendLine("Reflection Properties (*** Read Only ***):");
+                    foreach (var property in reflectionProperties)
+                    {
+                        infos.AppendLine($"{property.Id}: {property.TypeName} {property.Description}");
+                    }
+                }
+
+                List<ITerminalAction> actions = new List<ITerminalAction>();
+                item.GetActions(actions);
+                actions.Sort(new TerminalActionComparer());
+                infos.AppendLine();
+                infos.AppendLine("Actions:");
+                foreach (var action in actions)
+                {
+                    infos.AppendLine($"{action.Id}: {action.Name}");
+                }
                 item.CustomData = infos.ToString();
             }
         }
@@ -127,6 +140,7 @@ namespace IngameScript
         {
             if(instructions.FirstStarted == false)
             {
+                Echo($"Version {version}");
                 instructions.Init();
                 instructions.Start();
             }

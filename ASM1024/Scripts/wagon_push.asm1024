@@ -1,40 +1,37 @@
-device pistons_push "MG:Pistons Poussée"
-device pistons_mobiles "MG:Pistons Mobiles"
-device plates_mobiles "MG:Patins Mobiles"
-device plates_fixes "MG:Patins Fixes"
+device pistons_mobiles "MG:V1 Pistons Mobiles"
+device plates_mobiles "MG:V1 Patins Mobiles"
+device plates_fixes "MG:V1 Patins Fixes"
 
-store plates_mobiles Autolock 0
-store plates_fixes Autolock 0
+set plates_mobiles Autolock 0
+set plates_fixes Autolock 0
 
 define kp 1
 move max_piston 10
 move min_piston 0
-store pistons_mobiles UpperLimit max_piston
-store pistons_mobiles LowerLimit min_piston
-store pistons_push UpperLimit max_piston
-store pistons_push LowerLimit min_piston
+set pistons_mobiles UpperLimit max_piston
+set pistons_mobiles LowerLimit min_piston
 
 device sensor_front "M:Capteur Avant"
-store sensor_front "Detect Players" 0
-store sensor_front "Detect Subgrids" 1
-store sensor_front "Detect Stations" 1
-store sensor_front Bottom 0.1
-store sensor_front Top 0.1
-store sensor_front Back 0.1
-store sensor_front Front 2.5
-store sensor_front Left 0.1
-store sensor_front Right 0.1
+set sensor_front "Detect Players" 0
+set sensor_front "Detect Subgrids" 1
+set sensor_front "Detect Stations" 1
+set sensor_front Bottom 0.1
+set sensor_front Top 0.1
+set sensor_front Back 0.1
+set sensor_front Front 2.5
+set sensor_front Left 0.1
+set sensor_front Right 0.1
 
 j end
 
 pistons_mobiles_push:
-	load position pistons_mobiles Position 3
-	load isActive sensor_front IsActive 3
+	get position pistons_mobiles Position 3
+	get isActive sensor_front IsActive 3
 	select kp isActive 0.1 1
 	sub err max_piston position
 	mul cmd err kp
 	max cmd cmd 0.5
-	store pistons_mobiles Velocity cmd
+	set pistons_mobiles Velocity cmd
 	print position
 	abs err err
 	sle state err 0.1
@@ -43,13 +40,13 @@ pistons_mobiles_push:
 j ra
 
 pistons_mobiles_retract:
-	load position pistons_mobiles Position 3
-	load isActive sensor_front IsActive 3
+	get position pistons_mobiles Position 3
+	get isActive sensor_front IsActive 3
 	select kp isActive 0.1 1
 	sub err min_piston position
 	mul cmd err kp
 	min cmd cmd -0.5
-	store pistons_mobiles Velocity cmd
+	set pistons_mobiles Velocity cmd
 	print position
 	abs err err
 	sle state err 0.1
@@ -58,7 +55,7 @@ j ra
 
 plates_mobiles_lock:
 	action plates_mobiles Lock
-	load lock_mode plates_mobiles LockMode 3
+	get lock_mode plates_mobiles LockMode 3
 	print lock_mode
 	seq state lock_mode 2
 	mul stage_next stage_next state
@@ -66,7 +63,7 @@ j ra
 
 plates_mobiles_unlock:
 	action plates_mobiles Unlock
-	load lock_mode plates_mobiles LockMode 3
+	get lock_mode plates_mobiles LockMode 3
 	print lock_mode
 	seq state lock_mode 1
 	mul stage_next stage_next state
@@ -74,7 +71,7 @@ j ra
 
 plates_fixes_lock:
 	action plates_fixes Lock
-	load lock_mode plates_fixes LockMode 3
+	get lock_mode plates_fixes LockMode 3
 	print lock_mode
 	seq state lock_mode 2
 	mul stage_next stage_next state
@@ -82,7 +79,7 @@ j ra
 
 plates_fixes_unlock:
 	action plates_fixes Unlock
-	load lock_mode plates_fixes LockMode 3
+	get lock_mode plates_fixes LockMode 3
 	print lock_mode
 	seq state lock_mode 1
 	mul stage_next stage_next state

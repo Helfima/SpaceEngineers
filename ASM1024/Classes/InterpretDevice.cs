@@ -51,7 +51,7 @@ namespace IngameScript
                             instruction.SetDevice(device, items);
                         }
                         break;
-                    case DeviceWords.load:
+                    case DeviceWords.get:
                         {
                             var r = instruction.GetArgumentString(1);
                             var device = instruction.GetArgumentDevice<IMyTerminalBlock>(2);
@@ -63,7 +63,7 @@ namespace IngameScript
                             //instruction.Parent.Log($"device: {device.List.Count} name:{a} mode:{b} {r}:{result}");
                         }
                         break;
-                    case DeviceWords.inventory:
+                    case DeviceWords.items:
                         {
                             var r = instruction.GetArgumentString(1);
                             var device = instruction.GetArgumentDevice<IMyTerminalBlock>(2);
@@ -76,7 +76,7 @@ namespace IngameScript
                             //instruction.Parent.Log($"device: {device.List.Count} name:{a} mode:{b} {r}:{result}");
                         }
                         break;
-                    case DeviceWords.store:
+                    case DeviceWords.set:
                         {
                             var device = instruction.GetArgumentDevice<IMyTerminalBlock>(1);
                             var a = instruction.GetArgumentString(2);
@@ -124,12 +124,12 @@ namespace IngameScript
         enum DeviceWords
         {
             device,
-            load,
-            store,
+            get,
+            set,
             action,
             color,
             colorrainbow,
-            inventory
+            items
         }
     }
 }

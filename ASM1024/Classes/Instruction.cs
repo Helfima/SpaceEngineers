@@ -97,7 +97,7 @@ namespace IngameScript
                     var arg = Args[index];
                     if (Parent.Labels.ContainsKey(arg))
                     {
-                        return Parent.Labels[arg] + 1;
+                        return Parent.Labels[arg];
                     }
                     else if (Parent.Vars.ContainsKey(arg))
                     {

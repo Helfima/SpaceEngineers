@@ -83,17 +83,24 @@ namespace IngameScript
             {
                 try
                 {
-                    if (Items.Count == 0 || Index >= Items.Count)
+                    if (Labels.ContainsKey(name))
                     {
-                        State = StateBasic.Completing;
+                        if (Items.Count == 0 || Index >= Items.Count)
+                        {
+                            State = StateBasic.Completing;
+                        }
+                        else
+                        {
+                            ExecuteInstructions(true);
+                        }
+                        var adress = Labels[name];
+                        Index = adress;
+                        State = StateBasic.Running;
                     }
                     else
                     {
-                        ExecuteInstructions(true);
+                        Log($"Execution error: The label does not exist");
                     }
-                    var adress = Labels[name];
-                    Index = adress;
-                    State = StateBasic.Running;
                 }
                 catch (Exception ex)
                 {
@@ -147,7 +154,14 @@ namespace IngameScript
                         }
                         else
                         {
-                            Log($"Execute {instruction.Command} at {Index + 1}");
+                            if(instruction.Type == InstructionType.Label)
+                            {
+                                Log($"== {instruction.Command} at {Index + 1}");
+                            }
+                            else
+                            {
+                                Log($"-> {instruction.Command} at {Index + 1}");
+                            }
                             switch (instruction.Type)
                             {
                                 case InstructionType.Branch:
@@ -201,7 +215,7 @@ namespace IngameScript
             }
             public void Log(string message)
             {
-                if (logger.Count > 20) logger.RemoveAt(0);
+                if (logger.Count > 30) logger.RemoveAt(0);
                 logger.Add(message);
             }
 
@@ -319,7 +333,8 @@ namespace IngameScript
             Math,
             Logic,
             Stack,
-            Misc
+            Misc,
+            Import
         }
     }
 }

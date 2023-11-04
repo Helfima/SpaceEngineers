@@ -1,8 +1,8 @@
-device block_fixes "MG:Bloc de fusion Fixes"
-device block_mobiles "MG:Bloc de fusion Mobiles"
+device block_fixes "MG:V3 Bloc de fusion Fixes"
+device block_mobiles "MG:V3 Bloc de fusion Mobiles"
 
-device hinge_fixes "MG:Charnière Fixes"
-device hinge_mobiles "MG:Charnière Mobiles"
+device hinge_fixes "MG:V3 Charnière Fixes"
+device hinge_mobiles "MG:V3 Charnière Mobiles"
 
 device pistons_elevator "MG:Pistons Elevateur"
 
@@ -22,7 +22,7 @@ device sensor "M:Capteur Mineuse"
 
 define kp 0.1
 define min_angle_fixes 0
-define max_angle_fixes 80
+define max_angle_fixes 30
 define min_angle_mobiles -90
 define max_angle_mobiles -45
 define min_angle_connector -90
@@ -36,48 +36,42 @@ sub max_piston 20 2.5
 div max_piston max_piston 2
 add max_piston max_piston min_piston
 
-store hinge_fixes UpperLimit max_angle_fixes
-store hinge_fixes LowerLimit min_angle_fixes
-store hinge_mobiles UpperLimit max_angle_mobiles
-store hinge_mobiles LowerLimit min_angle_mobiles
-store hinge_fusion UpperLimit max_angle_connector
-store hinge_fusion LowerLimit min_angle_connector
-store pistons_elevator UpperLimit max_piston
-store pistons_elevator LowerLimit min_piston
+set hinge_fixes UpperLimit max_angle_fixes
+set hinge_fixes LowerLimit min_angle_fixes
+set hinge_mobiles UpperLimit max_angle_mobiles
+set hinge_mobiles LowerLimit min_angle_mobiles
+set hinge_fusion UpperLimit max_angle_connector
+set hinge_fusion LowerLimit min_angle_connector
+set pistons_elevator UpperLimit max_piston
+set pistons_elevator LowerLimit min_piston
 
 define min_hinge_drill -30
 define max_hinge_drill 30
-store hinge_drills UpperLimit max_hinge_drill
-store hinge_drills LowerLimit min_hinge_drill
+set hinge_drills UpperLimit max_hinge_drill
+set hinge_drills LowerLimit min_hinge_drill
 
-store sensor "Detect Players" 0
-store sensor "Detect Subgrids" 1
-store sensor Bottom 0.1
-store sensor Top 0.1
-store sensor Back 0.1
-store sensor Front 5
-store sensor Left 0.1
-store sensor Right 0.1
+set sensor "Detect Players" 0
+set sensor "Detect Subgrids" 1
+set sensor Bottom 0.1
+set sensor Top 0.1
+set sensor Back 0.1
+set sensor Front 5
+set sensor Left 0.1
+set sensor Right 0.1
 
 move stage 0
-move drill_velocity 2
+move drill_velocity 3
 
-define stage_limit 2
+define step_limit 2
 
-start:
-	yield
-	inventory amount drills 0 Amount 1
-	print amount
-	load isActive sensor IsActive 3
-	print isActive
-j start
+j end
 
 up_step:
-	load temp block_mobiles IsConnected 3
+	get temp block_mobiles IsConnected 3
 	print temp
 	beq temp 0 end
 	move stage 0
-	move stage_count 0
+	move step_count 0
 loop_up_step:
 	yield
 	move stage_next 1
@@ -95,25 +89,29 @@ loop_up_step:
 	add stage stage stage_next
 	bne stage 8 loop_up_step
 	move stage 0
-	add stage_count stage_count 1
-	bge stage_count stage_limit end
+	add step_count step_count 1
+	bge step_count step_limit end
 j loop_up_step
 
+down_and_up_step:
+	move down_and_up 1
+	j down_step_begin
 down_step:
-	load temp block_fixes IsConnected 3
+	move down_and_up 0
+down_step_begin:
+	get temp block_fixes IsConnected 3
 	print temp
 	beq temp 0 end
 	move stage 0
-	move stage_count 0
+	move step_count 0
 loop_down_step:
 	yield
-	load isActive sensor IsActive 3
+	get isActive sensor IsActive 3
 	seq activeDrill isActive 1
 	move stage_next 1
 	seq isOn stage 2
-	store wellders OnOff isOn
-	store projector OnOff isOn
-	
+	set wellders OnOff isOn
+	set projector OnOff isOn
 	beqal stage 0 connector_unlock
 	beqal stage 1 mobiles_unlock 
 	beqal stage 2 pistons_up
@@ -127,43 +125,47 @@ loop_down_step:
 	add stage stage stage_next
 	bne stage 8 loop_down_step
 	move stage 0
-	add stage_count stage_count 1
-	bge stage_count stage_limit end
+	add step_count step_count 1
+	beq down_and_up 1 down_next_up
+	bge step_count step_limit end
+j loop_down_step
+down_next_up:
+	bge step_count step_limit up_step
 j loop_down_step
 
 grinder_top_on:
-	store top_grinders OnOff 1
-	load angle top_hinge_grinders Angle 3
+	set top_grinders OnOff 1
+	get angle top_hinge_grinders Angle 3
 	sub err 0 angle
 	mul cmd err kp
 	min cmd cmd -1
-	store top_hinge_grinders Velocity cmd
+	set top_hinge_grinders Velocity cmd
 	abs err err
 	sle state err 1
 	mul stage_next stage_next state
 j ra
 
 grinder_top_off:
-	load angle top_hinge_grinders Angle 3
+	get angle top_hinge_grinders Angle 3
 	print angle
 	slt isOn angle 30
-	store top_grinders OnOff isOn
+	set top_grinders OnOff isOn
 	sub err 90 angle
 	mul cmd err kp
 	max cmd cmd 1
-	store top_hinge_grinders Velocity cmd
+	set top_hinge_grinders Velocity cmd
 	abs err err
 	sle state err 1
 	mul stage_next stage_next state
 j ra
 
 fixes_lock:
-	store block_fixes OnOff 1
-	load angle hinge_fixes Angle 3
+	set block_fixes OnOff 1
+	get angle hinge_fixes Angle 3
 	sub err min_angle_fixes angle
 	mul cmd err kp
 	min cmd cmd -1
-	store hinge_fixes Velocity cmd
+	set hinge_fixes Velocity cmd
 	print angle
 	abs err err
 	sle state err 1
@@ -171,15 +173,15 @@ fixes_lock:
 j ra
 
 fixes_unlock:
-	load temp block_mobiles IsConnected 3
+	get temp block_mobiles IsConnected 3
 	beq temp 0 ra
-	store block_fixes OnOff 0
+	set block_fixes OnOff 0
 	yield
-	load angle hinge_fixes Angle 3
+	get angle hinge_fixes Angle 3
 	sub err max_angle_fixes angle
 	mul cmd err kp
 	max cmd cmd 1
-	store hinge_fixes Velocity cmd
+	set hinge_fixes Velocity cmd
 	print angle
 	abs err err
 	sle state err 1
@@ -187,11 +189,11 @@ fixes_unlock:
 j ra
 
 connector_lock:
-	load angle hinge_fusion Angle 3
+	get angle hinge_fusion Angle 3
 	sub err min_angle_connector angle
 	mul cmd err kp
 	min cmd cmd -1
-	store hinge_fusion Velocity cmd
+	set hinge_fusion Velocity cmd
 	print angle
 	abs err err
 	sle state err 1
@@ -202,11 +204,11 @@ j ra
 
 connector_unlock:
 	action connector_fusion Detach
-	load angle hinge_fusion Angle 3
+	get angle hinge_fusion Angle 3
 	sub err max_angle_connector angle
 	mul cmd err kp
 	max cmd cmd 1
-	store hinge_fusion Velocity cmd
+	set hinge_fusion Velocity cmd
 	print angle
 	abs err err
 	sle state err 1
@@ -214,12 +216,12 @@ connector_unlock:
 j ra
 
 mobiles_lock:
-	store block_mobiles OnOff 1
-	load angle hinge_mobiles Angle 3
+	set block_mobiles OnOff 1
+	get angle hinge_mobiles Angle 3
 	sub err min_angle_mobiles angle
 	mul cmd err kp
 	min cmd cmd -1
-	store hinge_mobiles Velocity cmd
+	set hinge_mobiles Velocity cmd
 	print angle
 	abs err err
 	sle state err 1
@@ -227,15 +229,15 @@ mobiles_lock:
 j ra
 
 mobiles_unlock:
-	load temp block_fixes IsConnected 3
+	get temp block_fixes IsConnected 3
 	beq temp 0 ra
-	store block_mobiles OnOff 0
+	set block_mobiles OnOff 0
 	yield
-	load angle hinge_mobiles Angle 3
+	get angle hinge_mobiles Angle 3
 	sub err max_angle_mobiles angle
 	mul cmd err kp
 	max cmd cmd 1
-	store hinge_mobiles Velocity cmd
+	set hinge_mobiles Velocity cmd
 	print angle
 	abs err err
 	sle state err 1
@@ -243,12 +245,12 @@ mobiles_unlock:
 j ra
 
 pistons_up:
-	load position pistons_elevator Position 3
+	get position pistons_elevator Position 3
 	sub err max_piston position
 	mul cmd err kp
 	min cmd cmd 0.4
 	max cmd cmd 0.1
-	store pistons_elevator Velocity cmd
+	set pistons_elevator Velocity cmd
 	print position
 	abs err err
 	sle state err 0.1
@@ -256,9 +258,11 @@ pistons_up:
 j ra
 
 pistons_down:
-	load position pistons_elevator Position 3
+	items capacity drills 0 VolumeFillFactor 3
+	print capacity
+	get position pistons_elevator Position 3
 	sub err min_piston position
-	store pistons_elevator Velocity -0.08
+	set pistons_elevator Velocity -0.08
 	print position
 	abs err err
 	sle state err 0.1
@@ -267,26 +271,33 @@ j ra
 
 move_drills:
 	beq activeDrill 0 ra
-	store drills OnOff 1
-	store hinge_drills Velocity drill_velocity
-	sge temp drill_velocity 0
-	select limit_hinge_drill temp max_hinge_drill min_hinge_drill
-	load temp hinge_drills Angle 3
-	bna temp limit_hinge_drill 0.01 ra
+	set drills OnOff 1
+	set hinge_drills Velocity drill_velocity
+	sge direction drill_velocity 0
+	select target_angle direction max_hinge_drill min_hinge_drill
+	get angle hinge_drills Angle 3
+	sub err target_angle angle
+	abs err err
+	sle state err 0.1
+	beq state 0 ra
 	mul drill_velocity drill_velocity -1
 j ra
 
 stop_drills:
-	load temp hinge_drills Velocity 3
+	get temp hinge_drills Velocity 3
 	beq temp 0 ra
-	load angle hinge_drills Angle 3
-	sgt temp angle 0
-	select drill_velocity temp -1 1
-	store hinge_drills Velocity drill_velocity
-	abs temp angle
-	bgt temp 1 ra
-	store hinge_drills Velocity 0
-	store drills OnOff 0
+	get angle hinge_drills Angle 3
+	sub err 0 angle
+	print err
+	sge temp err 0
+	select hinge_rot temp 2 -2
+	print hinge_rot
+	set hinge_drills Velocity hinge_rot
+	abs err err
+	sle state err 1
+	beq state 0 ra
+	set hinge_drills Velocity 0
+	set drills OnOff 0
 j ra
 
 execute_fixes_lock:
@@ -349,5 +360,14 @@ execute_grinder_off:
 	jal grinder_top_off
 	beq stage_next 1 end
 j execute_grinder_off
+
+execute_stop_drill:
+	set hinge_drills Velocity drill_velocity
+loop_stop_drill:
+	yield
+	jal stop_drills
+	get temp hinge_drills Velocity 3
+	beq temp 0 end
+j loop_stop_drill
 
 end:

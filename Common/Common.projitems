@@ -13,7 +13,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)Drawing.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GridHelper.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Logger.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)ThrusterSystem.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Util.cs" />
   </ItemGroup>
 </Project>

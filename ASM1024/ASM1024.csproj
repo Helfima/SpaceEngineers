@@ -50,9 +50,11 @@
     <Compile Include="Classes\InterpretLogic.cs" />
     <Compile Include="Classes\InterpretMath.cs" />
     <Compile Include="Classes\InterpretMisk.cs" />
-    <Compile Include="Classes\StringHelper.cs" />
     <Compile Include="Classes\TerminalPropertyComparer.cs" />
     <Compile Include="Classes\TerminalActionComparer.cs" />
+    <Compile Include="Extensions\IMyInventoryExtensions.cs" />
+    <Compile Include="Extensions\IMyTerminalBlockExtensions.cs" />
+    <Compile Include="Extensions\ReflectionProperty.cs" />
     <Compile Include="MDK\Bootstrapper.cs" />
     <AdditionalFiles Include="MDK\MDK.options.props">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
