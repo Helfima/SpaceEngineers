@@ -82,6 +82,12 @@ namespace IngameScript
                     case "reset":
                         Init();
                         break;
+                    case "prefix":
+                        RenamePrefix(commandLine.Argument(1));
+                        break;
+                    case "unprefix":
+                        UnRenamePrefix(commandLine.Argument(1));
+                        break;
                     default:
                         drawingSurface.WriteText("Program started", false);
                         instructions.Init();
@@ -90,50 +96,81 @@ namespace IngameScript
                 }
             }
         }
+        private void RenamePrefix(string tag)
+        {
+            BlockSystem<IMyTerminalBlock> blocks = BlockSystem<IMyTerminalBlock>.SearchBlocks(this);
+            blocks.ForEach(delegate (IMyTerminalBlock block)
+            {
+                if (!block.CustomName.StartsWith(tag))
+                {
+                    block.CustomName = tag + " " + block.CustomName;
+                }
+            });
+
+        }
+        private void UnRenamePrefix(string tag)
+        {
+            BlockSystem<IMyTerminalBlock> blocks = BlockSystem<IMyTerminalBlock>.SearchBlocks(this);
+            blocks.ForEach(delegate (IMyTerminalBlock block)
+            {
+                if (block.CustomName.StartsWith(tag))
+                {
+                    block.CustomName = block.CustomName.Replace(tag + " ", "");
+                }
+            });
+
+        }
         private void GetInformation(string filter)
         {
             BlockFilter<IMyTerminalBlock> block_filter = BlockFilter<IMyTerminalBlock>.Create(Me, filter);
             var items = BlockSystem<IMyTerminalBlock>.SearchByFilter(this, block_filter);
             if (items.IsEmpty == false)
             {
-                var infos = new StringBuilder();
-                var item = items.First;
-                var type = item.GetType();
-                infos.AppendLine($"Type:{type.Name}");
-
-                List<ITerminalProperty> properties = new List<ITerminalProperty>();
-                item.GetProperties(properties);
-                properties.Sort(new TerminalPropertyComparer());
-                infos.AppendLine();
-                infos.AppendLine("Properties:");
-                foreach (var property in properties)
+                foreach (var item in items.List)
                 {
-                    infos.AppendLine($"{property.Id}: {property.TypeName}");
-                }
+                    var infos = new StringBuilder();
+                    var type = item.GetType();
+                    infos.AppendLine($"# {type.Name}");
 
-                List<IReflectionProperty> reflectionProperties = new List<IReflectionProperty>();
-                item.GetReflectionProperties(reflectionProperties);
-                if (reflectionProperties.Count > 0)
-                {
+                    List<ITerminalProperty> properties = new List<ITerminalProperty>();
+                    item.GetProperties(properties);
                     properties.Sort(new TerminalPropertyComparer());
                     infos.AppendLine();
-                    infos.AppendLine("Reflection Properties (*** Read Only ***):");
-                    foreach (var property in reflectionProperties)
+                    infos.AppendLine("## Properties:");
+                    foreach (var property in properties)
                     {
-                        infos.AppendLine($"{property.Id}: {property.TypeName} {property.Description}");
+                        infos.AppendLine($"* [RW] {property.Id}: {property.TypeName}");
                     }
-                }
 
-                List<ITerminalAction> actions = new List<ITerminalAction>();
-                item.GetActions(actions);
-                actions.Sort(new TerminalActionComparer());
-                infos.AppendLine();
-                infos.AppendLine("Actions:");
-                foreach (var action in actions)
-                {
-                    infos.AppendLine($"{action.Id}: {action.Name}");
+                    List<IReflectionProperty> reflectionProperties = new List<IReflectionProperty>();
+                    item.GetReflectionProperties(reflectionProperties);
+                    if (reflectionProperties.Count > 0)
+                    {
+                        properties.Sort(new TerminalPropertyComparer());
+                        infos.AppendLine();
+                        infos.AppendLine("## Reflection Properties:");
+                        foreach (var property in reflectionProperties)
+                        {
+                            var bindingFlags = "[R ]";
+                            if (property.BindingFlags == ReflectionBindingFlags.ReadWrite)
+                            {
+                                bindingFlags = "[RW]";
+                            }
+                            infos.AppendLine($"* {bindingFlags} {property.Id}: {property.TypeName} {property.Description}");
+                        }
+                    }
+
+                    List<ITerminalAction> actions = new List<ITerminalAction>();
+                    item.GetActions(actions);
+                    actions.Sort(new TerminalActionComparer());
+                    infos.AppendLine();
+                    infos.AppendLine("## Actions:");
+                    foreach (var action in actions)
+                    {
+                        infos.AppendLine($"* [W] {action.Id}: {action.Name}");
+                    }
+                    item.CustomData = infos.ToString();
                 }
-                item.CustomData = infos.ToString();
             }
         }
         void RunContinuousLogic()

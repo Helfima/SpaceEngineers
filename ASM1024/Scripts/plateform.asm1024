@@ -245,7 +245,7 @@ mobiles_unlock:
 j ra
 
 pistons_up:
-	get position pistons_elevator Position 3
+	get position pistons_elevator CurrentPosition 3
 	sub err max_piston position
 	mul cmd err kp
 	min cmd cmd 0.4
@@ -258,11 +258,13 @@ pistons_up:
 j ra
 
 pistons_down:
-	items capacity drills 0 VolumeFillFactor 3
+	inventory capacity drills 0 VolumeFillFactor 3
 	print capacity
-	get position pistons_elevator Position 3
+	sgt isFull capacity 0.5
+	select cmd isFull 0 -0.08
+	set pistons_elevator Velocity cmd
+	get position pistons_elevator CurrentPosition 3
 	sub err min_piston position
-	set pistons_elevator Velocity -0.08
 	print position
 	abs err err
 	sle state err 0.1

@@ -63,7 +63,7 @@ namespace IngameScript
                             //instruction.Parent.Log($"device: {device.List.Count} name:{a} mode:{b} {r}:{result}");
                         }
                         break;
-                    case DeviceWords.items:
+                    case DeviceWords.inventory:
                         {
                             var r = instruction.GetArgumentString(1);
                             var device = instruction.GetArgumentDevice<IMyTerminalBlock>(2);
@@ -129,7 +129,7 @@ namespace IngameScript
             action,
             color,
             colorrainbow,
-            items
+            inventory
         }
     }
 }

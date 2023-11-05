@@ -20,8 +20,15 @@ using VRageMath;
 
 namespace IngameScript
 {
+    public enum ReflectionBindingFlags
+    {
+        Read,
+        Write,
+        ReadWrite
+    }
     public interface IReflectionProperty : ITerminalProperty
     {
+        ReflectionBindingFlags BindingFlags { get; }
         string Description { get; }
         object GetValue(object block);
         TValue GetValue<TValue>(object block);
@@ -31,12 +38,21 @@ namespace IngameScript
         public ReflectionProperty(string id, string typeName, Func<T, object> lambdaGet, string description = "")
         {
             this.Id = id;
+            this.BindingFlags = ReflectionBindingFlags.Read;
+            this.TypeName = typeName;
+            this.Description = description;
+            this.lambdaGet = lambdaGet;
+        }
+        public ReflectionProperty(string id, ReflectionBindingFlags bindingFlags, string typeName, Func<T, object> lambdaGet, string description = "")
+        {
+            this.Id = id;
+            this.BindingFlags = bindingFlags;
             this.TypeName = typeName;
             this.Description = description;
             this.lambdaGet = lambdaGet;
         }
         public string Id { get; }
-
+        public ReflectionBindingFlags BindingFlags { get; }
         public string TypeName { get; }
         public string Description { get; }
 

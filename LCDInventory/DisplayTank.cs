@@ -28,6 +28,7 @@ namespace IngameScript
             private int panel = 0;
             private bool enable = false;
 
+            private float scale = 1f;
             private bool tank_h2 = false;
             private bool tank_o2 = false;
             public DisplayTank(DisplayLcd DisplayLcd)
@@ -39,14 +40,16 @@ namespace IngameScript
             {
                 panel = MyIni.Get("Tank", "panel").ToInt32(0);
                 enable = MyIni.Get("Tank", "on").ToBoolean(false);
-                tank_h2 = MyIni.Get("Tank", "H2").ToBoolean(false);
-                tank_o2 = MyIni.Get("Tank", "O2").ToBoolean(false);
+                scale = MyIni.Get("Tank", "scale").ToSingle(1f);
+                tank_h2 = MyIni.Get("Tank", "H2").ToBoolean(true);
+                tank_o2 = MyIni.Get("Tank", "O2").ToBoolean(true);
             }
 
             public void Save(MyIni MyIni)
             {
                 MyIni.Set("Tank", "panel", panel);
                 MyIni.Set("Tank", "on", enable);
+                MyIni.Set("Tank", "scale", scale);
                 MyIni.Set("Tank", "H2", tank_h2);
                 MyIni.Set("Tank", "O2", tank_o2);
             }
@@ -70,7 +73,7 @@ namespace IngameScript
                         BlockSystem<IMyGasTank> tanks = BlockSystem<IMyGasTank>.SearchBlocks(DisplayLcd.program, block => String.IsNullOrEmpty(block.BlockDefinition.SubtypeName) ? block.BlockDefinition.TypeIdString.Contains(type) : block.BlockDefinition.SubtypeName.Contains(type));
                         float volumes = 0f;
                         float capacity = 0f;
-                        float width = 50f;
+                        float width = 50f * scale;
                         StyleGauge style = new StyleGauge()
                         {
                             Orientation = SpriteOrientation.Horizontal,
@@ -79,7 +82,7 @@ namespace IngameScript
                             Height = width,
                             Padding = new StylePadding(0),
                             Round = false,
-                            RotationOrScale = 0.5f,
+                            RotationOrScale = 1f * scale,
                             Thresholds = this.DisplayLcd.program.MyProperty.TankThresholds
                         };
 
@@ -88,7 +91,7 @@ namespace IngameScript
                             Type = SpriteType.TEXT,
                             Color = Color.DimGray,
                             Position = surface.Position + new Vector2(0, 0),
-                            RotationOrScale = 1f,
+                            RotationOrScale = 1f * scale,
                             FontId = surface.Font,
                             Alignment = TextAlignment.LEFT
 
@@ -101,7 +104,7 @@ namespace IngameScript
                         });
 
                         surface.DrawGauge(surface.Position, volumes, capacity, style);
-                        surface.Position += new Vector2(0, 60);
+                        surface.Position += new Vector2(0, 60 * scale);
                         switch (type)
                         {
                             case "Hydrogen":
@@ -113,7 +116,7 @@ namespace IngameScript
                         }
                         text.Position = surface.Position;
                         surface.AddSprite(text);
-                        surface.Position += new Vector2(0, 60);
+                        surface.Position += new Vector2(0, 60 * scale);
                     }
                 }
             }

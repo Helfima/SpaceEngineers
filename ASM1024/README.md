@@ -20,7 +20,7 @@ Assembler language for Space Engineer.
     <td>Get device property to variable, see AgregationMode</td>
   </tr>
   <tr>
-    <td>items v? d? int Property AgregationMode</td>
+    <td>inventory v? d? int Property AgregationMode</td>
     <td>get from a device inventory, the content property to variable, see AgregationMode</td>
   </tr>
   <tr>

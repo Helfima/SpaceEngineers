@@ -32,7 +32,7 @@ namespace IngameScript
 
         private bool ForceUpdate = false;
         private bool search = true;
-
+        private string version = "0.1";
         private Dictionary<long, DisplayLcd> displayLcds = new Dictionary<long, DisplayLcd>();
 
         public Program()
@@ -51,6 +51,7 @@ namespace IngameScript
 
         private void Search()
         {
+            Echo($"Version {version}");
             blocks = new BlockSystem<IMyTerminalBlock>();
             BlockFilter<IMyTextPanel> block_filter = BlockFilter<IMyTextPanel>.Create(Me, MyProperty.lcd_filter);
             BlockSystem<IMyTextPanel> lcds = BlockSystem<IMyTextPanel>.SearchByFilter(this, block_filter);

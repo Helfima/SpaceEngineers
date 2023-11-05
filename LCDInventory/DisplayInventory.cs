@@ -29,6 +29,7 @@ namespace IngameScript
             private bool enable = false;
 
             public bool search = true;
+            private float scale = 1f;
 
             private string filter = "*";
 
@@ -64,6 +65,7 @@ namespace IngameScript
                 panel = MyIni.Get("Inventory", "panel").ToInt32(0);
                 filter = MyIni.Get("Inventory", "filter").ToString("*");
                 enable = MyIni.Get("Inventory", "on").ToBoolean(true);
+                //scale = MyIni.Get("Inventory", "scale").ToSingle(1f);
 
                 gauge = MyIni.Get("Inventory", "gauge_on").ToBoolean(true);
                 gaugeFullscreen = MyIni.Get("Inventory", "gauge_fullscreen").ToBoolean(true);
@@ -84,6 +86,7 @@ namespace IngameScript
                 MyIni.Set("Inventory", "panel", panel);
                 MyIni.Set("Inventory", "filter", filter);
                 MyIni.Set("Inventory", "on", enable);
+                //MyIni.Set("Inventory", "scale", scale);
 
                 MyIni.Set("Inventory", "gauge_on", gauge);
                 MyIni.Set("Inventory", "gauge_fullscreen", gaugeFullscreen);

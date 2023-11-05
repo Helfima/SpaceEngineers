@@ -25,9 +25,9 @@ set sensor_front Right 0.1
 j end
 
 pistons_mobiles_push:
-	get position pistons_mobiles Position 3
+	get position pistons_mobiles CurrentPosition 3
 	get isActive sensor_front IsActive 3
-	select kp isActive 0.1 1
+	select kp isActive 0.1 0.2
 	sub err max_piston position
 	mul cmd err kp
 	max cmd cmd 0.5
@@ -40,9 +40,9 @@ pistons_mobiles_push:
 j ra
 
 pistons_mobiles_retract:
-	get position pistons_mobiles Position 3
+	get position pistons_mobiles CurrentPosition 3
 	get isActive sensor_front IsActive 3
-	select kp isActive 0.1 1
+	select kp isActive 0.1 0.2
 	sub err min_piston position
 	mul cmd err kp
 	min cmd cmd -0.5

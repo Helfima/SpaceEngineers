@@ -110,6 +110,15 @@ namespace IngameScript
                     Alignment = TextAlignment.LEFT,
                 };
                 float offset_y = 40f * (float)scale;
+
+                if (oneLine == true)
+                {
+                    text.Data = "Thrusts:";
+                    text.Color = Color.LightGreen;
+                    text.Position = surface.Position;
+                    surface.AddSprite(text);
+                    surface.Position += new Vector2(0, offset_y);
+                }
                 foreach ( var item in forces)
                 {
                     if (oneLine)

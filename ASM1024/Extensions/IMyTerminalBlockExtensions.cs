@@ -32,7 +32,7 @@ namespace IngameScript
             }
             if (block is IMyPistonBase)
             {
-                resultList.Add(new ReflectionProperty<IMyPistonBase>("Position", "Single", x => (double)x.CurrentPosition));
+                resultList.Add(new ReflectionProperty<IMyPistonBase>("CurrentPosition", "Single", x => (double)x.CurrentPosition));
             }
             if (block is IMyShipMergeBlock)
             {
@@ -42,9 +42,27 @@ namespace IngameScript
             {
                 resultList.Add(new ReflectionProperty<IMySensorBlock>("IsActive", "Boolean", x => (bool)x.IsActive));
             }
+            if(block is IMyBatteryBlock)
+            {
+                resultList.Add(new ReflectionProperty<IMyBatteryBlock>("HasCapacityRemaining", "Boolean", x => (bool)x.HasCapacityRemaining));
+                resultList.Add(new ReflectionProperty<IMyBatteryBlock>("CurrentStoredPower", "Single", x => (double)x.CurrentStoredPower));
+                resultList.Add(new ReflectionProperty<IMyBatteryBlock>("MaxStoredPower", "Single", x => (double)x.MaxStoredPower));
+                resultList.Add(new ReflectionProperty<IMyBatteryBlock>("CurrentInput", "Single", x => (double)x.CurrentInput));
+                resultList.Add(new ReflectionProperty<IMyBatteryBlock>("MaxInput", "Single", x => (double)x.MaxInput));
+                resultList.Add(new ReflectionProperty<IMyBatteryBlock>("IsCharging", "Boolean", x => (bool)x.IsCharging));
+            }
             if (block is IMyLandingGear)
             {
+                resultList.Add(new ReflectionProperty<IMyLandingGear>("IsLocked", "Boolean", x => (bool)x.IsLocked));
                 resultList.Add(new ReflectionProperty<IMyLandingGear>("LockMode", "Single", x => (double)x.LockMode, "0:Unlocked 1:ReadyToLock 2:Locked"));
+                resultList.Add(new ReflectionProperty<IMyLandingGear>("IsParkingEnabled", ReflectionBindingFlags.ReadWrite, "Boolean", x => (bool)x.IsParkingEnabled));
+            }
+            if (block is IMyAssembler)
+            {
+                resultList.Add(new ReflectionProperty<IMyAssembler>("CurrentProgress", "Single", x => (double)x.CurrentProgress));
+                resultList.Add(new ReflectionProperty<IMyAssembler>("Mode", ReflectionBindingFlags.ReadWrite, "Single", x => (double)x.Mode, "0:Assembly 1:Disassembly"));
+                resultList.Add(new ReflectionProperty<IMyAssembler>("CooperativeMode", ReflectionBindingFlags.ReadWrite, "Boolean", x => (bool)x.CooperativeMode));
+                resultList.Add(new ReflectionProperty<IMyAssembler>("Repeating", ReflectionBindingFlags.ReadWrite, "Boolean", x => (bool)x.Repeating));
             }
         }
         public static IReflectionProperty GetReflectionProperty(this IMyTerminalBlock block, string id)
