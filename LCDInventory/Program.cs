@@ -32,7 +32,7 @@ namespace IngameScript
 
         private bool ForceUpdate = false;
         private bool search = true;
-        private string version = "0.1";
+        private string version = "1.0";
         private Dictionary<long, DisplayLcd> displayLcds = new Dictionary<long, DisplayLcd>();
 
         public Program()
