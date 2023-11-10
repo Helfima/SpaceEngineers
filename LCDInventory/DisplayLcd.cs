@@ -73,23 +73,27 @@ namespace IngameScript
                 cleanup++;
                 Drawing drawing = new Drawing(Block);
                 //TestViewport(drawing);
-
-                if (cleanup < 100)
+                try
                 {
-                    DisplayInventory.Draw(drawing);
-                    DisplayDrill.Draw(drawing);
-                    DisplayMachine.Draw(drawing);
-                    DisplayPower.Draw(drawing);
-                    DisplayShip.Draw(drawing);
-                    DisplayTank.Draw(drawing);
+                    if (cleanup < 100)
+                    {
+                        DisplayInventory.Draw(drawing);
+                        DisplayDrill.Draw(drawing);
+                        DisplayMachine.Draw(drawing);
+                        DisplayPower.Draw(drawing);
+                        DisplayShip.Draw(drawing);
+                        DisplayTank.Draw(drawing);
+                    }
+                    else
+                    {
+                        drawing.Clean();
+                        cleanup = 0;
+                    }
                 }
-                else
+                finally
                 {
-                    drawing.Clean();
-                    cleanup = 0;
+                    drawing?.Dispose();
                 }
-
-                drawing.Dispose();
             }
             private void TestViewport(Drawing drawing)
             {

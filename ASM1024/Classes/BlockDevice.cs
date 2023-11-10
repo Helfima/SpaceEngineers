@@ -32,12 +32,11 @@ namespace IngameScript
             {
                 this.instruction = instruction;
             }
-            public void SetColor(BlockSystem<IMyTerminalBlock> devices, string name, int r, int g, int b, int a)
+            public void SetColor(BlockSystem<IMyTerminalBlock> devices, string name, Color color)
             {
                 if (devices.IsEmpty) return;
                 foreach (IMyTerminalBlock block in devices.List)
                 {
-                    var color = new Color(r, g, b, a);
                     block.SetValueColor(name, color);
                 }
             }
@@ -67,12 +66,7 @@ namespace IngameScript
                                 block.SetValueFloat(property.Id, (float)value);
                                 break;
                             case "Color":
-                                var r = 1;
-                                var g = 1;
-                                var b = 1;
-                                var color = new Color(r, g, b);
-                                block.SetValueColor(property.Id, color);
-                                break;
+                                throw new Exception("Use Color instruction");
                         }
                     }
                     else

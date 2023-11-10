@@ -11,6 +11,7 @@
   <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)BlockSystem.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Drawing.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)EnumFont.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GridHelper.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Logger.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Util.cs" />

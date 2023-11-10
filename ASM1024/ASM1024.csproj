@@ -54,6 +54,7 @@
     <Compile Include="Classes\TerminalActionComparer.cs" />
     <Compile Include="Extensions\IMyInventoryExtensions.cs" />
     <Compile Include="Extensions\IMyTerminalBlockExtensions.cs" />
+    <Compile Include="Extensions\InstructionException.cs" />
     <Compile Include="Extensions\ReflectionProperty.cs" />
     <Compile Include="MDK\Bootstrapper.cs" />
     <AdditionalFiles Include="MDK\MDK.options.props">

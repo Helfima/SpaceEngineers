@@ -138,7 +138,7 @@ namespace IngameScript
                 }
 
                 surface.Position += new Vector2(0, 40);
-                surface.DrawGauge(surface.Position, batteries_store.Current, batteries_store.Max, style, true);
+                surface.DrawGauge(surface.Position, batteries_store.Current, batteries_store.Max, style);
                 surface.Position += new Vector2(0, 40);
                 text.Data = $"Battery Store (n={batteries_store.Count})\n Store: {Math.Round(batteries_store.Current, 2)}MW / {Math.Round(batteries_store.Max, 2)}MW";
                 text.Position = surface.Position;
@@ -165,7 +165,7 @@ namespace IngameScript
                     }
                 });
                 surface.Position += new Vector2(0, 40);
-                surface.DrawGauge(surface.Position, current_input, max_input, style, true);
+                surface.DrawGauge(surface.Position, current_input, max_input, style);
                 surface.Position += new Vector2(0, 40);
                 text.Data = $"Power In: {Math.Round(current_input, 2)}MW / {Math.Round(max_input, 2)}MW";
                 text.Position = surface.Position;

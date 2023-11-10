@@ -8,7 +8,7 @@ store hinge UpperLimit max_angle
 store hinge LowerLimit min_angle
 
 move stage 0
-
+# start
 start:
 	yield
 	beqal stage 0 hinge_down

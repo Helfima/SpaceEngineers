@@ -101,20 +101,33 @@ namespace IngameScript
                             var g = instruction.GetArgumentInt(4);
                             var b = instruction.GetArgumentInt(5);
                             var a = instruction.GetArgumentInt(6);
-                            blockDevice.SetColor(device, name, r, g, b, a);
-                            //instruction.Parent.Log($"device: {device.List.Count} action:{a} value:{b}");
+                            var color = new Color(r, g, b, a);
+                            blockDevice.SetColor(device, name, color);
                         }
                         break;
-                    case DeviceWords.colorrainbow:
+                    case DeviceWords.colorhsv:
                         {
                             var device = instruction.GetArgumentDevice<IMyTerminalBlock>(1);
                             var name = instruction.GetArgumentString(2);
-                            var r = instruction.GetArgumentDouble(3);
-                            var color = ColorHelper.Rainbow(r);
-                            blockDevice.SetColor(device, name, color.R, color.G, color.B, color.A);
-                            instruction.Parent.Log($"device: {device.List.Count} rainbow:{r} color:{color}");
+                            var h = instruction.GetArgumentDouble(3);
+                            var s = instruction.GetArgumentDouble(4);
+                            var v = instruction.GetArgumentDouble(5);
+                            var hsv = new Vector3(h/360, s, v);
+                            var color = hsv.HSVtoColor();
+                            blockDevice.SetColor(device, name, color);
                         }
                         break;
+                    case DeviceWords.colorhex:
+                        {
+                            var device = instruction.GetArgumentDevice<IMyTerminalBlock>(1);
+                            var name = instruction.GetArgumentString(2);
+                            var hex = instruction.GetArgumentString(3);
+                            var color = ColorExtensions.HexToColor(hex);
+                            blockDevice.SetColor(device, name, color);
+                        }
+                        break;
+
+
                 }
             }
 
@@ -127,9 +140,10 @@ namespace IngameScript
             get,
             set,
             action,
+            inventory,
             color,
-            colorrainbow,
-            inventory
+            colorhsv,
+            colorhex
         }
     }
 }

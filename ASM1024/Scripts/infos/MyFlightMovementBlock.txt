@@ -1,0 +1,61 @@
+Type:MyFlightMovementBlock
+
+Properties:
+ActivateBehavior: Boolean
+alignment: Int64
+AlignToGravity: Boolean
+BackgroundColor: Color
+ChangeIntervalSlider: Single
+CollisionAvoidance: Boolean
+Content: Int64
+DockingMode: Boolean
+Font: Int64
+FontColor: Color
+FontSize: Single
+MaxPitchAngle: Single
+MaxRollAngle: Single
+MinHeightAboveTerrain: Single
+Name: StringBuilder
+OnOff: Boolean
+PreserveAspectRatio: Boolean
+ScriptBackgroundColor: Color
+ScriptForegroundColor: Color
+ShowInInventory: Boolean
+ShowInTerminal: Boolean
+ShowInToolbarConfig: Boolean
+ShowOnHUD: Boolean
+SpeedLimit: Single
+TextPaddingSlider: Single
+
+Actions:
+ActivateBehavior: Comportement IA On/Off
+ActivateBehavior_Off: Comportement IA Off
+ActivateBehavior_On: Comportement IA On
+AlignToGravity: Aligner sur la Gravité-P On/Off
+CollisionAvoidance: Evitement de collision On/Off
+CollisionAvoidance_Off: Evitement de collision Off
+CollisionAvoidance_On: Evitement de collision On
+DecreaseChangeIntervalSlider: Diminuer Temps de rafraîchissement
+DecreaseFontSize: Diminuer Taille de police
+DecreaseMaxPitchAngle: Diminuer Angle de tangage max
+DecreaseMaxRollAngle: Diminuer Angle de roulis max
+DecreaseMinHeightAboveTerrain: Diminuer Altitude min.
+DecreaseSpeedLimit: Diminuer Limite de vitesse
+DecreaseTextPaddingSlider: Diminuer Remplissage de texte
+DockingMode: Mode précision On/Off
+DockingMode_Off: Mode précision Off
+DockingMode_On: Mode précision On
+IncreaseChangeIntervalSlider: Augmenter Temps de rafraîchissement
+IncreaseFontSize: Augmenter Taille de police
+IncreaseMaxPitchAngle: Augmenter Angle de tangage max
+IncreaseMaxRollAngle: Augmenter Angle de roulis max
+IncreaseMinHeightAboveTerrain: Augmenter Altitude min.
+IncreaseSpeedLimit: Augmenter Limite de vitesse
+IncreaseTextPaddingSlider: Augmenter Remplissage de texte
+OnOff: Commuter le bloc On/Off
+OnOff_Off: Commuter le bloc Off
+OnOff_On: Commuter le bloc On
+PreserveAspectRatio: Conserver le rapport d'image On/Off
+ShowOnHUD: Afficher sur l'ATH On/Off
+ShowOnHUD_Off: Afficher sur l'ATH Off
+ShowOnHUD_On: Afficher sur l'ATH On

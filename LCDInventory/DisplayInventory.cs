@@ -65,7 +65,7 @@ namespace IngameScript
                 panel = MyIni.Get("Inventory", "panel").ToInt32(0);
                 filter = MyIni.Get("Inventory", "filter").ToString("*");
                 enable = MyIni.Get("Inventory", "on").ToBoolean(true);
-                //scale = MyIni.Get("Inventory", "scale").ToSingle(1f);
+                scale = MyIni.Get("Inventory", "scale").ToSingle(1f);
 
                 gauge = MyIni.Get("Inventory", "gauge_on").ToBoolean(true);
                 gaugeFullscreen = MyIni.Get("Inventory", "gauge_fullscreen").ToBoolean(true);
@@ -86,7 +86,7 @@ namespace IngameScript
                 MyIni.Set("Inventory", "panel", panel);
                 MyIni.Set("Inventory", "filter", filter);
                 MyIni.Set("Inventory", "on", enable);
-                //MyIni.Set("Inventory", "scale", scale);
+                MyIni.Set("Inventory", "scale", scale);
 
                 MyIni.Set("Inventory", "gauge_on", gauge);
                 MyIni.Set("Inventory", "gauge_fullscreen", gaugeFullscreen);
@@ -159,10 +159,8 @@ namespace IngameScript
                         volumes += volume;
                         long maxVolume = block_inventory.MaxVolume.RawValue;
                         maxVolumes += maxVolume;
-                        //drawingSurface.WriteText($"\nVolume:{volume}/{maxVolume}", true);
                     }
                 });
-                //drawingSurface.WriteText($"\nVolume:{volumes}/{maxVolumes}", true);
                 StyleGauge style = new StyleGauge()
                 {
                     Orientation = gaugeHorizontal ? SpriteOrientation.Horizontal : SpriteOrientation.Vertical,
@@ -171,24 +169,29 @@ namespace IngameScript
                     Height = gaugeHeight,
                     Thresholds = this.DisplayLcd.program.MyProperty.ChestThresholds
                 };
-                drawing.DrawGauge(drawing.Position, volumes, maxVolumes, style);
-                if (gaugeHorizontal) drawing.Position += new Vector2(0, gaugeHeight + topPadding);
-                else drawing.Position += new Vector2(gaugeWidth + leftPadding, 0);
+                style.Scale(scale);
+                drawing.Position = drawing.DrawGauge(drawing.Position, volumes, maxVolumes, style);
+                if (gaugeHorizontal)
+                {
+                    drawing.Position += new Vector2(0, 2*cellSpacing * scale);
+                }
             }
 
-            private int GetLimit(SurfaceDrawing drawing)
+            private int GetLimit(SurfaceDrawing drawing, float itemSize, float cellSpacing)
             {
                 int limit = 5;
-                if (gauge && gaugeHorizontal) { limit = (int)Math.Floor((drawing.Viewport.Height - gaugeHeight - topPadding) / (itemSize + cellSpacing)); }
-                else { limit = (int)Math.Floor((drawing.Viewport.Height - topPadding) / (itemSize + cellSpacing)); }
+                if (gauge && gaugeHorizontal) { limit = (int)Math.Floor((drawing.Viewport.Height - (gaugeHeight + topPadding) * scale) / (itemSize + cellSpacing)); }
+                else { limit = (int)Math.Floor((drawing.Viewport.Height - topPadding * scale) / (itemSize + cellSpacing)); }
                 return Math.Max(limit, 1);
             }
             private void DisplayByType(SurfaceDrawing drawing, List<string> types)
             {
                 int count = 0;
                 float height = itemSize;
-                float width = 3 * itemSize;
-                int limit = GetLimit(drawing);
+                float width = 2.5f * itemSize;
+                float delta_width = width * scale;
+                float delta_height = height * scale;
+                int limit = GetLimit(drawing, delta_height, cellSpacing);
                 string colorDefault = DisplayLcd.program.MyProperty.Get("color", "default");
                 int limitDefault = DisplayLcd.program.MyProperty.GetInt("Limit", "default");
 
@@ -197,7 +200,7 @@ namespace IngameScript
                     foreach (KeyValuePair<string, Item> entry in item_list.OrderByDescending(entry => entry.Value.Amount).Where(entry => entry.Value.Type == type))
                     {
                         Item item = entry.Value;
-                        Vector2 position2 = drawing.Position + new Vector2(width * (count / limit), (cellSpacing + height) * (count - (count / limit) * limit));
+                        Vector2 position2 = drawing.Position + new Vector2((cellSpacing + delta_width) * (count / limit), (cellSpacing + delta_height) * (count - (count / limit) * limit));
                         // Icon
                         Color color = DisplayLcd.program.MyProperty.GetColor("color", item.Name, colorDefault);
                         int limitBar = DisplayLcd.program.MyProperty.GetInt("Limit", item.Name, limitDefault);
@@ -210,6 +213,7 @@ namespace IngameScript
                             Color = color,
                             Thresholds = this.DisplayLcd.program.MyProperty.ItemThresholds
                         };
+                        style.Scale(scale);
                         int variance = 2;
                         //DisplayLcd.program.drawingSurface.WriteText($"variance:{entry.Key}?{last_amount.ContainsKey(entry.Key)}\n", true);
                         if (last_amount.ContainsKey(entry.Key))
@@ -225,8 +229,8 @@ namespace IngameScript
                         count++;
                     }
                 }
-                if(item_list.Count > limit) drawing.Position += new Vector2(0, (cellSpacing + height) * limit);
-                drawing.Position += new Vector2(0, (cellSpacing + height) * item_list.Count);
+                if(item_list.Count > limit) drawing.Position += new Vector2(0, (cellSpacing * scale + height) * limit);
+                drawing.Position += new Vector2(0, (cellSpacing * scale + height) * item_list.Count);
             }
 
             private void InventoryCount()
@@ -242,7 +246,7 @@ namespace IngameScript
                         block_inventory.GetItems(items);
                         foreach (MyInventoryItem block_item in items)
                         {
-
+                            var itemInfo = block_item.Type.GetItemInfo();
                             string name = Util.GetName(block_item);
                             string type = Util.GetType(block_item);
                             double amount = 0;

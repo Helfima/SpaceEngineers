@@ -1,0 +1,78 @@
+{
+	"$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+	"name": "asm1024",
+	"patterns": [
+		{
+			"include": "#comments"
+		},
+		{
+			"include": "#entity"
+		},
+		{
+			"include": "#strings"
+		},
+		{
+			"include": "#constant"
+		}
+	],
+	"repository": {
+		"comments": {
+			"patterns": [
+			  {
+				"begin": "#",
+				"beginCaptures": {
+				  "0": {
+					"name": "punctuation.definition.comment.asm1024"
+				  }
+				},
+				"end": "$",
+				"name": "comment.line.number-sign.asm1024"
+			  }
+			]
+		},
+		"entity": {
+			"patterns": [{
+				"name": "entity.name.function.asm1024",
+				"match": "\\b(device|set|get|action|color|colorrainbow|inventory)\\b"
+			},
+			{
+				"name": "entity.name.function.asm1024",
+				"match": "\\b(bap|bapal|bapz|bapzal|beq|beqal|beqz|beqzal|bge|bgeal|bgez|bgezal|bgt|bgtal|bgtz|bgtzal|ble|bleal|blez|blezal|blt|bltal|bltz|bltzal|bna|bnaal|bnaz|bnazal|bne|bneal|bnez|bnezal|brap|brapz|breq|breqz|brge|brgez|brgt|brgtz|brle|brlez|brlt|brltz|brna|brnaz|brne|brnez|j|jal|jr)\\b"
+			},
+			{
+				"name": "entity.name.function.asm1024",
+				"match": "\\b(and|nor|or|xor|not|abs|acos|add|asin|atan|ceil|cos|div|exp|floor|log|max|min|mod|mul|rand|round|sin|sqrt|sub|tan|trunc)\\b"
+			},
+			{
+				"name": "entity.name.function.asm1024",
+				"match": "\\b(define|yield|move|print)\\b"
+			},
+			{
+				"name": "entity.name.function.asm1024",
+				"match": "\\b(sap|sapz|select|seq|seqz|sge|sgez|sgt|sgtz|sle|slez|slt|sltz|sna|snaz|sne|snez)\\b"
+			},
+			{
+				"name": "entity.name.tag.asm1024",
+				"match": "\\s{0,}j\\s{0,}(\\w+$)|(^\\s{0,}\\w+:$)"
+			}]
+		},
+		"strings": {
+			"name": "string.quoted.double.asm1024",
+			"begin": "\"",
+			"end": "\"",
+			"patterns": [
+				{
+					"name": "constant.character.escape.asm1024",
+					"match": "\\\\."
+				}
+			]
+		},
+		"constant": {
+			"patterns": [{
+				"name": "constant.numeric.asm1024",
+				"match": "\\b([0-9]+)\\b"
+			}]
+		}
+	},
+	"scopeName": "source.asm1024"
+}

@@ -1,0 +1,31 @@
+{
+  "name": "asm1024",
+  "displayName": "ASM1024",
+  "description": "",
+  "version": "0.0.1",
+  "license": "MIT",
+  "publisher": "Helfima",
+  "repository": "https://github.com/Helfima/SpaceEngineers/tree/master/ASM1024",
+  "author": {
+    "name": "Helfima"
+  },
+  "engines": {
+    "vscode": "^1.84.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "contributes": {
+    "languages": [{
+      "id": "asm1024",
+      "aliases": ["asm1024", "asm1024"],
+      "extensions": [".asm1024"],
+      "configuration": "./language-configuration.json"
+    }],
+    "grammars": [{
+      "language": "asm1024",
+      "scopeName": "source.asm1024",
+      "path": "./syntaxes/asm1024.tmLanguage.json"
+    }]
+  }
+}

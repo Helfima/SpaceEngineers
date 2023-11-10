@@ -106,7 +106,7 @@ namespace IngameScript
         {
             public float Padding_x = 10f;
             public float Padding_y = 10f;
-            public string Font = "Monospace";
+            public string Font { get; } = "Monospace";
 
             public IMyTextSurface Surface;
             private MySpriteDrawFrame frame;
@@ -131,7 +131,9 @@ namespace IngameScript
                 get { return this.position; }   
                 set { this.position = value; }
             }
-
+            /// <summary>
+            /// Initialize only if not
+            /// </summary>
             public void Initialize()
             {
                 if (this.initialized) return;
@@ -148,7 +150,9 @@ namespace IngameScript
                 // Retrieve the Large Display, which is the first surface
                 this.frame = Surface.DrawFrame();
             }
-
+            /// <summary>
+            /// Dipose if initialized
+            /// </summary>
             public void Dispose()
             {
                 if (this.initialized)
@@ -195,45 +199,54 @@ namespace IngameScript
             public void DrawGaugeIcon(Vector2 position, string name, double amount, int limit, StyleIcon style_icon, int variance = 0)
             {
                 Vector2 position2 = position + new Vector2(style_icon.Padding.X, style_icon.Padding.Y);
-                // cadre info
-                //AddForm(position2, SpriteForm.SquareSimple, style_icon.Width, style_icon.Height, new Color(40, 40, 40, 128));
 
-                float width = (style_icon.Width - 3 * style_icon.Margin.X) / 3;
-                float fontTitle = Math.Max(0.3f, (float)Math.Round(0.5f * (style_icon.Height / 80f), 1));
-                float fontQuantity = Math.Max(0.5f, (float)Math.Round(1f * (style_icon.Height / 80f), 1));
-                // Icon 
+                float factor = 2.5f;
+
+                float width = (style_icon.Width - 3 * style_icon.Margin.X) / factor;
+                float height = (style_icon.Height - 3 * style_icon.Margin.Y);
+                string font_title = "BuildInfo";
+                float font_size_title = Math.Max(0.3f, (float)Math.Round(height / 4f / 32f, 1));
+                float deltaTitle = font_size_title * 20f;
+
+                string font_quantity = "BuildInfo";
+                float font_size_quantity = Math.Max(0.3f, (float)Math.Round(height / 2.25f / 32f, 1));
+                float deltaQuantity = font_size_quantity * 32f;
+
+                float icon_size = style_icon.Height - style_icon.Margin.Y - deltaTitle;
+
+                AddForm(position2, SpriteForm.SquareSimple, style_icon.Width, style_icon.Height, new Color(5, 5, 5, 125));
+                // Add Icon 
                 AddSprite(new MySprite()
                 {
                     Type = SpriteType.TEXTURE,
                     Data = style_icon.path,
-                    Size = new Vector2(width, width),
+                    Size = new Vector2(icon_size, icon_size),
                     Color = style_icon.Color,
-                    Position = position2 + new Vector2(0, width / 2)
-
+                    Position = position2 + new Vector2(0, deltaTitle + icon_size / 2)
                 });
 
+                // Add Gauge
                 StyleGauge style = new StyleGauge()
                 {
                     Orientation = SpriteOrientation.Horizontal,
                     Fullscreen = false,
-                    Width = width * 2,
-                    Height = width / 3,
+                    Width = width * (factor - 1f),
+                    Height = height / 3,
                     Padding = new StylePadding(0),
-                    RotationOrScale = Math.Max(0.3f, (float)Math.Round(0.6f * (style_icon.Height / 80f), 1)),
                     Thresholds = style_icon.Thresholds
                 };
-                DrawGauge(position2 + new Vector2(width + style_icon.Margin.X, style_icon.Height / 2), (float)amount, limit, style);
+                DrawGauge(position2 + new Vector2(width + style_icon.Margin.X, deltaTitle + deltaQuantity + style_icon.Margin.Y), (float)amount, limit, style);
 
                 // Element Name
                 icon = new MySprite()
                 {
                     Type = SpriteType.TEXT,
                     Data = name,
-                    Size = new Vector2(width, width),
+                    //Size = new Vector2(width, width),
                     Color = Color.DimGray,
-                    Position = position2 + new Vector2(style_icon.Margin.X, -8),
-                    RotationOrScale = fontTitle,
-                    FontId = Font,
+                    Position = position2,
+                    RotationOrScale = font_size_title,
+                    FontId = font_title,
                     Alignment = TextAlignment.LEFT
 
                 };
@@ -243,11 +256,11 @@ namespace IngameScript
                 {
                     Type = SpriteType.TEXT,
                     Data = Util.GetKiloFormat(amount),
-                    Size = new Vector2(width, width),
+                    //Size = new Vector2(width, width),
                     Color = Color.LightGray,
-                    Position = position2 + new Vector2(width + style_icon.Margin.X, style_icon.Margin.Y),
-                    RotationOrScale = fontQuantity,
-                    FontId = Font
+                    Position = position2 + new Vector2(width + style_icon.Margin.X, deltaTitle + style_icon.Margin.Y),
+                    RotationOrScale = font_size_quantity,
+                    FontId = font_quantity
 
                 };
                 AddSprite(icon);
@@ -261,7 +274,7 @@ namespace IngameScript
                         Data = SpriteForm.Triangle.ToString(),
                         Size = new Vector2(symbolSize, symbolSize),
                         Color = new Color(0,100,0,255),
-                        Position = position2 + new Vector2(3 * width - 25, symbolSize - style_icon.Margin.Y),
+                        Position = position2 + new Vector2(factor * width - 25, symbolSize - style_icon.Margin.Y),
                         RotationOrScale = 0
                     });
                 }
@@ -273,13 +286,16 @@ namespace IngameScript
                         Data = SpriteForm.Triangle.ToString(),
                         Size = new Vector2(symbolSize, symbolSize),
                         Color = new Color(100, 0, 0, 255),
-                        Position = position2 + new Vector2(3 * width - 25, symbolSize + style_icon.Margin.Y),
+                        Position = position2 + new Vector2(factor * width - 25, symbolSize + style_icon.Margin.Y),
                         RotationOrScale = (float)Math.PI
                     });
                 }
             }
-
-            public void DrawGauge(Vector2 position, float amount, float limit, StyleGauge style, bool invert = false)
+            public Vector2 DrawGauge(Vector2 position, float amount, float limit, StyleGauge style, bool invert)
+            {
+                return DrawGauge(position, amount, limit, style, invert);
+            }
+            public Vector2 DrawGauge(Vector2 position, float amount, float limit, StyleGauge style)
             {
                 float width = style.Width;
                 float height = style.Height;
@@ -297,9 +313,8 @@ namespace IngameScript
 
                 // Gauge quantity
                 float percent = Math.Min(1f, amount / limit);
-                Color color = Color.Green;
                 var threshold = style.Thresholds.GetGaugeThreshold(percent);
-                color = threshold.Color;
+                Color color = threshold.Color;
 
                 if (style.Orientation.Equals(SpriteOrientation.Horizontal))
                 {
@@ -327,12 +342,28 @@ namespace IngameScript
                         Size = new Vector2(width, width),
                         Color = Color.Black,
                         Position = position2 + new Vector2(2 * style.Margin.X, style.Margin.Y),
-                        RotationOrScale = style.RotationOrScale,
-                        FontId = Font,
+                        
+                        FontId = EnumFont.Monospace,
                         Alignment = TextAlignment.LEFT
 
                     };
+                    if (style.Fullscreen && style.Orientation.Equals(SpriteOrientation.Horizontal))
+                    {
+                        icon.RotationOrScale = Math.Max(0.3f, (float)Math.Round((height - 2 * style.Margin.Y) / 32f, 1));
+                    }
+                    else
+                    {
+                        icon.RotationOrScale = Math.Max(0.3f, (float)Math.Round((height - 2 * style.Margin.Y) / 32f, 1));
+                    }
                     AddSprite(icon);
+                }
+                if (style.Orientation.Equals(SpriteOrientation.Horizontal))
+                {
+                    return position + new Vector2 (0, height + 2 * style.Margin.Y);
+                }
+                else
+                {
+                    return position + new Vector2(width + 2 * style.Margin.X, 0);
                 }
             }
             public void Test()
@@ -400,29 +431,35 @@ namespace IngameScript
 
         public class StylePadding
         {
-            public StylePadding(int x = 2, int y = 2)
+            public StylePadding(float x = 2, float y = 2)
             {
                 X = x;
                 Y = y;
             }
-            public StylePadding(int value)
+            public StylePadding(float value)
             {
                 X = value;
                 Y = value;
             }
 
-            public int X = 2;
-            public int Y = 2;
-        }
+            public float X = 2;
+            public float Y = 2;
 
+            public virtual void Scale(float scale)
+            {
+                this.X *= scale;
+                this.Y *= scale;
+            }
+        }
+        
         public class StyleMargin : StylePadding
         {
-            public StyleMargin(int x = 2, int y = 2)
+            public StyleMargin(float x = 2, float y = 2)
             {
                 X = x;
                 Y = y;
             }
-            public StyleMargin(int value)
+            public StyleMargin(float value)
             {
                 X = value;
                 Y = value;
@@ -430,29 +467,36 @@ namespace IngameScript
         }
         public class Style
         {
-            public StylePadding Padding = new StylePadding(2);
-            public StyleMargin Margin = new StyleMargin(2);
-            public float Width = 50f;
-            public float Height = 50f;
-            public Color Color = new Color(100, 100, 100, 128);
+            public StylePadding Padding { get; set; } = new StylePadding(2);
+            public StyleMargin Margin { get; set; } = new StyleMargin(2);
+            public float Width { get; set; } = 50f;
+            public float Height { get; set; } = 50f;
+            public float RotationOrScale { get; set; } = 1f;
+            public Color Color { get; set; } = new Color(100, 100, 100, 128);
+            public virtual void Scale(float scale)
+            {
+                this.Width *= scale;
+                this.Height *= scale;
+                this.Padding.Scale(scale);
+                this.Margin.Scale(scale);
+            }
         }
         public class StyleIcon : Style
         {
-            public string path;
-            public GaugeThresholds Thresholds = new GaugeThresholds();
+            public string path { get; set; }
+            public GaugeThresholds Thresholds { get; set; } = new GaugeThresholds();
         }
         public class StyleGauge : Style
         {
-            public SpriteOrientation Orientation = SpriteOrientation.Horizontal;
-            public bool Fullscreen = false;
-            public bool Percent = true;
-            public bool Round = true;
-            public float RotationOrScale = 0.6f;
-            public GaugeThresholds Thresholds = new GaugeThresholds();
+            public SpriteOrientation Orientation { get; set; } = SpriteOrientation.Horizontal;
+            public bool Fullscreen { get; set; } = false;
+            public bool Percent { get; set; } = true;
+            public bool Round { get; set; } = true;
+            public GaugeThresholds Thresholds { get; set; } = new GaugeThresholds();
         }
         public class GaugeThresholds
         {
-            public List<GaugeThreshold> Thresholds = new List<GaugeThreshold>();
+            public List<GaugeThreshold> Thresholds { get; set; } = new List<GaugeThreshold>();
             public GaugeThreshold GetGaugeThreshold(float value)
             {
                 GaugeThreshold gaugeThreshold = Thresholds.First();
@@ -477,8 +521,8 @@ namespace IngameScript
                 Value = value;
                 Color = color;
             }
-            public float Value;
-            public Color Color;
+            public float Value { get; set; }
+            public Color Color { get; set; }
 
             public override string ToString()
             {
@@ -493,10 +537,10 @@ namespace IngameScript
             public const string TYPE_COMPONENT = "MyObjectBuilder_Component";
             public const string TYPE_AMMO = "MyObjectBuilder_AmmoMagazine";
 
-            public string Name;
-            public string Type;
-            public Double Amount;
-            public int Variance;
+            public string Name { get; set; }
+            public string Type { get; set; }
+            public Double Amount { get; set; }
+            public int Variance { get; set; }
 
             public string Icon
             {

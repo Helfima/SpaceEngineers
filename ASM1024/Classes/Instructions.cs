@@ -206,14 +206,19 @@ namespace IngameScript
                         }
 
                     }
+                }
+                catch (InstructionException ex)
+                {
+                    Log($"Instruction error {Index + 1}: {ex.Message}");
+                    State = StateBasic.Completing;
                 } catch (Exception ex)
                 {
                     Log($"Instruction error {Index + 1}: {ex.Message}");
                     Log(ex.StackTrace);
                     State = StateBasic.Completing;
                 }
-            }
-            public void Log(string message)
+    }
+    public void Log(string message)
             {
                 if (logger.Count > 30) logger.RemoveAt(0);
                 logger.Add(message);
@@ -263,18 +268,36 @@ namespace IngameScript
             {
                 if (line.Trim() != null && !line.Trim().Equals(""))
                 {
-                    commandLine.TryParse(line);
-                    //char firstChar = line.Trim().First();
-                    //string[] values = line.Trim().Split(separator);
-                    string[] values = commandLine.Items.ToArray();
-                    string name = values[0];
-                    if (string.IsNullOrEmpty(name) == false)
+                    if (line.StartsWith("#"))
                     {
-                        name = name.ToLower();
+                        Instruction instanciated = new Instruction();
+                        instanciated.Command = line;
+                        instanciated.Index = index;
+                        instanciated.NextIndex = index + 1;
+                        instanciated.Parent = this;
+                        instanciated.Type = InstructionType.None;
                     }
-                    Log($"try instanciate {line} at {index + 1}");
-                    var instanciated = InstanciateInstruction(line, name, index, values);
-                    return instanciated;
+                    else
+                    {
+                        if (line.Contains("#"))
+                        {
+                            var splited = line.Split('#');
+                            line = splited[0];
+                        }
+                        commandLine.TryParse(line);
+                        //char firstChar = line.Trim().First();
+                        //string[] values = line.Trim().Split(separator);
+                        string[] values = commandLine.Items.ToArray();
+                        string name = values[0];
+                        if (string.IsNullOrEmpty(name) == false)
+                        {
+                            name = name.ToLower();
+                        }
+                        Log($"try instanciate {line} at {index + 1}");
+                        var instanciated = InstanciateInstruction(line, name, index, values);
+                        return instanciated;
+                    }
+                    
                 }
                 return null;
             }
@@ -303,7 +326,7 @@ namespace IngameScript
                     }
                     else
                     {
-                        instanciated.Type = InstructionType.None;
+                        throw new InstructionException($"Instruction '{name}' not found at {index}");
                     }
                 }
                 return instanciated;

@@ -1,0 +1,66 @@
+device lamp "MC:Spotlight"
+device hinge "M:Hinge"
+device piston "M:Piston"
+
+define max_angle 45
+define min_angle -45
+
+set hinge UpperLimit max_angle
+set hinge LowerLimit min_angle
+
+move stage 0
+move err_last 0
+
+start:
+	yield
+	beqal stage 0 hinge_down
+	beqal stage 1 hinge_up
+	jal lamp_color
+	jal extend_piston
+j start
+
+lamp_color:
+	get angle hinge Angle 3
+	sub angle angle min_angle
+	div angle angle 90
+	mul angle angle 280
+	print angle
+	colorhsv lamp Color angle 1 1
+j ra
+
+extend_piston:
+	get angle hinge Angle 3
+	abs angle angle
+	div angle angle 180
+	mul angle angle PY
+	cos cosinus angle
+print cosinus
+	div length 5 cosinus
+	get position piston CurrentPosition 3
+	sub err length position
+	sub derive err_last err
+	mul derive derive 5
+print err    
+	mul cmd err 0.5
+	add cmd cmd derive
+	set piston Velocity cmd
+	move err_last err
+j ra
+
+hinge_down:
+	set hinge Velocity -2
+	get temp hinge Angle 3
+	print temp
+	bna temp -45 0.01 ra
+	move stage 1
+j ra
+
+hinge_up:
+	set hinge Velocity 2
+	get temp hinge Angle 3
+	print temp
+	bna temp 45 0.01 ra
+	move stage 0
+j ra
+
+end:
