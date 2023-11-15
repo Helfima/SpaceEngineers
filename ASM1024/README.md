@@ -68,6 +68,12 @@ Calcul agregation:
 * 2 = Minimum
 * 3 = Maximum
 
+### Color
+
+In Control interface you can see [RGBA color](Images/color_rgb.png)
+
+In GPS interface you can see [HSV or HEX color](Images/color_hsv.png)
+
 ## Jump
 
 <table>
