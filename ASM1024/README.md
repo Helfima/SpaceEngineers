@@ -30,16 +30,20 @@ In the documentation d? is use for a list of "ITerminalBlock" and v? for a varia
     <td>Set variable value to property on device</td>
   </tr>
   <tr>
-    <td>action v? ActionName</td>
+    <td>action d? ActionName</td>
     <td>Execute action on device with name "ActionName"</td>
   </tr>
   <tr>
-    <td>color r(v?|num) g(v?|num) b(v?|num) a(v?|num)</td>
-    <td>Store rgba color, values are integer [0-255]</td>
+    <td>color d? r(v?|num) g(v?|num) b(v?|num) a(v?|num)</td>
+    <td>Set rgba color, values are integer [0-255]</td>
   </tr>
   <tr>
-    <td>colorrainbow v? a(v?|num)</td>
-    <td>Store color from interpolation value a</td>
+    <td>colorHSV d? h(v?|num) s(v?|num) v(v?|num)</td>
+    <td>Set hsv color, h value are degre [0-360], s and v [0-1]</td>
+  </tr>
+  <tr>
+    <td>colorHEX d? String</td>
+    <td>Set html color</td>
   </tr>
 </table>
 
