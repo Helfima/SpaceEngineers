@@ -143,6 +143,7 @@ namespace IngameScript
                     var loop = 0;
                     var wait = true;
                     while (wait) {
+                        //Log($"** loop = {loop}");
                         var instruction = Items[Index];
                         if(instruction == null)
                         {
@@ -194,7 +195,7 @@ namespace IngameScript
                             else
                             {
                                 loop++;
-                                wait = loop < 512;
+                                wait = loop < 1024;
                             }
                             if (isSettings)
                             {

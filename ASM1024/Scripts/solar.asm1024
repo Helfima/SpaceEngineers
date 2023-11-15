@@ -1,0 +1,21 @@
+device panels "MG:solar panels"
+device rotor "M:solar rotor"
+
+move err_last 0
+
+move Kp 1
+move Kd 0.5
+
+start:
+    yield
+    get power panels CurrentOutputRatio 3
+    print power
+    sub err 1 power
+    mul cmd err Kp
+    sub der err_last err
+    mul cmd2 der Kd
+    add cmd cmd cmd2
+    print cmd
+    set rotor Velocity cmd
+    move err_last err
+j start

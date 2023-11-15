@@ -1,0 +1,85 @@
+device piston "M:Piston"
+device plate_top "M:Magnetic Plate Top"
+device plate_bottom "M:Magnetic Plate Bottom"
+
+j end
+
+piston_retract:
+    set piston Velocity -1
+    get value piston CurrentPosition
+    sub err 0 value
+    abs err err
+    sle state err 0.1
+    mul stage_next stage_next state
+j ra
+
+piston_extend:
+    set piston Velocity 1
+    get value piston CurrentPosition
+    sub err 10 value
+    abs err err
+    sle state err 0.1
+    mul stage_next stage_next state
+j ra
+
+plate_bottom_lock:
+    action plate_bottom Lock
+    get lock_mode plate_bottom LockMode 3
+    seq state lock_mode 2
+    mul stage_next stage_next state
+j ra
+
+plate_bottom_unlock:
+    action plate_bottom Unlock
+    get lock_mode plate_bottom LockMode 3
+    seq state lock_mode 1
+    mul stage_next stage_next state
+j ra
+
+plate_top_lock:
+    action plate_top Lock
+    get lock_mode plate_top LockMode 3
+    seq state lock_mode 2
+    mul stage_next stage_next state
+j ra
+
+plate_top_unlock:
+    action plate_top Unlock
+    get lock_mode plate_top LockMode 3
+    seq state lock_mode 1
+    mul stage_next stage_next state
+j ra
+
+forward:
+    move stage 0
+loop_forward:
+    yield
+    move stage_next 1
+    beqal stage 0 plate_bottom_lock
+    beqal stage 0 plate_top_unlock
+    beqal stage 1 piston_extend
+    beqal stage 2 plate_top_lock
+    beqal stage 3 plate_bottom_unlock
+    beqal stage 4 piston_retract
+    beqal stage 5 plate_bottom_lock
+    add stage stage stage_next
+	beq stage 6 end
+j loop_forward
+
+backward:
+    move stage 0
+loop_backward:
+    yield
+    move stage_next 1
+    beqal stage 0 plate_top_lock
+    beqal stage 0 plate_bottom_unlock
+    beqal stage 1 piston_extend
+    beqal stage 2 plate_bottom_lock
+    beqal stage 3 plate_top_unlock
+    beqal stage 4 piston_retract
+    beqal stage 5 plate_top_lock
+    add stage stage stage_next
+	beq stage 6 end
+j loop_backward
+
+end:

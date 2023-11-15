@@ -28,6 +28,8 @@ namespace IngameScript
             private MyDefinitionId PowerDefinitionId = new MyDefinitionId(typeof(MyObjectBuilder_GasProperties), "Electricity");
 
             private bool enable = false;
+            private float scale = 1f;
+
             public DisplayPower(DisplayLcd DisplayLcd)
             {
                 this.DisplayLcd = DisplayLcd;
@@ -36,12 +38,14 @@ namespace IngameScript
             {
                 panel = MyIni.Get("Power", "panel").ToInt32(0);
                 enable = MyIni.Get("Power", "on").ToBoolean(false);
+                scale = MyIni.Get("Power", "scale").ToSingle(1f);
             }
 
             public void Save(MyIni MyIni)
             {
                 MyIni.Set("Power", "panel", panel);
                 MyIni.Set("Power", "on", enable);
+                MyIni.Set("Power", "scale", scale);
             }
             public void Draw(Drawing drawing)
             {
@@ -61,16 +65,19 @@ namespace IngameScript
                 outputs.Add("all", new Power() { Type = "All" });
                 float current_input = 0f;
                 float max_input = 0f;
-                float width = 30f;
+                float height = 30f * scale;
+                Vector2 deltaPosition = new Vector2(0, 45) * scale;
+                Vector2 padding = new Vector2(0, 6) * scale;
+
                 StyleGauge style = new StyleGauge()
                 {
                     Orientation = SpriteOrientation.Horizontal,
                     Fullscreen = true,
-                    Width = width,
-                    Height = width,
+                    Width = height,
+                    Height = height,
                     Padding = new StylePadding(0),
                     Round = false,
-                    RotationOrScale = 0.5f,
+                    RotationOrScale = 0.5f * scale,
                     Thresholds = this.DisplayLcd.program.MyProperty.PowerThresholds
                 };
 
@@ -78,9 +85,9 @@ namespace IngameScript
                 {
                     Type = SpriteType.TEXT,
                     Color = Color.DimGray,
-                    Position = surface.Position + new Vector2(0, 0),
-                    RotationOrScale = .6f,
-                    FontId = surface.Font,
+                    Position = surface.Position,
+                    RotationOrScale = 0.75f * scale,
+                    FontId = EnumFont.BuildInfo,
                     Alignment = TextAlignment.LEFT
 
                 };
@@ -117,12 +124,12 @@ namespace IngameScript
                 });
 
                 surface.DrawGauge(surface.Position, outputs["all"].Current, outputs["all"].Max, style);
+                surface.Position += new Vector2(0, height) +  padding;
 
                 foreach (KeyValuePair<string, Power> kvp in outputs)
                 {
                     string title = kvp.Key;
                     
-                    surface.Position += new Vector2(0, 40);
                     if (kvp.Key.Equals("all"))
                     {
                         text.Data = $"Global Generator\n Out: {Math.Round(kvp.Value.Current, 2)}MW / {Math.Round(kvp.Value.Max, 2)}MW";
@@ -135,11 +142,12 @@ namespace IngameScript
                     }
                     text.Position = surface.Position;
                     surface.AddSprite(text);
+                    surface.Position += deltaPosition;
                 }
 
-                surface.Position += new Vector2(0, 40);
+                surface.Position += padding;
                 surface.DrawGauge(surface.Position, batteries_store.Current, batteries_store.Max, style);
-                surface.Position += new Vector2(0, 40);
+                surface.Position += deltaPosition;
                 text.Data = $"Battery Store (n={batteries_store.Count})\n Store: {Math.Round(batteries_store.Current, 2)}MW / {Math.Round(batteries_store.Max, 2)}MW";
                 text.Position = surface.Position;
                 surface.AddSprite(text);
@@ -164,14 +172,14 @@ namespace IngameScript
                         }
                     }
                 });
-                surface.Position += new Vector2(0, 40);
+                surface.Position += deltaPosition;
                 surface.DrawGauge(surface.Position, current_input, max_input, style);
-                surface.Position += new Vector2(0, 40);
+                surface.Position += deltaPosition;
                 text.Data = $"Power In: {Math.Round(current_input, 2)}MW / {Math.Round(max_input, 2)}MW";
                 text.Position = surface.Position;
                 surface.AddSprite(text);
 
-                surface.Position += new Vector2(0, 60);
+                surface.Position += deltaPosition;
             }
         }
 

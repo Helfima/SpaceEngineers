@@ -106,10 +106,10 @@ namespace IngameScript
                     Type = SpriteType.TEXT,
                     Position = surface.Position + new Vector2(0, 0),
                     RotationOrScale = (float)scale,
-                    FontId = surface.Font,
+                    FontId = EnumFont.Monospace,
                     Alignment = TextAlignment.LEFT,
                 };
-                float offset_y = 40f * (float)scale;
+                float offset_y = 35f * (float)scale;
 
                 if (oneLine == true)
                 {

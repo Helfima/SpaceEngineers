@@ -32,7 +32,7 @@ namespace IngameScript
 
         private bool ForceUpdate = false;
         private bool search = true;
-        private string version = "1.0";
+        private string version = "1.1";
         private Dictionary<long, DisplayLcd> displayLcds = new Dictionary<long, DisplayLcd>();
 
         public Program()
@@ -113,7 +113,7 @@ namespace IngameScript
                         lcd.ScriptBackgroundColor = Color.Black;
                         Drawing drawing = new Drawing(lcd);
                         var surfaceDrawing = drawing.GetSurfaceDrawing();
-                        surfaceDrawing.Test();
+                        surfaceDrawing.Test(this);
                         surfaceDrawing.Dispose();
                         break;
                     case "getname":

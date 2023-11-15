@@ -42,7 +42,13 @@ namespace IngameScript
             {
                 resultList.Add(new ReflectionProperty<IMySensorBlock>("IsActive", "Boolean", x => (bool)x.IsActive));
             }
-            if(block is IMyBatteryBlock)
+            if (block is IMyPowerProducer)
+            {
+                resultList.Add(new ReflectionProperty<IMyPowerProducer>("CurrentOutput", "Single", x => (double)x.CurrentOutput));
+                resultList.Add(new ReflectionProperty<IMyPowerProducer>("MaxOutput", "Single", x => (double)x.MaxOutput));
+                resultList.Add(new ReflectionProperty<IMyPowerProducer>("CurrentOutputRatio", "Single", x => (double)x.CurrentOutputRatio));
+            }
+            if (block is IMyBatteryBlock)
             {
                 resultList.Add(new ReflectionProperty<IMyBatteryBlock>("HasCapacityRemaining", "Boolean", x => (bool)x.HasCapacityRemaining));
                 resultList.Add(new ReflectionProperty<IMyBatteryBlock>("CurrentStoredPower", "Single", x => (double)x.CurrentStoredPower));

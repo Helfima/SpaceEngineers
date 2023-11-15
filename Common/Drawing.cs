@@ -149,6 +149,8 @@ namespace IngameScript
                 this.position = this.Viewport.Position;
                 // Retrieve the Large Display, which is the first surface
                 this.frame = Surface.DrawFrame();
+                // add clip token
+                this.frame.Clip(0, 0, (int)this.Viewport.Width, (int)this.Viewport.Height);
             }
             /// <summary>
             /// Dipose if initialized
@@ -204,11 +206,11 @@ namespace IngameScript
 
                 float width = (style_icon.Width - 3 * style_icon.Margin.X) / factor;
                 float height = (style_icon.Height - 3 * style_icon.Margin.Y);
-                string font_title = "BuildInfo";
+                string font_title = EnumFont.BuildInfo;
                 float font_size_title = Math.Max(0.3f, (float)Math.Round(height / 4f / 32f, 1));
                 float deltaTitle = font_size_title * 20f;
 
-                string font_quantity = "BuildInfo";
+                string font_quantity = EnumFont.BuildInfo;
                 float font_size_quantity = Math.Max(0.3f, (float)Math.Round(height / 2.25f / 32f, 1));
                 float deltaQuantity = font_size_quantity * 32f;
 
@@ -366,15 +368,16 @@ namespace IngameScript
                     return position + new Vector2(width + 2 * style.Margin.X, 0);
                 }
             }
-            public void Test()
+            public void Test(MyGridProgram program)
             {
+                this.Initialize();
                 MySprite icon;
                 //Sandbox.ModAPI.Ingame.IMyTextSurface#GetSprites
                 //Gets a list of available sprites
                 var names = new List<string>();
                 this.Surface.GetSprites(names);
                 int count = -1;
-                float width = 40;
+                float width = 35;
                 bool auto = false;
                 if (auto)
                 {
@@ -384,11 +387,13 @@ namespace IngameScript
                 float height = width + 10f;
                 int limit = (int)Math.Floor(Viewport.Height/height);
                 Vector2 position = new Vector2(0, 0);
-
+                program.Echo($"Count names: {names.Count}");
+                program.Echo($"limit: {limit}");
+                var customData = new StringBuilder();
                 foreach (string name in names)
                 {
-                    //logger.Debug(String.Format("Sprite {0}", name));
                     count++;
+                    customData.AppendLine($"{count}:{name}");
                     Vector2 position2 = position + new Vector2(width * (count / limit), height * (count - (count / limit) * limit));
                     icon = new MySprite()
                     {
@@ -405,13 +410,14 @@ namespace IngameScript
                         Type = SpriteType.TEXT,
                         Data = count.ToString(),
                         Size = new Vector2(width, width),
-                        RotationOrScale = 0.3f,
+                        RotationOrScale = 0.4f,
                         Color = Color.Gray,
                         Position = position2 + new Vector2(0, 0),
-                        FontId = Font
+                        FontId = EnumFont.BuildInfo
                     };
                     this.frame.Add(icon);
                 }
+                this.parent.TerminalBlock.CustomData = customData.ToString();
             }
         }
 
