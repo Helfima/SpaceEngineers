@@ -4,7 +4,11 @@ Assembler language for Space Engineer.
 
 # Syntax
 
-In the documentation d? is use for a list of "ITerminalBlock" and v? for a variable name.
+In the documentation:
+
+* d? device name and is a list of "ITerminalBlock"
+* v? variable name.
+* num number
 
 ## Device IO
 
@@ -31,19 +35,19 @@ In the documentation d? is use for a list of "ITerminalBlock" and v? for a varia
   </tr>
   <tr>
     <td>action d? ActionName</td>
-    <td>Execute action on device with name "ActionName"</td>
+    <td>Execute an "ActionName" action on device</td>
   </tr>
   <tr>
-    <td>color d? r(v?|num) g(v?|num) b(v?|num) a(v?|num)</td>
-    <td>Set rgba color, values are integer [0-255]</td>
+    <td>color d? Property r(v?|num) g(v?|num) b(v?|num) a(v?|num)</td>
+    <td>Set rgba color on property, values are integer [0-255]</td>
   </tr>
   <tr>
-    <td>colorHSV d? h(v?|num) s(v?|num) v(v?|num)</td>
-    <td>Set hsv color, h value are degre [0-360], s and v [0-1]</td>
+    <td>colorHSV d? Property h(v?|num) s(v?|num) v(v?|num)</td>
+    <td>Set hsv color on property, h value are degre [0-360], s and v [0-1]</td>
   </tr>
   <tr>
-    <td>colorHEX d? String</td>
-    <td>Set html color</td>
+    <td>colorHEX d? Property string</td>
+    <td>Set html color on property</td>
   </tr>
 </table>
 

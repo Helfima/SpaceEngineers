@@ -6,7 +6,8 @@ j end
 
 piston_retract:
     set piston Velocity -1
-    get value piston CurrentPosition
+    get value piston CurrentPosition 3
+    print value
     sub err 0 value
     abs err err
     sle state err 0.1
@@ -15,7 +16,8 @@ j ra
 
 piston_extend:
     set piston Velocity 1
-    get value piston CurrentPosition
+    get value piston CurrentPosition 3
+    print value
     sub err 10 value
     abs err err
     sle state err 0.1
@@ -63,7 +65,7 @@ loop_forward:
     beqal stage 4 piston_retract
     beqal stage 5 plate_bottom_lock
     add stage stage stage_next
-	beq stage 6 end
+    beq stage 6 end
 j loop_forward
 
 backward:
