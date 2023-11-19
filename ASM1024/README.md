@@ -8,7 +8,10 @@ In the documentation:
 
 * d? device name and is a list of "ITerminalBlock"
 * v? variable name.
+* ra registry address, reserved word
 * num number
+
+WARNING: it is strongly recommended to put the 'yield' instruction (see Misc) at least once in the executed loop.
 
 ## Device IO
 
@@ -77,6 +80,95 @@ Calcul agregation:
 In Control interface you can see [RGBA color](Images/color_rgb.png)
 
 In GPS interface you can see [HSV or HEX color](Images/color_hsv.png)
+
+## Abbreviations
+
+Some elements of instruction abbreviation:
+<table>
+  <tr>
+    <th>Abbreviation</th>
+    <th>Word</th>
+    <th>Description</th>
+  </tr>
+  <tr>
+    <td>j</td>
+    <td>jump</td>
+    <td>Jump to a line</td>
+  </tr>
+  <tr>
+    <td>b</td>
+    <td>branch</td>
+    <td>Conditional jump to a line</td>
+  </tr>
+  <tr>
+    <td>s</td>
+    <td>Select</td>
+    <td>Toggle 0 or 1 depending on condition</td>
+  </tr>
+</table>
+
+Other instruction abbreviation:
+<table>
+  <tr>
+    <th>Abbreviation</th>
+    <th>Word</th>
+    <th>Description</th>
+  </tr>
+  <tr>
+    <td>r</td>
+    <td>relatif</td>
+    <td>For a relative jump, number of lines before or after</td>
+  </tr>
+  <tr>
+    <td>z</td>
+    <td>Zero</td>
+    <td>Comparison with zero</td>
+  </tr>
+  <tr>
+    <td>al</td>
+    <td>Adress Line</td>
+    <td>Jump affecting 'ra' variable of the current line + 1</td>
+  </tr>
+</table>
+
+Condition abbreviation:
+<table>
+  <tr>
+    <th>Abbreviation</th>
+    <th>Word</th>
+    <th>Symbol</th>
+  </tr>
+  <tr>
+    <td>eq</td>
+    <td>Equals</td>
+    <td>==</td>
+  </tr>
+  <tr>
+    <td>ne</td>
+    <td>No Equal</td>
+    <td>!=</td>
+  </tr>
+  <tr>
+    <td>lt</td>
+    <td>Lower Than</td>
+    <td><</td>
+  </tr>
+  <tr>
+    <td>le</td>
+    <td>Lower Than or Equal</td>
+    <td><=</td>
+  </tr>
+  <tr>
+    <td>gt</td>
+    <td>Greater Than</td>
+    <td>></td>
+  </tr>
+  <tr>
+    <td>ge</td>
+    <td>Greater Than or Equal</td>
+    <td>>=</td>
+  </tr>
+</table>
 
 ## Jump
 

@@ -150,7 +150,7 @@ namespace IngameScript
                 // Retrieve the Large Display, which is the first surface
                 this.frame = Surface.DrawFrame();
                 // add clip token
-                this.frame.Clip(0, 0, (int)this.Viewport.Width, (int)this.Viewport.Height);
+                this.frame.Clip((int)this.Viewport.X, (int)this.Viewport.Y, (int)this.Viewport.Width, (int)this.Viewport.Height);
             }
             /// <summary>
             /// Dipose if initialized
@@ -216,6 +216,8 @@ namespace IngameScript
 
                 float icon_size = style_icon.Height - style_icon.Margin.Y - deltaTitle;
 
+                float globalSoftening = 0.7f;
+
                 AddForm(position2, SpriteForm.SquareSimple, style_icon.Width, style_icon.Height, new Color(5, 5, 5, 125));
                 // Add Icon 
                 AddSprite(new MySprite()
@@ -223,7 +225,7 @@ namespace IngameScript
                     Type = SpriteType.TEXTURE,
                     Data = style_icon.path,
                     Size = new Vector2(icon_size, icon_size),
-                    Color = style_icon.Color,
+                    Color = style_icon.Color * globalSoftening,
                     Position = position2 + new Vector2(0, deltaTitle + icon_size / 2)
                 });
 
@@ -235,7 +237,8 @@ namespace IngameScript
                     Width = width * (factor - 1f),
                     Height = height / 3,
                     Padding = new StylePadding(0),
-                    Thresholds = style_icon.Thresholds
+                    Thresholds = style_icon.Thresholds,
+                    ColorSoftening = style_icon.ColorSoftening
                 };
                 DrawGauge(position2 + new Vector2(width + style_icon.Margin.X, deltaTitle + deltaQuantity + style_icon.Margin.Y), (float)amount, limit, style);
 
@@ -244,7 +247,6 @@ namespace IngameScript
                 {
                     Type = SpriteType.TEXT,
                     Data = name,
-                    //Size = new Vector2(width, width),
                     Color = Color.DimGray,
                     Position = position2,
                     RotationOrScale = font_size_title,
@@ -258,8 +260,7 @@ namespace IngameScript
                 {
                     Type = SpriteType.TEXT,
                     Data = Util.GetKiloFormat(amount),
-                    //Size = new Vector2(width, width),
-                    Color = Color.LightGray,
+                    Color = Color.LightGray * globalSoftening,
                     Position = position2 + new Vector2(width + style_icon.Margin.X, deltaTitle + style_icon.Margin.Y),
                     RotationOrScale = font_size_quantity,
                     FontId = font_quantity
@@ -267,7 +268,8 @@ namespace IngameScript
                 };
                 AddSprite(icon);
 
-                float symbolSize = 20f;
+                float symbolSize = 20f * font_size_quantity;
+                float offset = 25f * font_size_quantity;
                 if (variance == 1)
                 {
                     AddSprite(new MySprite()
@@ -276,7 +278,7 @@ namespace IngameScript
                         Data = SpriteForm.Triangle.ToString(),
                         Size = new Vector2(symbolSize, symbolSize),
                         Color = new Color(0,100,0,255),
-                        Position = position2 + new Vector2(factor * width - 25, symbolSize - style_icon.Margin.Y),
+                        Position = position2 + new Vector2(factor * width - offset, symbolSize - style_icon.Margin.Y),
                         RotationOrScale = 0
                     });
                 }
@@ -288,7 +290,7 @@ namespace IngameScript
                         Data = SpriteForm.Triangle.ToString(),
                         Size = new Vector2(symbolSize, symbolSize),
                         Color = new Color(100, 0, 0, 255),
-                        Position = position2 + new Vector2(factor * width - 25, symbolSize + style_icon.Margin.Y),
+                        Position = position2 + new Vector2(factor * width - offset, symbolSize + style_icon.Margin.Y),
                         RotationOrScale = (float)Math.PI
                     });
                 }
@@ -311,12 +313,13 @@ namespace IngameScript
                 // Gauge
                 AddForm(position2, SpriteForm.SquareSimple, width, height, style.Color);
                 // Gauge Interrior
-                AddForm(position2 + new Vector2(style.Margin.X, style.Margin.Y), SpriteForm.SquareSimple, width - 2 * style.Margin.X, height - 2 * style.Margin.Y, new Color(20, 20, 20, 255));
+                var color_interior = new Color(20, 20, 20, 255);
+                AddForm(position2 + new Vector2(style.Margin.X, style.Margin.Y), SpriteForm.SquareSimple, width - 2 * style.Margin.X, height - 2 * style.Margin.Y, color_interior);
 
                 // Gauge quantity
                 float percent = Math.Min(1f, amount / limit);
                 var threshold = style.Thresholds.GetGaugeThreshold(percent);
-                Color color = threshold.Color;
+                Color color = threshold.Color * style.ColorSoftening;
 
                 if (style.Orientation.Equals(SpriteOrientation.Horizontal))
                 {
@@ -479,6 +482,7 @@ namespace IngameScript
             public float Height { get; set; } = 50f;
             public float RotationOrScale { get; set; } = 1f;
             public Color Color { get; set; } = new Color(100, 100, 100, 128);
+            public float ColorSoftening { get; set; } = 1f;
             public virtual void Scale(float scale)
             {
                 this.Width *= scale;

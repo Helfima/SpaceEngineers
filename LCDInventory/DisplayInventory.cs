@@ -167,7 +167,8 @@ namespace IngameScript
                     Fullscreen = gaugeFullscreen,
                     Width = gaugeWidth,
                     Height = gaugeHeight,
-                    Thresholds = this.DisplayLcd.program.MyProperty.ChestThresholds
+                    Thresholds = this.DisplayLcd.program.MyProperty.ChestThresholds,
+                    ColorSoftening = .6f
                 };
                 style.Scale(scale);
                 drawing.Position = drawing.DrawGauge(drawing.Position, volumes, maxVolumes, style);
@@ -211,7 +212,8 @@ namespace IngameScript
                             Width = width,
                             Height = height,
                             Color = color,
-                            Thresholds = this.DisplayLcd.program.MyProperty.ItemThresholds
+                            Thresholds = this.DisplayLcd.program.MyProperty.ItemThresholds,
+                            ColorSoftening = .6f
                         };
                         style.Scale(scale);
                         int variance = 2;

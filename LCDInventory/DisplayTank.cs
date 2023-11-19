@@ -99,8 +99,8 @@ namespace IngameScript
 
                         tanks.ForEach(delegate (IMyGasTank block)
                         {
-                            volumes += (float)block.FilledRatio * block.Capacity;
-                            capacity += block.Capacity;
+                            volumes += (float)block.FilledRatio * block.Capacity / 1000;
+                            capacity += block.Capacity / 1000;
                         });
 
                         surface.DrawGauge(surface.Position, volumes, capacity, style);
@@ -108,10 +108,10 @@ namespace IngameScript
                         switch (type)
                         {
                             case "Hydrogen":
-                                text.Data = $"H2: {Math.Round(volumes, 2)}L / {Math.Round(capacity, 2)}L";
+                                text.Data = $"H2: {Math.Round(volumes, 2)}M³/{Math.Round(capacity, 2)}M³";
                                 break;
                             case "Oxygen":
-                                text.Data = $"O2: {Math.Round(volumes, 2)}L / {Math.Round(capacity, 2)}L";
+                                text.Data = $"O2: {Math.Round(volumes, 2)}M³/{Math.Round(capacity, 2)}M³";
                                 break;
                         }
                         text.Position = surface.Position;
