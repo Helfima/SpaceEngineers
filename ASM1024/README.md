@@ -2,6 +2,10 @@
 
 Assembler language for Space Engineer.
 
+## VS Code Extension
+
+You can install ASM1024 Extension, in VS Code, in the extensions use menu `...` (Views and other actions) and Install from VSIX: [asm1024-x.vsix](vsc-extension/asm1024-0.0.1.vsix)
+
 # Syntax
 
 In the documentation:

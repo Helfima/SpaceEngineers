@@ -167,8 +167,9 @@ namespace IngameScript
         }
         private void Display()
         {
-            drawingSurface.WriteText($"LCD list size:{blocks.List.Count}\n", false);
-            //drawingSurface.WriteText($"Cockpit list size:{cockpits.List.Count}\n", true);
+            drawingSurface.WriteText($"*** LCDInventory {version} ***\n", false);
+            drawingSurface.WriteText($"------------------------------\n", true);
+            drawingSurface.WriteText($"LCD list size:{blocks.List.Count}\n", true);
         }
 
         private void RunLcd()

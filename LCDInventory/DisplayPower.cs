@@ -103,22 +103,17 @@ namespace IngameScript
                     }
                     else
                     {
-                        MyResourceSourceComponent resourceSource;
-                        block.Components.TryGet<MyResourceSourceComponent>(out resourceSource);
-                        if (resourceSource != null)
+                        if (block is IMyPowerProducer)
                         {
-                            ListReader<MyDefinitionId> myDefinitionIds = resourceSource.ResourceTypes;
-                            if (myDefinitionIds.Contains(PowerDefinitionId))
-                            {
-                                Power global_output = outputs["all"];
-                                global_output.AddCurrent(resourceSource.CurrentOutputByType(PowerDefinitionId));
-                                global_output.AddMax(resourceSource.MaxOutputByType(PowerDefinitionId));
+                            IMyPowerProducer producer = (IMyPowerProducer)block;
+                            Power global_output = outputs["all"];
+                            global_output.AddCurrent(producer.CurrentOutput);
+                            global_output.AddMax(producer.MaxOutput);
 
-                                if (!outputs.ContainsKey(type)) outputs.Add(type, new Power() { Type = type });
-                                Power current_output = outputs[type];
-                                current_output.AddCurrent(resourceSource.CurrentOutputByType(PowerDefinitionId));
-                                current_output.AddMax(resourceSource.MaxOutputByType(PowerDefinitionId));
-                            }
+                            if (!outputs.ContainsKey(type)) outputs.Add(type, new Power() { Type = type });
+                            Power current_output = outputs[type];
+                            current_output.AddCurrent(producer.CurrentOutput);
+                            current_output.AddMax(producer.MaxOutput);
                         }
                     }
                 });
