@@ -140,7 +140,10 @@ namespace IngameScript
                 Echo($"{refinery.CustomName}:{items.Count}");
                 if (items.Count > 1)
                 {
-                    refinery_inventory.TransferItemTo(refinery_inventory, 0, items.Count - 1);
+                    for(int i = 0; i < items.Count - 1; i++)
+                    {
+                        refinery_inventory.TransferItemTo(refinery_inventory, i, i+1);
+                    }
                 }
                 refinery.UseConveyorSystem = true;
             }
