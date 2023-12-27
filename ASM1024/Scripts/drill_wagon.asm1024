@@ -1,0 +1,130 @@
+prog line 10
+device piston "M:Piston"
+device plate_front "M:Magnetic Plate Front"
+device plate_rear "M:Magnetic Plate Rear"
+device hinge_azimute "M:Hinge Azimute"
+device hinge_elevation "M:Hinge Elevation"
+device drill "M:Drill"
+
+define velocity_forward 0.1
+define velocity_backward -1
+
+define azimute_min -30
+define azimute_max 30
+move azimute_velocity 1
+
+define elevation_min -30
+define elevation_max 30
+
+set hinge_azimute UpperLimit azimute_max
+set hinge_azimute LowerLimit azimute_min
+
+set hinge_elevation UpperLimit elevation_max
+set hinge_elevation LowerLimit elevation_min
+
+j end
+
+piston_retract:
+    set piston Velocity velocity_backward
+    get value piston CurrentPosition 3
+    print value
+    sub err 0 value
+    abs err err
+    sle state err 0.1
+    mul stage_next stage_next state
+j ra
+
+piston_extend:
+    set piston Velocity velocity_forward
+    get value piston CurrentPosition 3
+    print value
+    sub err 10 value
+    abs err err
+    sle state err 0.1
+    mul stage_next stage_next state
+j ra
+
+plate_rear_lock:
+    action plate_rear Lock
+    get lock_mode plate_rear LockMode 3
+    seq state lock_mode 2
+    mul stage_next stage_next state
+j ra
+
+plate_rear_unlock:
+    action plate_rear Unlock
+    get lock_mode plate_rear LockMode 3
+    seq state lock_mode 1
+    mul stage_next stage_next state
+j ra
+
+plate_front_lock:
+    action plate_front Lock
+    get lock_mode plate_front LockMode 3
+    seq state lock_mode 2
+    mul stage_next stage_next state
+j ra
+
+plate_front_unlock:
+    action plate_front Unlock
+    get lock_mode plate_front LockMode 3
+    seq state lock_mode 1
+    mul stage_next stage_next state
+j ra
+
+move_drills:
+	set drill OnOff 1
+    # Azimute
+	set hinge_azimute Velocity azimute_velocity
+	sge direction hinge_azimute 0
+	select target_angle direction azimute_max azimute_min
+	get angle hinge_azimute Angle 3
+	sub err target_angle angle
+	abs err err
+	sle state err 0.1
+	breq state 0 1
+	mul azimute_velocity azimute_velocity -1
+j ra
+
+forward:
+    move stage 0
+loop_forward:
+    yield
+    move stage_next 1
+    beqal stage 0 plate_rear_lock
+    beqal stage 0 plate_front_unlock
+    beqal stage 1 piston_extend
+    beqal stage 2 plate_front_lock
+    beqal stage 3 plate_rear_unlock
+    beqal stage 4 piston_retract
+    beqal stage 5 plate_rear_lock
+    add stage stage stage_next
+    beq stage 6 end
+j loop_forward
+
+backward:
+    move stage 0
+loop_backward:
+    yield
+    move stage_next 1
+    beqal stage 0 plate_front_lock
+    beqal stage 0 plate_rear_unlock
+    beqal stage 1 piston_extend
+    beqal stage 2 plate_rear_lock
+    beqal stage 3 plate_front_unlock
+    beqal stage 4 piston_retract
+    beqal stage 5 plate_front_lock
+    add stage stage stage_next
+	beq stage 6 end
+j loop_backward
+
+test_drill:
+    yield
+    jal move_drills
+j test_drill
+
+stop_drill:
+    set drill OnOff 1
+j end
+
+end:

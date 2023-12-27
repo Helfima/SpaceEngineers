@@ -45,6 +45,7 @@
     <Compile Include="Classes\InterpretJump.cs" />
     <Compile Include="Classes\InterpretDevice.cs" />
     <Compile Include="Classes\InterpretBranch.cs" />
+    <Compile Include="Classes\InterpretProgram.cs" />
     <Compile Include="Classes\InterpretStack.cs" />
     <Compile Include="Classes\InterpretSelection.cs" />
     <Compile Include="Classes\InterpretLogic.cs" />
@@ -67,6 +68,12 @@
     <AdditionalFiles Include="Instructions.readme" />
     <AdditionalFiles Include="thumb.png" />
     <AdditionalFiles Include="MDK\whitelist.cache" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Steam\metadata.mod" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Steam\modinfo.sbmi" />
   </ItemGroup>
   <Import Project="..\Common\Common.projitems" Label="Shared" />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

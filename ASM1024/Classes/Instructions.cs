@@ -53,6 +53,7 @@ namespace IngameScript
 
                 SetVar("PY", Math.PI);
 
+                InterpretProgram.AppendWords(Words);
                 InterpretBranch.AppendWords(Words);
                 InterpretDevice.AppendWords(Words);
                 InterpretJump.AppendWords(Words);
@@ -142,10 +143,11 @@ namespace IngameScript
                 {
                     var loop = 0;
                     var wait = true;
-                    while (wait) {
+                    while (wait)
+                    {
                         //Log($"** loop = {loop}");
                         var instruction = Items[Index];
-                        if(instruction == null)
+                        if (instruction == null)
                         {
                             Index++;
                             if (Index >= Items.Count)
@@ -155,7 +157,7 @@ namespace IngameScript
                         }
                         else
                         {
-                            if(instruction.Type == InstructionType.Label)
+                            if (instruction.Type == InstructionType.Label)
                             {
                                 Log($"== {instruction.Command} at {Index + 1}");
                             }
@@ -165,6 +167,9 @@ namespace IngameScript
                             }
                             switch (instruction.Type)
                             {
+                                case InstructionType.Program:
+                                    InterpretProgram.Interpret(instruction);
+                                    break;
                                 case InstructionType.Branch:
                                     InterpretBranch.Interpret(instruction);
                                     break;
@@ -199,7 +204,7 @@ namespace IngameScript
                             }
                             if (isSettings)
                             {
-                                if(instruction.Type == InstructionType.Label)
+                                if (instruction.Type == InstructionType.Label)
                                 {
                                     wait = false;
                                 }
@@ -212,16 +217,18 @@ namespace IngameScript
                 {
                     Log($"Instruction error {Index + 1}: {ex.Message}");
                     State = StateBasic.Completing;
-                } catch (Exception ex)
+                }
+                catch (Exception ex)
                 {
                     Log($"Instruction error {Index + 1}: {ex.Message}");
                     Log(ex.StackTrace);
                     State = StateBasic.Completing;
                 }
-    }
-    public void Log(string message)
+            }
+            public int LogLine = 20;
+            public void Log(string message)
             {
-                if (logger.Count > 30) logger.RemoveAt(0);
+                if (logger.Count > LogLine) logger.RemoveAt(0);
                 logger.Add(message);
             }
 
@@ -267,7 +274,8 @@ namespace IngameScript
 
             private Instruction ParseLine(string line, int index)
             {
-                if (line.Trim() != null && !line.Trim().Equals(""))
+                if(line != null) line = line.Trim();
+                if (line != null && !line.Equals(""))
                 {
                     if (line.StartsWith("#"))
                     {
@@ -298,7 +306,7 @@ namespace IngameScript
                         var instanciated = InstanciateInstruction(line, name, index, values);
                         return instanciated;
                     }
-                    
+
                 }
                 return null;
             }
@@ -358,7 +366,8 @@ namespace IngameScript
             Logic,
             Stack,
             Misc,
-            Import
+            Import,
+            Program
         }
     }
 }
