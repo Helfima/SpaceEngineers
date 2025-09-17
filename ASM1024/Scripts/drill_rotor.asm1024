@@ -1,0 +1,231 @@
+device piston_down "M:Piston Down"
+device piston_up "M:Piston Up"
+device piston_arm "M:Piston Arm"
+device rotor "M:Base Rotor"
+device drill "M:Base Drill"
+
+define rotor_min -90
+define rotor_max 90
+move rotor_velocity 1
+move rotor_target 90
+
+set rotor UpperLimit rotor_max
+set rotor LowerLimit rotor_min
+
+move piston_arm_velocity 1
+move piston_arm_target 10
+set piston_arm UpperLimit 10
+set piston_arm LowerLimit 0
+
+move piston_down_velocity -1
+move piston_down_target 0
+set piston_down UpperLimit 10
+set piston_down LowerLimit 0
+
+move piston_up_velocity 1
+move piston_up_target 10
+set piston_up UpperLimit 10
+set piston_up LowerLimit 0
+
+move piston_target 7.5
+
+j end
+
+piston_down:
+    set piston_down Velocity piston_down_velocity
+    get value piston_down CurrentPosition 3
+    print value
+    sub err piston_down_target value
+    abs err err
+    sle state err 0.1
+    sgt is_on err 0.1
+    set piston_down OnOff is_on
+    mul stage_next stage_next state
+j ra
+
+piston_up:
+    set piston_up Velocity piston_up_velocity
+    get value piston_up CurrentPosition 3
+    print value
+    sub err piston_up_target value
+    abs err err
+    sle state err 0.1
+    sgt is_on err 0.1
+    set piston_up OnOff is_on
+    mul stage_next stage_next state
+j ra
+
+piston_arm:
+    set piston_arm Velocity piston_arm_velocity
+    get value piston_arm CurrentPosition 3
+    print value
+    sub err piston_arm_target value
+    abs err err
+    sle state err 0.1
+    sgt is_on err 0.1
+    set piston_arm OnOff is_on
+    mul stage_next stage_next state
+j ra
+
+rotor:
+    set rotor Velocity rotor_velocity
+    get value rotor Angle 3
+    print value
+    sub err rotor_target value
+    abs err err
+    sle state err 1
+    sgt is_on err 1
+    set rotor OnOff is_on
+    set rotor RotorLock state
+    mul stage_next stage_next state
+j ra
+
+piston_fast_up:
+    move piston_down_velocity -1
+    move piston_down_target 0
+    move piston_up_velocity 1
+    move piston_up_target 10
+j ra
+
+piston_fast_down:
+    move piston_down_velocity 1
+    move piston_down_target 10
+    move piston_up_velocity -1
+    move piston_up_target 0
+j ra
+
+piston_mining:
+    move piston_down_velocity 1
+    move piston_down_target piston_target
+    move piston_up_velocity -1
+    sub value 10 piston_target
+    move piston_up_target value
+j ra
+
+rotor_fast_middle:
+    move rotor_velocity -1
+    move rotor_target 0
+j ra
+
+rotor_fast_max:
+    move rotor_velocity 1
+    move rotor_target rotor_max
+j ra
+
+rotor_fast_min:
+    move rotor_velocity -1
+    move rotor_target rotor_min
+j ra
+
+rotor_mining:
+    get value rotor Angle 3
+    brge value 0 4
+    move rotor_velocity 0.2
+    move rotor_target rotor_max
+j ra
+    move rotor_velocity -0.2
+    move rotor_target rotor_min
+j ra
+
+check_deep:
+    inventory drill_content drill 0 Amount 3
+    sgt state1 drill_content 1000
+    get value piston_down CurrentPosition 3
+    sub err 10 value
+    abs err err
+    sle state2 err 0.1
+    or state state1 state2
+    mul stage_next 1 state
+j ra
+
+check_piston_target:
+    get value piston_down CurrentPosition 3
+    min piston_target piston_target value
+j ra
+
+drill_info:
+    inventory drill_content drill 0 Amount 3
+    print drill_content
+j ra
+
+stop_all:
+    set piston_down OnOff 0
+    set piston_up OnOff 0
+    set rotor OnOff 0
+    set rotor RotorLock 1
+j ra
+
+print_infos:
+    print stage
+    print piston_target
+j ra
+
+initialize:
+    move stage 0
+loop_initialize:
+    yield
+    move stage_next 1
+    beqal stage 0 piston_down
+    beqal stage 0 piston_up
+    beqal stage 1 piston_arm
+    # step 1
+    beqal stage 2 rotor
+    beqal stage 3 piston_fast_down
+    beqal stage 3 piston_down
+    beqal stage 3 piston_up
+    beqal stage 3 check_deep
+    beqal stage 4 check_piston_target
+    beqal stage 5 piston_fast_up
+    beqal stage 5 piston_down
+    beqal stage 5 piston_up
+    # step 2
+    beqal stage 6 rotor_fast_middle
+    beqal stage 7 rotor
+    beqal stage 8 piston_fast_down
+    beqal stage 8 piston_down
+    beqal stage 8 piston_up
+    beqal stage 8 check_deep
+    beqal stage 9 check_piston_target
+    beqal stage 10 piston_fast_up
+    beqal stage 10 piston_down
+    beqal stage 10 piston_up
+    # step 3
+    beqal stage 11 rotor_fast_min
+    beqal stage 12 rotor
+    beqal stage 13 piston_fast_down
+    beqal stage 13 piston_down
+    beqal stage 13 piston_up
+    beqal stage 13 check_deep
+    beqal stage 14 check_piston_target
+    beqal stage 15 piston_fast_up
+    beqal stage 15 piston_down
+    beqal stage 15 piston_up
+
+    beqal stage 16 stop_all
+    add stage stage stage_next
+    jal print_infos
+    beq stage 17 end
+j loop_initialize
+
+mining:
+    move stage 0
+loop_retract:
+    yield
+    move stage_next 1
+    beqal stage 0 piston_down
+    beqal stage 0 piston_up
+    beqal stage 1 rotor
+    beqal stage 2 piston_mining
+    beqal stage 2 piston_down
+    beqal stage 2 piston_up
+    beqal stage 3 rotor_mining
+    beqal stage 4 rotor
+    
+    add stage stage stage_next
+    beq stage 5 end
+j loop_retract
+
+test:
+jal drill_info
+
+end:

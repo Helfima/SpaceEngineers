@@ -132,6 +132,11 @@ namespace IngameScript
                         string name = commandLine.Argument(1);
                         DiplayGetType(name);
                         break;
+                    case "getiteminfos":
+                        int.TryParse(commandLine.Argument(1), out index);
+                        string blockname = commandLine.Argument(1);
+                        DiplayGetType(blockname);
+                        break;
                     default:
                         search = true;
                         Search();
@@ -163,6 +168,44 @@ namespace IngameScript
                 Echo($"Type Name={block.GetType().Name}");
                 Echo($"SubtypeName={block.BlockDefinition.SubtypeName}");
                 Echo($"SubtypeId={block.BlockDefinition.SubtypeId}");
+            }
+        }
+        private void DiplayGetInfoItem(string name)
+        {
+            Dictionary<string, string> infos = new Dictionary<string, string>();
+            IMyTerminalBlock block = (IMyTerminalBlock)GridTerminalSystem.GetBlockWithName(name);
+            if(block is IMyAssembler)
+            {
+                IMyAssembler assembler = (IMyAssembler)block;
+                List<MyProductionItem> productionItems = new List<MyProductionItem>();
+                assembler.GetQueue(productionItems);
+                if (productionItems.Count > 0)
+                {
+                    foreach (MyProductionItem productionItem in productionItems)
+                    {
+                        infos.Add("ItemId", productionItem.ItemId.ToString());
+                        infos.Add("BlueprintId", productionItem.BlueprintId.ToString());
+                        break;
+                    }
+                }
+            }
+            IMyTextPanel lcdResult2 = GridTerminalSystem.GetBlockWithName("Result Type") as IMyTextPanel;
+            if (lcdResult2 != null)
+            {
+                lcdResult2.ContentType = ContentType.TEXT_AND_IMAGE;
+                var append = false;
+                foreach (var info in infos)
+                {
+                    lcdResult2.WriteText($"{info.Key} = {info.Value}\n", append);
+                    append = true;
+                }
+            }
+            else
+            {
+                foreach (var info in infos)
+                {
+                    Echo($"{info.Key} = {info.Value}");
+                }
             }
         }
         private void Display()
