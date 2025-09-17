@@ -18,8 +18,7 @@ using VRage.Game.ModAPI.Ingame;
 using VRage.Game.ModAPI.Ingame.Utilities;
 using VRage.Game.ObjectBuilders.Definitions;
 using VRageMath;
-using static IngameScript.Program;
-using static VRage.Game.MyObjectBuilder_CurveDefinition;
+
 
 namespace IngameScript
 {

@@ -16,8 +16,7 @@ using VRage.Game.ObjectBuilders.Definitions;
 using VRage.Game;
 using VRage;
 using VRageMath;
-using static System.Net.Mime.MediaTypeNames;
-using static VRage.Render11.Shader.CacheGenerator;
+
 
 namespace IngameScript
 {

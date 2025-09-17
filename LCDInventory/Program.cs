@@ -135,7 +135,7 @@ namespace IngameScript
                     case "getiteminfos":
                         int.TryParse(commandLine.Argument(1), out index);
                         string blockname = commandLine.Argument(1);
-                        DiplayGetType(blockname);
+                        DiplayGetInfoItem(blockname);
                         break;
                     default:
                         search = true;
@@ -183,13 +183,15 @@ namespace IngameScript
                 {
                     foreach (MyProductionItem productionItem in productionItems)
                     {
-                        infos.Add("ItemId", productionItem.ItemId.ToString());
-                        infos.Add("BlueprintId", productionItem.BlueprintId.ToString());
+                        string subtypeName = productionItem.BlueprintId.SubtypeName;
+                        string typeName = Util.GetName(productionItem);
+                        infos.Add("typeName", typeName);
+                        infos.Add("subtypeName", subtypeName);
                         break;
                     }
                 }
             }
-            IMyTextPanel lcdResult2 = GridTerminalSystem.GetBlockWithName("Result Type") as IMyTextPanel;
+            IMyTextPanel lcdResult2 = GridTerminalSystem.GetBlockWithName("Result Name") as IMyTextPanel;
             if (lcdResult2 != null)
             {
                 lcdResult2.ContentType = ContentType.TEXT_AND_IMAGE;
