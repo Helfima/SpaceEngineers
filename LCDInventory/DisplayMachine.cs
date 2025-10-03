@@ -174,7 +174,8 @@ namespace IngameScript
                                 Name = iName,
                                 Type = iType,
                                 Amount = amount,
-                                Variance = variance
+                                Variance = variance,
+                                Definition = productionItem.BlueprintId
                             });
                             loop++;
                         }
@@ -208,13 +209,14 @@ namespace IngameScript
                                 variance = 1;
                                 last_amount.Add(key, amount);
                             }
-
+                            
                             items.Add(new Item()
                             {
                                 Name = iName,
                                 Type = iType,
                                 Amount = amount,
-                                Variance = variance
+                                Variance = variance,
+                                Definition = inventoryItem.Type
                             });
                             loop++;
                         }
@@ -242,7 +244,6 @@ namespace IngameScript
 
                 foreach (Item item in items)
                 {
-                    
                     // icon
                     surface.AddSprite(new MySprite()
                     {

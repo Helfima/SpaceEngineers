@@ -32,6 +32,7 @@ namespace IngameScript
             private DisplayPower DisplayPower;
             private DisplayShip DisplayShip;
             private DisplayTank DisplayTank;
+            private DisplayFarm DisplayFarm;
             private int cleanup;
 
             public DisplayLcd(Program program, IMyTerminalBlock block)
@@ -45,6 +46,7 @@ namespace IngameScript
                 this.DisplayPower = new DisplayPower(this);
                 this.DisplayShip = new DisplayShip(this);
                 this.DisplayTank = new DisplayTank(this);
+                this.DisplayFarm = new DisplayFarm(this);
                 this.cleanup = 0;
             }
 
@@ -56,6 +58,7 @@ namespace IngameScript
                 DisplayPower.Load(MyIni);
                 DisplayShip.Load(MyIni);
                 DisplayTank.Load(MyIni);
+                DisplayFarm.Load(MyIni);
                 if (Block.CustomData.Trim().Equals("prepare") || program.ForceUpdate)
                 {
                     program.drawingSurface.WriteText($"Prepare:{Block.CustomName}\n", true);
@@ -65,6 +68,7 @@ namespace IngameScript
                     DisplayPower.Save(MyIni);
                     DisplayShip.Save(MyIni);
                     DisplayTank.Save(MyIni);
+                    DisplayFarm.Save(MyIni);
                     Block.CustomData = MyIni.ToString();
                 }
             }
@@ -83,6 +87,7 @@ namespace IngameScript
                         DisplayPower.Draw(drawing);
                         DisplayShip.Draw(drawing);
                         DisplayTank.Draw(drawing);
+                        DisplayFarm.Draw(drawing);
                     }
                     else
                     {

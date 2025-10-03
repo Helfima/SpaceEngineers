@@ -1,0 +1,291 @@
+device rotor_base "M:Harvest.2 Rotor Base"
+device rotor_all "MG:Harvest.2 Rotors"
+device hinge_all "MG:Harvest.2 Hinges"
+device rotor_1 "M:Harvest.2 Rotor 1"
+device hinge_1 "M:Harvest.2 Hinge 1"
+device rotor_2 "M:Harvest.2 Rotor 2"
+device hinge_2 "M:Harvest.2 Hinge 2"
+device rotor_3 "M:Harvest.2 Rotor 3"
+device hinge_3 "M:Harvest.2 Hinge 3"
+device rotor_4 "M:Harvest.2 Rotor 4"
+device hinge_4 "M:Harvest.2 Hinge 4"
+
+define kp 0.1
+
+define rotor_base_target 0
+define rotor_base_velocity 1
+
+define hinge_target_up -80
+define hinge_target_down 0
+define hinge_limit_up 0
+define hinge_limit_down -80
+
+define hinge_rotor_velocity 1
+
+set hinge_1 UpperLimit hinge_limit_up
+set hinge_1 LowerLimit hinge_limit_down
+set hinge_2 UpperLimit hinge_limit_up
+set hinge_2 LowerLimit hinge_limit_down
+set hinge_3 UpperLimit hinge_limit_up
+set hinge_3 LowerLimit hinge_limit_down
+set hinge_4 UpperLimit hinge_limit_up
+set hinge_4 LowerLimit hinge_limit_down
+
+j end
+
+move_rotor_base:
+    
+    get value rotor_base Angle 3 # 0:ave 1:sum 2:min 3:max
+    print rotor_base_target
+    print value
+    sub err rotor_base_target value
+    abs err err
+    sle state err 1
+    sgt is_on err 1
+
+    brle value 340 2 #limitation pour passage 360° à 0°
+    move err 1
+    mul current_velocity err kp
+    min current_velocity current_velocity 5
+    max current_velocity current_velocity 1
+    mul current_velocity is_on current_velocity
+    set rotor_base Velocity current_velocity
+
+    set rotor_base OnOff is_on
+    set rotor_base RotorLock state
+    mul stage_next stage_next state
+j ra
+
+move_hinges_initial:
+    get value hinge_all Angle 3 # 0:ave 1:sum 2:min 3:max
+    print value
+    sub err hinge_target_up value
+    abs err err
+    sle state err 1
+    sgt is_on err 1
+    mul is_on is_on hinge_velocity
+    mul is_on is_on -1
+    set hinge_all Velocity is_on
+    mul stage_next stage_next state
+j ra
+
+move_arm_up:
+    move arm_target hinge_target_up
+    move arm_velocity -1
+    j move_arm
+move_arm_down:
+    move arm_target hinge_target_down
+    move arm_velocity 1
+move_arm:
+    brne arm_index 0 3
+    get value hinge_1 Angle 3 # 0:ave 1:sum 2:min 3:max
+    j continue_move_arm1
+    brne arm_index 1 3
+    get value hinge_2 Angle 3 # 0:ave 1:sum 2:min 3:max
+    j continue_move_arm1
+    brne arm_index 2 3
+    get value hinge_3 Angle 3 # 0:ave 1:sum 2:min 3:max
+    j continue_move_arm1
+    get value hinge_4 Angle 3 # 0:ave 1:sum 2:min 3:max
+    continue_move_arm1:
+    sub err arm_target value
+    abs err err
+    sle state err 1
+    sgt is_on err 1
+    mul current_velocity err kp
+    min current_velocity current_velocity 5
+    max current_velocity current_velocity 1
+    mul current_velocity current_velocity arm_velocity
+    mul current_velocity is_on current_velocity
+    print current_velocity
+    brne arm_index 0 3
+    set hinge_1 Velocity current_velocity
+    j continue_move_arm2
+    brne arm_index 1 3
+    set hinge_2 Velocity current_velocity
+    j continue_move_arm2
+    brne arm_index 2 3
+    set hinge_3 Velocity current_velocity
+    j continue_move_arm2
+    set hinge_4 Velocity current_velocity
+    continue_move_arm2:
+    mul stage_next stage_next state
+j ra
+
+move_arm_rotor_0:
+    move arm_velocity -1
+    move arm_rotor_target 0
+    j move_arm_rotor
+move_arm_rotor_45:
+    move arm_velocity 1
+    move arm_rotor_target 45
+    j move_arm_rotor
+move_arm_rotor_360:
+    move arm_velocity 1
+    move arm_rotor_target 360
+    j move_arm_rotor
+move_arm_rotor_plant:
+    move arm_velocity 1
+move_arm_rotor:
+    brne arm_index 0 3
+    get value rotor_1 Angle 3 # 0:ave 1:sum 2:min 3:max
+    j continue_arm_rotor1
+    brne arm_index 1 3
+    get value rotor_2 Angle 3 # 0:ave 1:sum 2:min 3:max
+    j continue_arm_rotor1
+    brne arm_index 2 3
+    get value rotor_3 Angle 3 # 0:ave 1:sum 2:min 3:max
+    j continue_arm_rotor1
+    get value rotor_4 Angle 3 # 0:ave 1:sum 2:min 3:max
+    continue_arm_rotor1:
+    sub err arm_rotor_target value
+    abs err err
+    sle state err 1
+    sgt is_on err 1
+
+    brle value 340 2 #limitation pour passage 360° à 0°
+    move err 1
+    mul current_velocity err kp
+    min current_velocity current_velocity 5
+    max current_velocity current_velocity 1
+    mul current_velocity current_velocity arm_velocity
+    mul current_velocity is_on current_velocity
+
+    print arm_rotor_target
+    print current_velocity
+
+    brne arm_index 0 5
+    set rotor_1 Velocity current_velocity
+    set rotor_1 OnOff is_on
+    set rotor_1 RotorLock state
+    j continue_arm_rotor2
+    brne arm_index 1 5
+    set rotor_2 Velocity current_velocity
+    set rotor_2 OnOff is_on
+    set rotor_2 RotorLock state
+    j continue_arm_rotor2
+    brne arm_index 2 5
+    set rotor_3 Velocity current_velocity
+    set rotor_3 OnOff is_on
+    set rotor_3 RotorLock state
+    j continue_arm_rotor2
+    set rotor_4 Velocity current_velocity
+    set rotor_4 OnOff is_on
+    set rotor_4 RotorLock state
+    continue_arm_rotor2:
+    mul stage_next stage_next state
+j ra
+
+select_arm_index:
+    get arm_index rotor_base Angle 3 # 0:ave 1:sum 2:min 3:max
+    div arm_index arm_index 90
+    round arm_index arm_index
+j ra
+
+plant:
+    move stage 0
+    jal select_arm_index
+    brne arm_index 0 3
+    get value rotor_1 Angle 3 # 0:ave 1:sum 2:min 3:max
+    j continue_plant
+    brne arm_index 1 3
+    get value rotor_2 Angle 3 # 0:ave 1:sum 2:min 3:max
+    j continue_plant
+    brne arm_index 2 3
+    get value rotor_3 Angle 3 # 0:ave 1:sum 2:min 3:max
+    j continue_plant
+    get value rotor_4 Angle 3 # 0:ave 1:sum 2:min 3:max
+    continue_plant:
+    div value value 90
+    round value value
+    mul value value 90
+    add arm_rotor_target value 90
+    brlt arm_rotor_target 360 2
+    move arm_rotor_target 0
+loop_plant:
+    print arm_rotor_target
+    yield
+    move stage_next 1
+    beqal stage 0 move_arm_rotor_plant
+    
+    add stage stage stage_next
+    beq stage 1 end
+j loop_plant
+
+harvest:
+    move stage 0
+loop_harvest:
+    yield
+    move stage_next 1
+    jal select_arm_index
+    beqal stage 0 move_arm_rotor_360
+    
+    add stage stage stage_next
+    beq stage 1 end
+j loop_harvest
+
+base_rotation:
+    get value rotor_base Angle 3 # 0:ave 1:sum 2:min 3:max
+    div value value 90
+    round value value
+    mul value value 90
+    add rotor_base_target value 90
+    brlt rotor_base_target 360 2
+    move rotor_base_target 0
+    j continue_base_rotation
+base_rotation_1:
+    move rotor_base_target 0
+    j continue_base_rotation
+base_rotation_2:
+    move rotor_base_target 90
+    j continue_base_rotation
+base_rotation_3:
+    move rotor_base_target 180
+    j continue_base_rotation
+base_rotation_4:
+    move rotor_base_target 270
+    continue_base_rotation:
+    move stage 0
+loop_base_rotation:
+    yield
+    move stage_next 1
+    jal select_arm_index
+    beqal stage 0 move_arm_rotor_45
+    beqal stage 1 move_arm_up
+    beqal stage 2 move_rotor_base
+    beqal stage 3 move_arm_down
+    beqal stage 4 move_arm_rotor_0
+    
+    add stage stage stage_next
+    beq stage 5 end
+j loop_base_rotation
+
+arm_up:
+    move stage 0
+loop_arm_up:
+    yield
+    move stage_next 1
+    jal select_arm_index
+    beqal stage 0 move_arm_rotor_45
+    beqal stage 1 move_arm_up
+    
+    add stage stage stage_next
+    beq stage 2 end
+j loop_arm_up
+
+arm_down:
+    move stage 0
+loop_arm_down:
+    yield
+    move stage_next 1
+    jal select_arm_index
+    beqal stage 0 move_arm_down
+    beqal stage 1 move_arm_rotor_0
+    
+    add stage stage stage_next
+    beq stage 2 end
+j loop_arm_down
+
+test:
+    jal move_hinge_down
+end:

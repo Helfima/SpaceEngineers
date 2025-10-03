@@ -20,8 +20,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Remove="Instructions.readme" />
-    <AdditionalFiles Include="Instructions.readme" />
-    <AdditionalFiles Include="thumb.png" />
   </ItemGroup>
   <Import Project="..\Common\Common.projitems" Label="Shared" />
 </Project>

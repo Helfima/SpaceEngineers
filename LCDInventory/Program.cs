@@ -183,10 +183,29 @@ namespace IngameScript
                 {
                     foreach (MyProductionItem productionItem in productionItems)
                     {
+                        var item = productionItem.ToString();
+                        var type = productionItem.GetType();
+                        var blueprintId = productionItem.BlueprintId.ToString();
+                        var typeId = productionItem.BlueprintId.TypeId.ToString();
                         string subtypeName = productionItem.BlueprintId.SubtypeName;
                         string typeName = Util.GetName(productionItem);
-                        infos.Add("typeName", typeName);
-                        infos.Add("subtypeName", subtypeName);
+                        MyDefinitionId itemDefinitionId;
+                        MyDefinitionId.TryParse(blueprintId, out itemDefinitionId);
+                        var itemType = MyItemType.Parse(blueprintId);
+                        var itemInfos = itemType.GetItemInfo();
+                        infos.Add("item", item);
+                        infos.Add("itemType.TypeId", itemType.TypeId);
+                        infos.Add("itemType.SubtypeId", itemType.SubtypeId);
+                        infos.Add("BlueprintId", blueprintId);
+                        infos.Add("BlueprintId.TypeId", typeId);
+                        infos.Add("BlueprintId.SubtypeName", subtypeName);
+                        infos.Add("Cleaned.SubtypeName", Util.CleanSubtypeName(subtypeName));
+                        infos.Add("itemDefinitionId.SubtypeName", itemDefinitionId.SubtypeName);
+                        infos.Add("itemInfos.IsAmmo", itemInfos.IsAmmo.ToString());
+                        infos.Add("itemInfos.IsComponent", itemInfos.IsComponent.ToString());
+                        infos.Add("itemInfos.IsIngot", itemInfos.IsIngot.ToString());
+                        infos.Add("itemInfos.IsOre", itemInfos.IsOre.ToString());
+                        infos.Add("itemInfos.IsTool", itemInfos.IsTool.ToString());
                         break;
                     }
                 }

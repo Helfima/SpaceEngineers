@@ -1,5 +1,4 @@
-﻿using Sandbox.Game.EntityComponents;
-using Sandbox.ModAPI.Ingame;
+﻿using Sandbox.ModAPI.Ingame;
 using Sandbox.ModAPI.Interfaces;
 using SpaceEngineers.Game.ModAPI.Ingame;
 using System.Collections.Generic;
@@ -16,6 +15,7 @@ using VRage.Game.ObjectBuilders.Definitions;
 using VRage.Game;
 using VRage;
 using VRageMath;
+using Sandbox.Game.Entities;
 
 namespace IngameScript
 {
@@ -567,7 +567,8 @@ namespace IngameScript
             public const string TYPE_INGOT = "MyObjectBuilder_Ingot";
             public const string TYPE_COMPONENT = "MyObjectBuilder_Component";
             public const string TYPE_AMMO = "MyObjectBuilder_AmmoMagazine";
-
+            
+            public MyDefinitionId Definition { get; set; }
             public string Name { get; set; }
             public string Type { get; set; }
             public Double Amount { get; set; }
