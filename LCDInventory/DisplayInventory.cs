@@ -45,6 +45,8 @@ namespace IngameScript
             private bool itemIngot = true;
             private bool itemComponent = true;
             private bool itemAmmo = true;
+            private bool itemTool = true;
+            private bool itemOther = true;
 
             private float topPadding = 10f;
             private float leftPadding = 10f;
@@ -75,11 +77,14 @@ namespace IngameScript
 
                 item = MyIni.Get("Inventory", "item_on").ToBoolean(true);
                 itemSize = MyIni.Get("Inventory", "item_size").ToSingle(80f);
+                
                 itemOre = MyIni.Get("Inventory", "item_ore").ToBoolean(true);
                 itemIngot = MyIni.Get("Inventory", "item_ingot").ToBoolean(true);
                 itemComponent = MyIni.Get("Inventory", "item_component").ToBoolean(true);
                 itemAmmo = MyIni.Get("Inventory", "item_ammo").ToBoolean(true);
-        }
+                itemTool = MyIni.Get("Inventory", "item_tool").ToBoolean(true);
+                itemOther = MyIni.Get("Inventory", "item_other").ToBoolean(true);
+            }
 
             public void Save(MyIni MyIni)
             {
@@ -96,10 +101,13 @@ namespace IngameScript
 
                 MyIni.Set("Inventory", "item_on", item);
                 MyIni.Set("Inventory", "item_size", itemSize);
+                
                 MyIni.Set("Inventory", "item_ore", itemOre);
                 MyIni.Set("Inventory", "item_ingot", itemIngot);
                 MyIni.Set("Inventory", "item_component", itemComponent);
                 MyIni.Set("Inventory", "item_ammo", itemAmmo);
+                MyIni.Set("Inventory", "item_tool", itemTool);
+                MyIni.Set("Inventory", "item_other", itemOther);
             }
 
             private void Search()
@@ -129,12 +137,6 @@ namespace IngameScript
                 else { surface.Position += new Vector2(0, topPadding); }
                 if (item)
                 {
-                    List<string> types = new List<string>();
-                    if (itemOre) types.Add(Item.TYPE_ORE);
-                    if (itemIngot) types.Add(Item.TYPE_INGOT);
-                    if (itemComponent) types.Add(Item.TYPE_COMPONENT);
-                    if (itemAmmo) types.Add(Item.TYPE_AMMO);
-
                     last_amount.Clear();
                     foreach (KeyValuePair<string, Item> entry in item_list)
                     {
@@ -142,7 +144,7 @@ namespace IngameScript
                     }
 
                     InventoryCount();
-                    DisplayByType(surface, types);
+                    DisplayByType(surface);
                 }
             }
 
@@ -185,7 +187,12 @@ namespace IngameScript
                 else { limit = (int)Math.Floor((drawing.Viewport.Height - topPadding * scale) / (itemSize + cellSpacing)); }
                 return Math.Max(limit, 1);
             }
-            private void DisplayByType(SurfaceDrawing drawing, List<string> types)
+            private bool isValidItem(Item item)
+            {
+                return item.IsAmmo == this.itemAmmo || item.IsComponent == this.itemComponent || item.IsIngot == this.itemIngot || 
+                    item.IsOre == this.itemOre || item.IsTool == this.itemTool || item.IsOther == this.itemOther;
+            }
+            private void DisplayByType(SurfaceDrawing drawing)
             {
                 int count = 0;
                 float height = itemSize;
@@ -196,40 +203,38 @@ namespace IngameScript
                 string colorDefault = DisplayLcd.program.MyProperty.Get("color", "default");
                 int limitDefault = DisplayLcd.program.MyProperty.GetInt("Limit", "default");
 
-                foreach (string type in types)
+                foreach (KeyValuePair<string, Item> entry in item_list.OrderByDescending(entry => entry.Value.Amount).Where(entry => isValidItem(entry.Value)))
                 {
-                    foreach (KeyValuePair<string, Item> entry in item_list.OrderByDescending(entry => entry.Value.Amount).Where(entry => entry.Value.Type == type))
+                    Item item = entry.Value;
+                    if (item.IsTool == this.itemTool) continue;
+                    Vector2 position2 = drawing.Position + new Vector2((cellSpacing + delta_width) * (count / limit), (cellSpacing + delta_height) * (count - (count / limit) * limit));
+                    // Icon
+                    Color color = DisplayLcd.program.MyProperty.GetColor("color", item.Name, colorDefault);
+                    int limitBar = DisplayLcd.program.MyProperty.GetInt("Limit", item.Name, limitDefault);
+                    //DisplayIcon(drawing, item, position2, width);
+                    StyleIcon style = new StyleIcon()
                     {
-                        Item item = entry.Value;
-                        Vector2 position2 = drawing.Position + new Vector2((cellSpacing + delta_width) * (count / limit), (cellSpacing + delta_height) * (count - (count / limit) * limit));
-                        // Icon
-                        Color color = DisplayLcd.program.MyProperty.GetColor("color", item.Name, colorDefault);
-                        int limitBar = DisplayLcd.program.MyProperty.GetInt("Limit", item.Name, limitDefault);
-                        //DisplayIcon(drawing, item, position2, width);
-                        StyleIcon style = new StyleIcon()
-                        {
-                            path = item.Icon,
-                            Width = width,
-                            Height = height,
-                            Color = color,
-                            Thresholds = this.DisplayLcd.program.MyProperty.ItemThresholds,
-                            ColorSoftening = .6f
-                        };
-                        style.Scale(scale);
-                        int variance = 2;
-                        //DisplayLcd.program.drawingSurface.WriteText($"variance:{entry.Key}?{last_amount.ContainsKey(entry.Key)}\n", true);
-                        if (last_amount.ContainsKey(entry.Key))
-                        {
-                            if (last_amount[entry.Key] < item.Amount) variance = 1;
-                            if (last_amount[entry.Key] > item.Amount) variance = 3;
-                        }
-                        else
-                        {
-                            variance = 1;
-                        }
-                        drawing.DrawGaugeIcon(position2, item.Name, item.Amount, limitBar, style, variance);
-                        count++;
+                        path = item.Icon,
+                        Width = width,
+                        Height = height,
+                        Color = color,
+                        Thresholds = this.DisplayLcd.program.MyProperty.ItemThresholds,
+                        ColorSoftening = .6f
+                    };
+                    style.Scale(scale);
+                    int variance = 2;
+                    //DisplayLcd.program.drawingSurface.WriteText($"variance:{entry.Key}?{last_amount.ContainsKey(entry.Key)}\n", true);
+                    if (last_amount.ContainsKey(entry.Key))
+                    {
+                        if (last_amount[entry.Key] < item.Amount) variance = 1;
+                        if (last_amount[entry.Key] > item.Amount) variance = 3;
                     }
+                    else
+                    {
+                        variance = 1;
+                    }
+                    drawing.DrawGaugeIcon(position2, item.Name, item.Amount, limitBar, style, variance);
+                    count++;
                 }
                 if(item_list.Count > limit) drawing.Position += new Vector2(0, (cellSpacing * scale + height) * limit);
                 drawing.Position += new Vector2(0, (cellSpacing * scale + height) * item_list.Count);
@@ -248,20 +253,12 @@ namespace IngameScript
                         block_inventory.GetItems(items);
                         foreach (MyInventoryItem block_item in items)
                         {
-                            var itemInfo = block_item.Type.GetItemInfo();
                             string name = Util.GetName(block_item);
                             string type = Util.GetType(block_item);
                             double amount = 0;
                             string key = String.Format("{0}_{1}", type, name);
-                            //string icon = block_item.Type.
-                            //DisplayLcd.program.drawingSurface.WriteText($"Type:{type} Name:{name}\n",true);
                             Double.TryParse(block_item.Amount.ToString(), out amount);
-                            Item item = new Item()
-                            {
-                                Type = type,
-                                Name = name,
-                                Amount = amount
-                            };
+                            Item item = Item.Parse(block_item);
 
                             if (item_list.ContainsKey(key))
                             {

@@ -16,6 +16,7 @@ using VRage.Game;
 using VRage;
 using VRageMath;
 using Sandbox.Game.Entities;
+using VRage.Network;
 
 namespace IngameScript
 {
@@ -32,7 +33,7 @@ namespace IngameScript
 
         private bool ForceUpdate = false;
         private bool search = true;
-        private string version = "1.1";
+        private string version = "1.2";
         private Dictionary<long, DisplayLcd> displayLcds = new Dictionary<long, DisplayLcd>();
 
         public Program()
@@ -186,28 +187,21 @@ namespace IngameScript
                         var item = productionItem.ToString();
                         var type = productionItem.GetType();
                         var blueprintId = productionItem.BlueprintId.ToString();
-                        var typeId = productionItem.BlueprintId.TypeId.ToString();
-                        string subtypeName = productionItem.BlueprintId.SubtypeName;
-                        string typeName = Util.GetName(productionItem);
-                        MyDefinitionId itemDefinitionId;
-                        MyDefinitionId.TryParse(blueprintId, out itemDefinitionId);
-                        var itemType = MyItemType.Parse(blueprintId);
-                        var itemInfos = itemType.GetItemInfo();
-                        infos.Add("item", item);
-                        infos.Add("itemType.TypeId", itemType.TypeId);
-                        infos.Add("itemType.SubtypeId", itemType.SubtypeId);
-                        infos.Add("BlueprintId", blueprintId);
-                        infos.Add("BlueprintId.TypeId", typeId);
-                        infos.Add("BlueprintId.SubtypeName", subtypeName);
-                        infos.Add("Cleaned.SubtypeName", Util.CleanSubtypeName(subtypeName));
-                        infos.Add("itemDefinitionId.SubtypeName", itemDefinitionId.SubtypeName);
-                        infos.Add("itemInfos.IsAmmo", itemInfos.IsAmmo.ToString());
-                        infos.Add("itemInfos.IsComponent", itemInfos.IsComponent.ToString());
-                        infos.Add("itemInfos.IsIngot", itemInfos.IsIngot.ToString());
-                        infos.Add("itemInfos.IsOre", itemInfos.IsOre.ToString());
-                        infos.Add("itemInfos.IsTool", itemInfos.IsTool.ToString());
+                        MyItemType itemType = MyItemType.Parse(blueprintId);
+                        infos = PrepareItemInfos(itemType);
                         break;
                     }
+                }
+            }
+            else
+            {
+                IMyInventory block_inventory = block.GetInventory(0);
+                List<MyInventoryItem> items = new List<MyInventoryItem>();
+                block_inventory.GetItems(items);
+                foreach (MyInventoryItem block_item in items)
+                {
+                    MyItemType itemType = block_item.Type;
+                    infos = PrepareItemInfos(itemType);
                 }
             }
             IMyTextPanel lcdResult2 = GridTerminalSystem.GetBlockWithName("Result Name") as IMyTextPanel;
@@ -228,6 +222,21 @@ namespace IngameScript
                     Echo($"{info.Key} = {info.Value}");
                 }
             }
+        }
+        private Dictionary<string, string> PrepareItemInfos(MyItemType itemType)
+        {
+            Dictionary<string, string> infos = new Dictionary<string, string>();
+            MyItemInfo itemInfos = itemType.GetItemInfo();
+
+            infos.Add("itemType.TypeId", itemType.TypeId);
+            infos.Add("itemType.SubtypeId", itemType.SubtypeId);
+            infos.Add("Cleaned.SubtypeId", Util.CleanSubtypeName(itemType.SubtypeId));
+            infos.Add("itemInfos.IsAmmo", itemInfos.IsAmmo.ToString());
+            infos.Add("itemInfos.IsComponent", itemInfos.IsComponent.ToString());
+            infos.Add("itemInfos.IsIngot", itemInfos.IsIngot.ToString());
+            infos.Add("itemInfos.IsOre", itemInfos.IsOre.ToString());
+            infos.Add("itemInfos.IsTool", itemInfos.IsTool.ToString());
+            return infos;
         }
         private void Display()
         {

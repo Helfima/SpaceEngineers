@@ -75,11 +75,12 @@ namespace IngameScript
             public void Draw()
             {
                 cleanup++;
-                Drawing drawing = new Drawing(Block);
+                var drawing = new Drawing(Block);
+                
                 //TestViewport(drawing);
                 try
                 {
-                    if (cleanup < 100)
+                    if (cleanup < 5)
                     {
                         DisplayInventory.Draw(drawing);
                         DisplayDrill.Draw(drawing);

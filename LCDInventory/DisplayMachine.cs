@@ -209,15 +209,9 @@ namespace IngameScript
                                 variance = 1;
                                 last_amount.Add(key, amount);
                             }
-                            
-                            items.Add(new Item()
-                            {
-                                Name = iName,
-                                Type = iType,
-                                Amount = amount,
-                                Variance = variance,
-                                Definition = inventoryItem.Type
-                            });
+                            Item item = Item.Parse(inventoryItem);
+                            item.Variance = variance;
+                            items.Add(item);
                             loop++;
                         }
                     }
@@ -244,11 +238,47 @@ namespace IngameScript
 
                 foreach (Item item in items)
                 {
+                    string sprite = item.Icon;
+                    if (item.Name.StartsWith("Seeds"))
+                    {
+                        var sprite_name = item.Name.Replace("Seeds_", "");
+                        if (surface.Sprites_seed.ContainsKey(sprite_name))
+                        {
+                            sprite = surface.Sprites_seed[sprite_name];
+                        }
+                    }
+                    else if(item.Name.StartsWith("Spores"))
+                    {
+                        var sprite_name = item.Name.Replace("Spores_", "");
+                        if (surface.Sprites_seed.ContainsKey(sprite_name))
+                        {
+                            sprite = surface.Sprites_seed[sprite_name];
+                        }
+                    }
+                    else
+                    {
+                        if (surface.Sprites_ammo.ContainsKey(item.Name))
+                        {
+                            sprite = surface.Sprites_ammo[item.Name];
+                        }
+                        else if (surface.Sprites_component.ContainsKey(item.Name))
+                        {
+                            sprite = surface.Sprites_component[item.Name];
+                        }
+                        else if (surface.Sprites_tool.ContainsKey(item.Name))
+                        {
+                            sprite = surface.Sprites_tool[item.Name];
+                        }
+                        else if (surface.Sprites_other.ContainsKey(item.Name))
+                        {
+                            sprite = surface.Sprites_other[item.Name];
+                        }
+                    }
                     // icon
                     surface.AddSprite(new MySprite()
                     {
                         Type = SpriteType.TEXTURE,
-                        Data = item.Icon,
+                        Data = sprite,
                         Size = new Vector2(size_icon, size_icon),
                         Color = DisplayLcd.program.MyProperty.GetColor("color", item.Name, colorDefault),
                         Position = position + new Vector2(x, size_icon / 2 + cell_spacing)

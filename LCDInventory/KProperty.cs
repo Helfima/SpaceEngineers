@@ -142,6 +142,7 @@ namespace IngameScript
 
             public Color GetColor(string section, string key, string default_value = null)
             {
+                if (key == null) return Color.Gray;
                 if (default_value == null) default_value = color_default;
                 string colorValue = MyIni.Get(section, key).ToString(default_value);
                 Color color = Color.Gray;

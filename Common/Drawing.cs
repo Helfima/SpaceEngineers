@@ -16,6 +16,9 @@ using VRage.Game;
 using VRage;
 using VRageMath;
 using Sandbox.Game.Entities;
+using static IngameScript.Program;
+using VRage.GameServices;
+using static VRage.Game.GUI.TextPanel.MySpriteDrawFrame;
 
 namespace IngameScript
 {
@@ -110,6 +113,7 @@ namespace IngameScript
 
             public IMyTextSurface Surface;
             private MySpriteDrawFrame frame;
+            private MySpriteDrawFrame.ClearClipToken token;
             public RectangleF Viewport;
 
             private MySprite icon;
@@ -136,7 +140,11 @@ namespace IngameScript
             /// </summary>
             public void Initialize()
             {
-                if (this.initialized) return;
+                if (this.initialized)
+                {
+                    ForceRefresh();
+                    return;
+                }
                 initialized = true;
                 // Set the sprite display mode
                 Surface.ContentType = ContentType.SCRIPT;
@@ -150,8 +158,53 @@ namespace IngameScript
                 // Retrieve the Large Display, which is the first surface
                 this.frame = Surface.DrawFrame();
                 // add clip token
-                this.frame.Clip((int)this.Viewport.X, (int)this.Viewport.Y, (int)this.Viewport.Width, (int)this.Viewport.Height);
+                this.token = this.frame.Clip((int)this.Viewport.X, (int)this.Viewport.Y, (int)this.Viewport.Width, (int)this.Viewport.Height);
+                PrepareSprite();
             }
+            public Dictionary<string, string> Sprites_component = new Dictionary<string, string>();
+            public Dictionary<string, string> Sprites_ingot = new Dictionary<string, string>();
+            public Dictionary<string, string> Sprites_ore = new Dictionary<string, string>();
+            public Dictionary<string, string> Sprites_tool = new Dictionary<string, string>();
+            public Dictionary<string, string> Sprites_seed = new Dictionary<string, string>();
+            public Dictionary<string, string> Sprites_ammo = new Dictionary<string, string>();
+            public Dictionary<string, string> Sprites_other = new Dictionary<string, string>();
+            private void PrepareSprite()
+            {
+                var names = new List<string>();
+                Surface.GetSprites(names);
+                foreach (var name in names)
+                {
+                    if (name.Contains("/"))
+                    {
+                        var words = name.Split('/');
+                        switch (words[0])
+                        {
+                            case "MyObjectBuilder_AmmoMagazine":
+                                Sprites_ammo.Add(words[1], name);
+                                break;
+                            case "MyObjectBuilder_Component":
+                                Sprites_component.Add(words[1], name);
+                                break;
+                            case "MyObjectBuilder_Ingot":
+                                Sprites_ingot.Add(words[1], name);
+                                break;
+                            case "MyObjectBuilder_Ore":
+                                Sprites_ore.Add(words[1], name);
+                                break;
+                            case "MyObjectBuilder_PhysicalGunObject":
+                                Sprites_tool.Add(words[1], name);
+                                break;
+                            case "MyObjectBuilder_SeedItem":
+                                Sprites_seed.Add(words[1], name);
+                                break;
+                            default:
+                                Sprites_other.Add(words[1], name);
+                                break;
+                        }
+                    }
+                }
+            }
+
             /// <summary>
             /// Dipose if initialized
             /// </summary>
@@ -167,8 +220,22 @@ namespace IngameScript
             {
                 if (this.initialized)
                 {
-                    AddForm(new Vector2(), SpriteForm.SquareSimple, Viewport.Width, Viewport.Height, Color.Black);
+                    this.token.Dispose();
                 }
+            }
+            private bool isForce = false;
+            public void ForceRefresh()
+            {
+                var position = new Vector2(5f, 5f);
+                if (isForce)
+                {
+                    //this.Surface.ScriptBackgroundColor = Color.Black;
+                }
+                else
+                {
+                    //this.Surface.ScriptBackgroundColor = Color.Red;
+                }
+                isForce = !isForce;
             }
 
             public MySprite AddSprite(MySprite sprite)
@@ -573,7 +640,13 @@ namespace IngameScript
             public string Type { get; set; }
             public Double Amount { get; set; }
             public int Variance { get; set; }
-
+            public bool IsOre { get; set; }
+            public bool IsIngot { get; set; }
+            public bool IsComponent { get; set; }
+            public bool IsTool { get; set; }
+            public bool IsAmmo { get; set; }
+            public bool IsOther { get; set; }
+            public string Sprite { get; set; }
             public string Icon
             {
                 get
@@ -585,6 +658,35 @@ namespace IngameScript
             public int CompareTo(Item other)
             {
                 return Amount.CompareTo(other.Amount);
+            }
+            public static Item Parse(MyInventoryItem inventoryItem)
+            {
+                var item = new Item();
+                item.Type = inventoryItem.Type.TypeId;
+                item.Name = inventoryItem.Type.SubtypeId;
+                double amount = 0;
+                Double.TryParse(inventoryItem.Amount.ToString(), out amount);
+                item.Amount = amount;
+                item.Sprite = String.Format("{0}/{1}", inventoryItem.Type.TypeId, inventoryItem.Type.SubtypeId);
+                var itemInfo = inventoryItem.Type.GetItemInfo();
+                item.IsOre = itemInfo.IsOre;
+                item.IsIngot = itemInfo.IsIngot;
+                item.IsComponent = itemInfo.IsComponent;
+                item.IsTool = itemInfo.IsTool;
+                item.IsAmmo = itemInfo.IsAmmo;
+                item.IsOther = item.IsOre == false && item.IsIngot == false &&
+                        item.IsComponent == false && item.IsTool == false && item.IsAmmo == false;
+                return item;
+            }
+            public static Item Parse(MyProductionItem productionItem)
+            {
+                var item = new Item();
+                string subtypeName = Util.CleanSubtypeName(productionItem.BlueprintId.SubtypeName);
+                item.Name = subtypeName;
+                if (subtypeName.EndsWith("Rifle") || subtypeName.StartsWith("Welder") || subtypeName.StartsWith("HandDrill") || subtypeName.StartsWith("AngleGrinder")) item.IsAmmo = true;
+                item.IsOther = item.IsOre == false && item.IsIngot == false &&
+                        item.IsComponent == false && item.IsTool == false && item.IsAmmo == false;
+                return item;
             }
         }
 

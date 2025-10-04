@@ -16,6 +16,8 @@ using VRage.Game.ObjectBuilders.Definitions;
 using VRage.Game;
 using VRage;
 using VRageMath;
+using System.Security.Policy;
+using static IngameScript.Program;
 
 namespace IngameScript
 {
@@ -104,7 +106,7 @@ namespace IngameScript
                 });
             }
 
-            public void DrawFarmPlot(SurfaceDrawing surface, Vector2 position, FarmPlot block, Style style)
+            public void DrawFarmPlot(SurfaceDrawing surface, Vector2 position, FarmPlot farmPlot, Style style)
             {
                 float size_icon = style.Height - 10;
                 Color color_title = new Color(100, 100, 100, 128);
@@ -114,25 +116,113 @@ namespace IngameScript
 
                 float form_width = style.Width - 5;
                 float form_height = style.Height - 5;
+                float font_size_title = Math.Max(0.3f, (float)Math.Round(style.Height / 4f / 32f, 1));
+                float deltaTitle = font_size_title * 20f;
+
+                float font_size_info = Math.Max(0.3f, (float)Math.Round(style.Height / 4f / 32f, 1));
+                float deltaInfo = font_size_info * 32f;
 
                 string colorDefault = DisplayLcd.program.MyProperty.Get("color", "default");
 
                 float x = 0f;
 
                 surface.AddForm(position + new Vector2(0, 0), SpriteForm.SquareSimple, form_width, form_height, new Color(5, 5, 5, 125));
-                DisplayLcd.program.Echo($"Block {block.FarmBlock.Name}");
 
-                Vector2 positionQuantity = position + new Vector2(x, size_icon - 12);
+                if (farmPlot.FarmLogic.IsPlantPlanted == false) return;
+
+                string name = farmPlot.FarmLogic.OutputItem.SubtypeName;
+                string sprite = "";
+                if (farmPlot.FarmLogic.IsPlantFullyGrown)
+                {
+                    if (surface.Sprites_other.ContainsKey(name))
+                    {
+                        sprite = surface.Sprites_other[name];
+                    }
+                }
+                else
+                {
+                    if (surface.Sprites_seed.ContainsKey(name))
+                    {
+                        sprite = surface.Sprites_seed[name];
+                    }
+                }
+                
+                Color iconColor = Color.Gray;
+                if (farmPlot.FarmLogic.IsPlantFullyGrown) iconColor = Color.ForestGreen;
+                else if (farmPlot.FarmLogic.IsAlive) iconColor = Color.YellowGreen;
+                else iconColor = Color.OrangeRed;
+                // icon
+                surface.AddSprite(new MySprite()
+                {
+                    Type = SpriteType.TEXTURE,
+                    Data = sprite,
+                    Size = new Vector2(size_icon, size_icon),
+                    Color = iconColor,
+                    Position = position + new Vector2(x, size_icon / 2 + cell_spacing)
+
+                });
+
+                var infos = farmPlot.FarmLogic.GetDetailedInfoWithoutRequiredInput().Split(':','\n');
+                var growText = infos[3];
+                var growTime = String.Format("{0}:{1}:{2}", infos[5], infos[6], infos[7]);
+                var waterText = infos[11];
+                if (farmPlot.FarmLogic.IsAlive == false)
+                {
+                    growText = " Dead";
+                    growTime = String.Format("{0}:{1}:{2}", infos[3], infos[4], infos[5]);
+                    waterText = infos[9];
+                }
+                // grown
+                Vector2 positionGrow = position + new Vector2(x + size_icon * 1.5f, deltaTitle + style.Padding.Y);
                 surface.AddSprite(new MySprite()
                 {
                     Type = SpriteType.TEXT,
-                    Data = block.FarmLogic.IsAlive.ToString(),
-                    Color = color_text,
-                    Position = positionQuantity,
-                    RotationOrScale = RotationOrScale,
+                    Data = growText,
+                    Color = iconColor,
+                    Position = positionGrow,
+                    RotationOrScale = font_size_info,
                     FontId = surface.Font,
                     Alignment = TextAlignment.LEFT
                 });
+
+                Vector2 positionTime = position + new Vector2(x + size_icon * 1.5f, deltaTitle + deltaInfo + 2 * style.Padding.Y);
+                surface.AddSprite(new MySprite()
+                {
+                    Type = SpriteType.TEXT,
+                    Data = growTime,
+                    Color = color_text,
+                    Position = positionTime,
+                    RotationOrScale = font_size_info,
+                    FontId = surface.Font,
+                    Alignment = TextAlignment.LEFT
+                });
+
+                Vector2 positionWater = position + new Vector2(x + size_icon * 1.5f, deltaTitle +  2 * deltaInfo + 3 * style.Padding.Y);
+                surface.AddSprite(new MySprite()
+                {
+                    Type = SpriteType.TEXT,
+                    Data = waterText,
+                    Color = Color.CadetBlue,
+                    Position = positionWater,
+                    RotationOrScale = font_size_info,
+                    FontId = surface.Font,
+                    Alignment = TextAlignment.LEFT
+                });
+
+                if (string.IsNullOrEmpty(name) == false)
+                {
+                    Vector2 positionName = position + new Vector2(style.Padding.X, style.Padding.Y);
+                    surface.AddSprite(new MySprite()
+                    {
+                        Type = SpriteType.TEXT,
+                        Data = name,
+                        Color = color_text,
+                        Position = positionName,
+                        RotationOrScale = RotationOrScale,
+                        FontId = surface.Font,
+                        Alignment = TextAlignment.LEFT
+                    });
+                }
             }
         }
     }
