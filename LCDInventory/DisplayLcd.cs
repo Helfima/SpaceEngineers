@@ -72,11 +72,14 @@ namespace IngameScript
                     Block.CustomData = MyIni.ToString();
                 }
             }
+            private Drawing drawing;
             public void Draw()
             {
                 cleanup++;
-                var drawing = new Drawing(Block);
-                
+                if (drawing == null)
+                {
+                    this.drawing = new Drawing(Block);
+                }
                 //TestViewport(drawing);
                 try
                 {

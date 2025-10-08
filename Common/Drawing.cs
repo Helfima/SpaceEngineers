@@ -142,7 +142,6 @@ namespace IngameScript
             {
                 if (this.initialized)
                 {
-                    ForceRefresh();
                     return;
                 }
                 initialized = true;
@@ -168,8 +167,12 @@ namespace IngameScript
             public Dictionary<string, string> Sprites_seed = new Dictionary<string, string>();
             public Dictionary<string, string> Sprites_ammo = new Dictionary<string, string>();
             public Dictionary<string, string> Sprites_other = new Dictionary<string, string>();
+
+            private bool isPrepared = false;
             private void PrepareSprite()
             {
+                if (this.isPrepared) return;
+                this.isPrepared = true;
                 var names = new List<string>();
                 Surface.GetSprites(names);
                 foreach (var name in names)
@@ -214,30 +217,17 @@ namespace IngameScript
                 {
                     // We are done with the frame, send all the sprites to the text panel
                     this.frame.Dispose();
+                    this.initialized = false;
                 }
             }
             public void Clean()
             {
                 if (this.initialized)
                 {
+                    Initialize();
                     this.token.Dispose();
                 }
             }
-            private bool isForce = false;
-            public void ForceRefresh()
-            {
-                var position = new Vector2(5f, 5f);
-                if (isForce)
-                {
-                    //this.Surface.ScriptBackgroundColor = Color.Black;
-                }
-                else
-                {
-                    //this.Surface.ScriptBackgroundColor = Color.Red;
-                }
-                isForce = !isForce;
-            }
-
             public MySprite AddSprite(MySprite sprite)
             {
                 frame.Add(sprite);
