@@ -1,0 +1,11 @@
+﻿---------------------------------------------------------------------------------------------------
+Version: 1.1
+  Features:
+    - Added "Inventory Ship" to see the propulsion forces
+    - Added "Inventory Drills" to see the drills inventory
+  Changes:
+    - Fixed item filter of cargo inventory
+---------------------------------------------------------------------------------------------------
+Version: 1.0
+  Changes:
+    - Initial

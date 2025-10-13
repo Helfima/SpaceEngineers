@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace AppsInventory.Common
+namespace AppsInventory.Surfaces
 {
     public class StyleMargin : StylePadding
     {

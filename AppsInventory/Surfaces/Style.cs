@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using AppsInventory.Common;
 using AppsInventory.Extensions;
 using Sandbox.Game.EntityComponents;
 using Sandbox.Game.GameSystems.TextSurfaceScripts;
@@ -12,7 +11,7 @@ using VRage.ModAPI;
 using VRage.Utils;
 using VRageMath;
 
-namespace AppsInventory.Common
+namespace AppsInventory.Surfaces
 {
     public class Style
     {
@@ -25,10 +24,10 @@ namespace AppsInventory.Common
         public float ColorSoftening { get; set; } = 1f;
         public virtual void Scale(float scale)
         {
-            this.Width *= scale;
-            this.Height *= scale;
-            this.Padding.Scale(scale);
-            this.Margin.Scale(scale);
+            Width *= scale;
+            Height *= scale;
+            Padding.Scale(scale);
+            Margin.Scale(scale);
         }
     }
 }

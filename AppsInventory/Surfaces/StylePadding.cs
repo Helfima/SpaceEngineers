@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace AppsInventory.Common
+namespace AppsInventory.Surfaces
 {
     public class StylePadding
     {
@@ -24,8 +24,8 @@ namespace AppsInventory.Common
 
         public virtual void Scale(float scale)
         {
-            this.X *= scale;
-            this.Y *= scale;
+            X *= scale;
+            Y *= scale;
         }
     }
 }

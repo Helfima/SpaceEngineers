@@ -187,7 +187,7 @@ namespace IngameScript
                 else { limit = (int)Math.Floor((drawing.Viewport.Height - topPadding * scale) / (itemSize + cellSpacing)); }
                 return Math.Max(limit, 1);
             }
-            private bool isValidItem(Item item)
+            private bool IsValidItem(Item item)
             {
                 return item.IsAmmo == this.itemAmmo || item.IsComponent == this.itemComponent || item.IsIngot == this.itemIngot || 
                     item.IsOre == this.itemOre || item.IsTool == this.itemTool || item.IsOther == this.itemOther;
@@ -203,7 +203,7 @@ namespace IngameScript
                 string colorDefault = DisplayLcd.program.MyProperty.Get("color", "default");
                 int limitDefault = DisplayLcd.program.MyProperty.GetInt("Limit", "default");
 
-                foreach (KeyValuePair<string, Item> entry in item_list.OrderByDescending(entry => entry.Value.Amount).Where(entry => isValidItem(entry.Value)))
+                foreach (KeyValuePair<string, Item> entry in item_list.OrderByDescending(entry => entry.Value.Amount).Where(entry => IsValidItem(entry.Value)))
                 {
                     Item item = entry.Value;
                     if (item.IsTool == this.itemTool) continue;

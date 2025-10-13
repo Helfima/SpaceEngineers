@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using AppsInventory.Common;
 using AppsInventory.Extensions;
 using Sandbox.Game.EntityComponents;
 using Sandbox.Game.GameSystems.TextSurfaceScripts;
@@ -11,64 +10,44 @@ using VRage.ModAPI;
 using VRage.Utils;
 using VRageMath;
 
-namespace AppsInventory.Common
+namespace AppsInventory.Surfaces
 {
-    public class SurfaceDrawing : IDisposable
+    public class SurfaceDrawing
     {
         public string Font { get; } = "Monospace";
-        public Sandbox.ModAPI.Ingame.IMyTextSurface surface;
-        private MySpriteDrawFrame frame;
-        public RectangleF viewport;
+        public Sandbox.ModAPI.Ingame.IMyTextSurface Surface;
+        private FrameDrawing frame;
+        public RectangleF Viewport;
         public SurfaceDrawing(Sandbox.ModAPI.Ingame.IMyTextSurface surface)
         {
-            this.surface = surface;
+            this.Surface = surface;
             Initialize();
         }
+        public Dictionary<string, string> Symbol = new Dictionary<string, string>();
         public void Initialize()
         {
             // background color
-            surface.ScriptBackgroundColor = Color.Black;
+            Surface.ScriptBackgroundColor = Color.Black;
             // Calculate the viewport by centering the surface size onto the texture size
-            this.viewport = new RectangleF((surface.TextureSize - surface.SurfaceSize) / 2f, surface.SurfaceSize);
-            this.position = this.viewport.Position;
-            this.frame = this.surface.DrawFrame();
+            Viewport = new RectangleF((Surface.TextureSize - Surface.SurfaceSize) / 2f, Surface.SurfaceSize);
             PrepareSprite();
-        }
-        private Vector2 position;
-        public Vector2 Position
-        {
-            get { return this.position; }
-            set { this.position = value; }
-        }
-        public void Dispose()
-        {
-            this.frame.Dispose();
-        }
 
-        public MySprite AddSprite(MySprite sprite)
-        {
-            this.frame.Add(sprite);
-            return sprite;
+            Symbol.Add("Cobalt", "Co");
+            Symbol.Add("Nickel", "Ni");
+            Symbol.Add("Magnesium", "Mg");
+            Symbol.Add("Platinum", "Pt");
+            Symbol.Add("Iron", "Fe");
+            Symbol.Add("Gold", "Au");
+            Symbol.Add("Silicon", "Si");
+            Symbol.Add("Silver", "Ag");
+            Symbol.Add("Stone", "Stone");
+            Symbol.Add("Uranium", "U");
+            Symbol.Add("Ice", "Ice");
         }
-
-        public MySprite AddForm(Vector2 position, SpriteForm form, float width, float height, Color color)
+        public FrameDrawing GetFrameDrawing()
         {
-            return AddSprite(new MySprite()
-            {
-                Type = SpriteType.TEXTURE,
-                Data = form.ToString(),
-                Size = new Vector2(width, height),
-                Color = color,
-                Position = position + new Vector2(0, height / 2)
-            });
-        }
-
-        public MySprite AddSprite(SpriteType type = SpriteType.TEXTURE, string data = null, Vector2? position = null, Vector2? size = null, Color? color = null, string fontId = null, TextAlignment alignment = TextAlignment.LEFT, float rotation = 0)
-        {
-            MySprite sprite = new MySprite(type, data, position, size, color, fontId, alignment, rotation);
-            // Add the sprite to the frame
-            frame.Add(sprite);
-            return sprite;
+            this.frame = new FrameDrawing(this);
+            return this.frame;
         }
         public Dictionary<string, string> Sprites_component = new Dictionary<string, string>();
         public Dictionary<string, string> Sprites_ingot = new Dictionary<string, string>();
@@ -81,10 +60,10 @@ namespace AppsInventory.Common
         private bool isPrepared = false;
         private void PrepareSprite()
         {
-            if (this.isPrepared) return;
-            this.isPrepared = true;
+            if (isPrepared) return;
+            isPrepared = true;
             var names = new List<string>();
-            this.surface.GetSprites(names);
+            Surface.GetSprites(names);
             foreach (var name in names)
             {
                 if (name.Contains("/"))

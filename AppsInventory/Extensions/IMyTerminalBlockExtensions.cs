@@ -42,5 +42,16 @@ namespace AppsInventory.Extensions
             catch { }
             return list;
         }
+        public static List<T> SearchBlocks<T>(this Sandbox.ModAPI.IMyTerminalBlock TerminalBlock) where T : class
+        {
+            List<T> list = new List<T>();
+            Sandbox.ModAPI.IMyGridTerminalSystem gridTerminalSystem = MyAPIGateway.TerminalActionsHelper.GetTerminalSystemForGrid(TerminalBlock.CubeGrid);
+            try
+            {
+                gridTerminalSystem.GetBlocksOfType<T>(list);
+            }
+            catch { }
+            return list;
+        }
     }
 }

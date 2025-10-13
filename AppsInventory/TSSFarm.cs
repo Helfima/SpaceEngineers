@@ -2,28 +2,36 @@
 using System.Collections.Generic;
 using AppsInventory.Common;
 using AppsInventory.Extensions;
+using AppsInventory.Surfaces;
+using Sandbox.Game.Entities.Cube;
 using Sandbox.Game.GameSystems.TextSurfaceScripts;
 using Sandbox.ModAPI;
 using VRage.Game;
 using VRage.Game.GUI.TextPanel;
 using VRage.Game.ModAPI;
+using VRage.Game.ModAPI.Ingame.Utilities;
 using VRage.ModAPI;
 using VRage.Utils;
 using VRageMath;
 
 namespace AppsInventory
 {
-    [MyTextSurfaceScript("InventoryFarm", "Inventory Farm")]
-    public class InventoryFarm : MyTSSCommon
+    [MyTextSurfaceScript("Helfima_TSSFarm", "Inventory Farm")]
+    public class TSSFarm : MyTSSCommon
     {
         public override ScriptUpdate NeedsUpdate { get; } = ScriptUpdate.Update10;
 
         readonly IMyTerminalBlock TerminalBlock;
+        private DataProperties Properties;
 
-        public InventoryFarm(Sandbox.ModAPI.Ingame.IMyTextSurface surface, IMyCubeBlock block, Vector2 size) : base(surface, block, size)
+        private string filter = "*";
+        public bool farm_plot = true;
+        public bool farm_solar = true;
+        public TSSFarm(Sandbox.ModAPI.Ingame.IMyTextSurface surface, IMyCubeBlock block, Vector2 size) : base(surface, block, size)
         {
             TerminalBlock = (IMyTerminalBlock)block;
             TerminalBlock.OnMarkForClose += BlockDeleted;
+            Properties = new DataProperties(TerminalBlock);
         }
 
         public override void Dispose()
@@ -40,6 +48,20 @@ namespace AppsInventory
         public override void Run()
         {
             base.Run();
+            this.Load();
+            this.Draw();
+        }
+        private SurfaceDrawing surfaceDrawing;
+        private List<FarmPlot> farmPlots = new List<FarmPlot>();
+        private void Draw()
+        {
+            if (this.surfaceDrawing == null)
+            {
+                this.surfaceDrawing = new SurfaceDrawing(Surface);
+            }
+            TerminalBlock.ClearDetailedInfo();
+            TerminalBlock.GetDetailedInfo().AppendLine($"TypeIdString: {TerminalBlock.BlockDefinition.TypeIdString}");
+            TerminalBlock.GetDetailedInfo().AppendLine($"SubtypeId: {TerminalBlock.BlockDefinition.SubtypeId}");
             Search();
             Style style = new Style()
             {
@@ -47,25 +69,23 @@ namespace AppsInventory
                 Height = 80,
                 Padding = new StylePadding(0),
             };
-            var SurfaceDrawing = new SurfaceDrawing(Surface);
-            using (SurfaceDrawing)
+            using (var frame = this.surfaceDrawing.GetFrameDrawing())
             {
                 int limit = 6;
                 int count = 0;
                 farmPlots.ForEach(delegate (FarmPlot block)
                 {
-                    Vector2 position2 = SurfaceDrawing.Position + new Vector2(style.Width * (count / limit), style.Height * (count - (count / limit) * limit));
-                    DrawFarmPlot(SurfaceDrawing, position2, block, style);
+                    Vector2 position2 = frame.Position + new Vector2(style.Width * (count / limit), style.Height * (count - (count / limit) * limit));
+                    DrawFarmPlot(frame, position2, block, style);
                     count += 1;
                 });
             }
         }
-        private List<FarmPlot> farmPlots = new List<FarmPlot>();
         private void Search()
         {
             if (TerminalBlock != null)
             {
-                BlockFilter<IMyTerminalBlock> plot_filter = BlockFilter<IMyTerminalBlock>.Create(TerminalBlock, "*");
+                BlockFilter<IMyTerminalBlock> plot_filter = BlockFilter<IMyTerminalBlock>.Create(TerminalBlock, this.filter);
                 List<IMyTerminalBlock> blockPlots = TerminalBlock.SearchBlocks(plot_filter);
 
                 this.farmPlots = new List<FarmPlot>();
@@ -78,13 +98,10 @@ namespace AppsInventory
                     };
                 }
 
-                TerminalBlock.ClearDetailedInfo();
-                var echo = TerminalBlock.GetDetailedInfo();
-                echo.AppendLine();
-                echo.AppendLine($"plots: {farmPlots.Count}");
+                TerminalBlock.GetDetailedInfo().AppendLine($"plots: {farmPlots.Count}");
             }
         }
-        public void DrawFarmPlot(SurfaceDrawing surface, Vector2 position, FarmPlot farmPlot, Style style)
+        public void DrawFarmPlot(FrameDrawing frame, Vector2 position, FarmPlot farmPlot, Style style)
         {
             float size_icon = style.Height - 10;
             Color color_title = new Color(100, 100, 100, 128);
@@ -102,7 +119,7 @@ namespace AppsInventory
 
             float x = 0f;
 
-            surface.AddForm(position + new Vector2(0, 0), SpriteForm.SquareSimple, form_width, form_height, new Color(5, 5, 5, 125));
+            frame.AddForm(position + new Vector2(0, 0), SpriteForm.SquareSimple, form_width, form_height, new Color(5, 5, 5, 125));
 
             if (farmPlot.FarmLogic.IsPlantPlanted == false) return;
 
@@ -110,16 +127,16 @@ namespace AppsInventory
             string sprite = "";
             if (farmPlot.FarmLogic.IsPlantFullyGrown)
             {
-                if (surface.Sprites_other.ContainsKey(name))
+                if (frame.Parent.Sprites_other.ContainsKey(name))
                 {
-                    sprite = surface.Sprites_other[name];
+                    sprite = frame.Parent.Sprites_other[name];
                 }
             }
             else
             {
-                if (surface.Sprites_seed.ContainsKey(name))
+                if (frame.Parent.Sprites_seed.ContainsKey(name))
                 {
-                    sprite = surface.Sprites_seed[name];
+                    sprite = frame.Parent.Sprites_seed[name];
                 }
             }
 
@@ -128,7 +145,7 @@ namespace AppsInventory
             else if (farmPlot.FarmLogic.IsAlive) iconColor = Color.YellowGreen;
             else iconColor = Color.OrangeRed;
             // icon
-            surface.AddSprite(new MySprite()
+            frame.AddSprite(new MySprite()
             {
                 Type = SpriteType.TEXTURE,
                 Data = sprite,
@@ -150,56 +167,77 @@ namespace AppsInventory
             }
             // grown
             Vector2 positionGrow = position + new Vector2(x + size_icon * 1.5f, deltaTitle + style.Padding.Y);
-            surface.AddSprite(new MySprite()
+            frame.AddSprite(new MySprite()
             {
                 Type = SpriteType.TEXT,
                 Data = growText,
                 Color = iconColor,
                 Position = positionGrow,
                 RotationOrScale = font_size_info,
-                FontId = surface.Font,
+                FontId = frame.Parent.Font,
                 Alignment = TextAlignment.LEFT
             });
 
             Vector2 positionTime = position + new Vector2(x + size_icon * 1.5f, deltaTitle + deltaInfo + 2 * style.Padding.Y);
-            surface.AddSprite(new MySprite()
+            frame.AddSprite(new MySprite()
             {
                 Type = SpriteType.TEXT,
                 Data = growTime,
                 Color = color_text,
                 Position = positionTime,
                 RotationOrScale = font_size_info,
-                FontId = surface.Font,
+                FontId = frame.Parent.Font,
                 Alignment = TextAlignment.LEFT
             });
 
             Vector2 positionWater = position + new Vector2(x + size_icon * 1.5f, deltaTitle + 2 * deltaInfo + 3 * style.Padding.Y);
-            surface.AddSprite(new MySprite()
+            frame.AddSprite(new MySprite()
             {
                 Type = SpriteType.TEXT,
                 Data = waterText,
                 Color = Color.CadetBlue,
                 Position = positionWater,
                 RotationOrScale = font_size_info,
-                FontId = surface.Font,
+                FontId = frame.Parent.Font,
                 Alignment = TextAlignment.LEFT
             });
 
             if (string.IsNullOrEmpty(name) == false)
             {
                 Vector2 positionName = position + new Vector2(style.Padding.X, style.Padding.Y);
-                surface.AddSprite(new MySprite()
+                frame.AddSprite(new MySprite()
                 {
                     Type = SpriteType.TEXT,
                     Data = name,
                     Color = color_text,
                     Position = positionName,
                     RotationOrScale = RotationOrScale,
-                    FontId = surface.Font,
+                    FontId = frame.Parent.Font,
                     Alignment = TextAlignment.LEFT
                 });
             }
         }
-        
+        private void Load()
+        {
+            DataLoad();
+            if (Properties.HasSection("Farm") == false)
+            {
+                DataSave();
+            }
+        }
+        private void DataLoad()
+        {
+            Properties.Load();
+            filter = Properties.Get("Farm", "filter", "*");
+            farm_plot = Properties.GetBoolean("Farm", "farm_plot", true);
+            farm_solar = Properties.GetBoolean("Farm", "farm_solar", true);
+        }
+        private void DataSave()
+        {
+            Properties.Set("Farm", "filter", filter);
+            Properties.Set("Farm", "farm_plot", farm_plot);
+            Properties.Set("Farm", "farm_solar", farm_solar);
+            Properties.Save();
+        }
     }
 }
