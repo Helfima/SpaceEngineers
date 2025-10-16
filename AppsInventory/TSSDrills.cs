@@ -18,59 +18,21 @@ using VRageMath;
 namespace AppsInventory
 {
     [MyTextSurfaceScript("Helfima_TSSDrills", "Inventory Drills")]
-    public class TSSDrills : MyTSSCommon
+    public class TSSDrills : TSSBase
     {
-        public override ScriptUpdate NeedsUpdate { get; } = ScriptUpdate.Update10;
-
-        readonly IMyTerminalBlock TerminalBlock;
-        private DataProperties Properties;
-
         public TSSDrills(Sandbox.ModAPI.Ingame.IMyTextSurface surface, IMyCubeBlock block, Vector2 size) : base(surface, block, size)
         {
-            TerminalBlock = (IMyTerminalBlock)block;
-            TerminalBlock.OnMarkForClose += BlockDeleted;
-            Properties = new DataProperties(TerminalBlock);
+            this.PropertiesSection = "Drills";
         }
-
-        public override void Dispose()
+        private List<IMyShipDrill> drills = null;
+        protected override void OnSearch()
         {
-            base.Dispose();
-            TerminalBlock.OnMarkForClose -= BlockDeleted;
-        }
-
-        void BlockDeleted(IMyEntity _)
-        {
-            Dispose();
-        }
-
-        public override void Run()
-        {
-            base.Run();
-            this.Load();
-            this.Draw();
-        }
-        private SurfaceDrawing surfaceDrawing;
-
-        private void Draw()
-        {
-            if (this.surfaceDrawing == null)
+            if (TerminalBlock != null)
             {
-                this.surfaceDrawing = new SurfaceDrawing(Surface);
-            }
-            TerminalBlock.ClearDetailedInfo();
-            Search();
-            Style style = new Style()
-            {
-                Width = 250,
-                Height = 80,
-                Padding = new StylePadding(0),
-            };
-            using (var frame = this.surfaceDrawing.GetFrameDrawing())
-            {
-                Draw(frame);
+                this.drills = TerminalBlock.SearchBlocks<IMyShipDrill>();
             }
         }
-        public void Draw(FrameDrawing frame)
+        protected override void OnDraw(FrameDrawing frame)
         {
             float width = drills_size;
             float padding = drills_padding;
@@ -168,14 +130,6 @@ namespace AppsInventory
             });
         }
        
-        private List<IMyShipDrill> drills = null;
-        private void Search()
-        {
-            if (TerminalBlock != null)
-            {
-                this.drills = TerminalBlock.SearchBlocks<IMyShipDrill>();
-            }
-        }
         public GaugeThresholds ChestThresholds { get; set; }
         private void LoadThresholds()
         {
@@ -188,16 +142,6 @@ namespace AppsInventory
                 ChestThresholds.Thresholds.Add(new GaugeThreshold(0.75f, new Color(180, 0, 0, 128)));
             }
         }
-        private void Load()
-        {
-            DataLoad();
-            LoadThresholds();
-            if (Properties.HasSection("Drills") == false)
-            {
-                DataSave();
-            }
-        }
-
         private string filter = "GM:Drills";
         private string drills_orientation = "z";
         private bool drills_rotate = false;
@@ -208,7 +152,7 @@ namespace AppsInventory
         private float drills_margin_x = 0f;
         private float drills_margin_y = 0f;
         private float drills_padding = 2f;
-        private void DataLoad()
+        protected override void DataLoad()
         {
             Properties.Load();
             this.filter = Properties.Get("Drills", "filter", "GM:Drills");
@@ -221,8 +165,9 @@ namespace AppsInventory
             this.drills_margin_x = Properties.GetSingle("Drills", "margin_x", 0f);
             this.drills_margin_y = Properties.GetSingle("Drills", "margin_y", 0f);
             this.drills_padding = Properties.GetSingle("Drills", "padding", 2f);
+            LoadThresholds();
         }
-        private void DataSave()
+        protected override void DataSave()
         {
             Properties.Set("Drills", "filter", this.filter);
             Properties.Set("Drills", "orientation", this.drills_orientation);

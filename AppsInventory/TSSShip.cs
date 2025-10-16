@@ -18,59 +18,24 @@ using VRageMath;
 namespace AppsInventory
 {
     [MyTextSurfaceScript("Helfima_TSSShip", "Inventory Ship")]
-    public class TSSShip : MyTSSCommon
+    public class TSSShip : TSSBase
     {
-        public override ScriptUpdate NeedsUpdate { get; } = ScriptUpdate.Update10;
-
-        readonly IMyTerminalBlock TerminalBlock;
-        private DataProperties Properties;
-
         public TSSShip(Sandbox.ModAPI.Ingame.IMyTextSurface surface, IMyCubeBlock block, Vector2 size) : base(surface, block, size)
         {
-            TerminalBlock = (IMyTerminalBlock)block;
-            TerminalBlock.OnMarkForClose += BlockDeleted;
-            Properties = new DataProperties(TerminalBlock);
+            this.PropertiesSection = "Ship";
         }
 
-        public override void Dispose()
+        private List<IMyThrust> thrusts = null;
+        private List<IMyCockpit> cockpit = null;
+        protected override void OnSearch()
         {
-            base.Dispose();
-            TerminalBlock.OnMarkForClose -= BlockDeleted;
-        }
-
-        void BlockDeleted(IMyEntity _)
-        {
-            Dispose();
-        }
-
-        public override void Run()
-        {
-            base.Run();
-            this.Load();
-            this.Draw();
-        }
-        private SurfaceDrawing surfaceDrawing;
-
-        private void Draw()
-        {
-            if (this.surfaceDrawing == null)
+            if (TerminalBlock != null)
             {
-                this.surfaceDrawing = new SurfaceDrawing(Surface);
-            }
-            TerminalBlock.ClearDetailedInfo();
-            Search();
-            Style style = new Style()
-            {
-                Width = 250,
-                Height = 80,
-                Padding = new StylePadding(0),
-            };
-            using (var frame = this.surfaceDrawing.GetFrameDrawing())
-            {
-                Draw(frame);
+                this.cockpit = TerminalBlock.SearchBlocks<IMyCockpit>();
+                this.thrusts = TerminalBlock.SearchBlocks<IMyThrust>();
             }
         }
-        public void Draw(FrameDrawing surface)
+        protected override void OnDraw(FrameDrawing frame)
         {
             float mass = 0f;
             if (this.cockpit.Count > 0)
@@ -101,7 +66,7 @@ namespace AppsInventory
             MySprite text = new MySprite()
             {
                 Type = SpriteType.TEXT,
-                Position = surface.Position + new Vector2(0, 0),
+                Position = frame.Position + new Vector2(0, 0),
                 RotationOrScale = (float)scale,
                 FontId = EnumFont.Monospace,
                 Alignment = TextAlignment.LEFT,
@@ -112,19 +77,19 @@ namespace AppsInventory
             {
                 text.Data = "Thrusts:";
                 text.Color = Color.LightGreen;
-                text.Position = surface.Position;
-                surface.AddSprite(text);
-                surface.Position += new Vector2(0, offset_y);
+                text.Position = frame.Position;
+                frame.AddSprite(text);
+                frame.Position += new Vector2(0, offset_y);
             }
             foreach (var item in forces)
             {
                 if (oneLine)
                 {
-                    Draw1Line(surface, item, text, mass, offset_y);
+                    Draw1Line(frame, item, text, mass, offset_y);
                 }
                 else
                 {
-                    Draw2Line(surface, item, text, mass, offset_y);
+                    Draw2Line(frame, item, text, mass, offset_y);
                 }
             }
         }
@@ -156,34 +121,15 @@ namespace AppsInventory
             surface.AddSprite(text);
             surface.Position += new Vector2(0, offset_y);
         }
-        private List<IMyThrust> thrusts = null;
-        private List<IMyCockpit> cockpit = null;
-        private void Search()
-        {
-            if (TerminalBlock != null)
-            {
-                this.cockpit = TerminalBlock.SearchBlocks<IMyCockpit>();
-                this.thrusts = TerminalBlock.SearchBlocks<IMyThrust>();
-            }
-        }
-        
-        private void Load()
-        {
-            DataLoad();
-            if (Properties.HasSection("Ship") == false)
-            {
-                DataSave();
-            }
-        }
         private float scale = 1f;
         private bool oneLine = false;
-        private void DataLoad()
+        protected override void DataLoad()
         {
             Properties.Load();
             this.scale = Properties.GetSingle("Ship", "scale", 1f);
             this.oneLine = Properties.GetBoolean("Ship", "one_line", true);
         }
-        private void DataSave()
+        protected override void DataSave()
         {
             Properties.Set("Ship", "scale", this.scale);
             Properties.Set("Ship", "one_line", this.oneLine);

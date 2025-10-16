@@ -1,4 +1,8 @@
 ﻿---------------------------------------------------------------------------------------------------
+Version: 1.2
+  Bugfixes:
+    - Fixed error on the build of sprite list
+---------------------------------------------------------------------------------------------------
 Version: 1.1
   Features:
     - Added "Inventory Ship" to see the propulsion forces

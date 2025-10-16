@@ -18,38 +18,15 @@ using VRageMath;
 namespace AppsInventory
 {
     [MyTextSurfaceScript("Helfima_TSSMachine", "Inventory Machine")]
-    public class TSSMachine : MyTSSCommon
+    public class TSSMachine : TSSBase
     {
-        public override ScriptUpdate NeedsUpdate { get; } = ScriptUpdate.Update10;
-
-        readonly IMyTerminalBlock TerminalBlock;
-        private DataProperties Properties;
         public TSSMachine(Sandbox.ModAPI.Ingame.IMyTextSurface surface, IMyCubeBlock block, Vector2 size) : base(surface, block, size)
         {
-            TerminalBlock = (IMyTerminalBlock)block;
-            TerminalBlock.OnMarkForClose += BlockDeleted;
-            Properties = new DataProperties(TerminalBlock);
+            this.PropertiesSection = "Machine";
         }
 
-        public override void Dispose()
-        {
-            base.Dispose();
-            TerminalBlock.OnMarkForClose -= BlockDeleted;
-        }
-
-        void BlockDeleted(IMyEntity _)
-        {
-            Dispose();
-        }
-
-        public override void Run()
-        {
-            base.Run();
-            this.Load();
-            this.Draw();
-        }
         private List<IMyProductionBlock> blocks;
-        private void Search()
+        protected override void OnSearch()
         {
             if (TerminalBlock != null)
             {
@@ -58,32 +35,9 @@ namespace AppsInventory
                 this.TerminalBlock.GetDetailedInfo().AppendLine($"blocks: {this.blocks.Count}");
             }
         }
-        private SurfaceDrawing surfaceDrawing;
-        private float scale = 1f;
-
-        private string filter = "*";
-        private bool machine_refinery = false;
-        private bool machine_assembler = false;
-
-        private int max_loop = 3;
-        private int string_len = 20;
-        public void Draw()
+        protected override void OnDraw(FrameDrawing frame)
         {
-            if (this.surfaceDrawing == null)
-            {
-                this.surfaceDrawing = new SurfaceDrawing(Surface);
-            }
-            TerminalBlock.ClearDetailedInfo();
-            Search();
             if (this.blocks == null || this.blocks.Count == 0) return;
-            using (var frame = this.surfaceDrawing.GetFrameDrawing())
-            {
-                Display(frame);
-            }
-            
-        }
-        private void Display(FrameDrawing frame)
-        {
             List<string> types = new List<string>();
             int limit = 0;
             if (machine_refinery)
@@ -337,17 +291,16 @@ namespace AppsInventory
             };
             frame.AddSprite(icon);
         }
-        private void Load()
-        {
-            DataLoad();
-            if (Properties.HasSection("Machine") == false)
-            {
-                DataSave();
-            }
-        }
         string colorDefault;
         int limitDefault;
-        private void DataLoad()
+        private string filter = "*";
+        private bool machine_refinery = false;
+        private bool machine_assembler = false;
+
+        private int max_loop = 3;
+        private int string_len = 20;
+
+        protected override void DataLoad()
         {
             Properties.Load();
 
@@ -359,7 +312,7 @@ namespace AppsInventory
             colorDefault = Properties.Get("Color", "default", "128,128,128,255");
         }
 
-        private void DataSave()
+        protected override void DataSave()
         {
             Properties.Set("Machine", "filter", filter);
             Properties.Set("Machine", "refinery", machine_refinery);

@@ -18,90 +18,34 @@ using VRageMath;
 namespace AppsInventory
 {
     [MyTextSurfaceScript("Helfima_TSSCargo", "Inventory Cargo")]
-    public class TSSCargo : MyTSSCommon
+    public class TSSCargo : TSSBase
     {
-        public override ScriptUpdate NeedsUpdate { get; } = ScriptUpdate.Update10;
-
-        readonly IMyTerminalBlock TerminalBlock;
-        private DataProperties Properties;
-
         public TSSCargo(Sandbox.ModAPI.Ingame.IMyTextSurface surface, IMyCubeBlock block, Vector2 size) : base(surface, block, size)
         {
-            TerminalBlock = (IMyTerminalBlock)block;
-            TerminalBlock.OnMarkForClose += BlockDeleted;
-            Properties = new DataProperties(TerminalBlock);
+            this.PropertiesSection = "Drills";
         }
 
-        public override void Dispose()
-        {
-            base.Dispose();
-            TerminalBlock.OnMarkForClose -= BlockDeleted;
-        }
-
-        void BlockDeleted(IMyEntity _)
-        {
-            Dispose();
-        }
-
-        public override void Run()
-        {
-            base.Run();
-            this.Load();
-            this.Draw();
-        }
-        private SurfaceDrawing surfaceDrawing;
         private Dictionary<string, Item> item_list = new Dictionary<string, Item>();
         private Dictionary<string, double> last_amount = new Dictionary<string, double>();
 
-        private float scale = 1f;
-
-        private string filter = "*";
-
-        private bool gauge = true;
-        private bool gaugeFullscreen = true;
-        private bool gaugeHorizontal = true;
-        private float gaugeWidth = 80f;
-        private float gaugeHeight = 40f;
-
-        private bool item = true;
-        private float itemSize = 80f;
-        private bool itemOre = true;
-        private bool itemIngot = true;
-        private bool itemComponent = true;
-        private bool itemAmmo = true;
-        private bool itemTool = true;
-        private bool itemOther = true;
-
-        private float topPadding = 10f;
-        private float leftPadding = 10f;
-        private float cellSpacing = 2f;
-        private void Draw()
+        protected override void OnDraw(FrameDrawing frame)
         {
-            if (this.surfaceDrawing == null)
-            {
-                this.surfaceDrawing = new SurfaceDrawing(Surface);
-            }
-            TerminalBlock.ClearDetailedInfo();
-            Search();
             if (this.blocks == null || this.blocks.Count == 0) return;
-            using (var frame = this.surfaceDrawing.GetFrameDrawing())
+            if (gauge)
             {
-                if (gauge)
-                {
-                    DisplayGauge(frame);
-                }
-                last_amount.Clear();
-                foreach (KeyValuePair<string, Item> entry in item_list)
-                {
-                    last_amount.Add(entry.Key, entry.Value.Amount);
-                }
-
-                InventoryCount();
-                DisplayByType(frame);
+                DisplayGauge(frame);
             }
+            last_amount.Clear();
+            foreach (KeyValuePair<string, Item> entry in item_list)
+            {
+                last_amount.Add(entry.Key, entry.Value.Amount);
+            }
+
+            InventoryCount();
+            DisplayByType(frame);
         }
         private List<IMyTerminalBlock> blocks;
-        private void Search()
+        protected override void OnSearch()
         {
             if (TerminalBlock != null)
             {
@@ -235,6 +179,28 @@ namespace AppsInventory
                 frame.Position += new Vector2(0, 2 * cellSpacing * scale);
             }
         }
+        private float scale = 1f;
+
+        private string filter = "*";
+
+        private bool gauge = true;
+        private bool gaugeFullscreen = true;
+        private bool gaugeHorizontal = true;
+        private float gaugeWidth = 80f;
+        private float gaugeHeight = 40f;
+
+        private bool item = true;
+        private float itemSize = 80f;
+        private bool itemOre = true;
+        private bool itemIngot = true;
+        private bool itemComponent = true;
+        private bool itemAmmo = true;
+        private bool itemTool = true;
+        private bool itemOther = true;
+
+        private float topPadding = 10f;
+        private float leftPadding = 10f;
+        private float cellSpacing = 2f;
         public GaugeThresholds ItemThresholds { get; set; }
         public GaugeThresholds ChestThresholds { get; set; }
         private void LoadThresholds()
@@ -257,18 +223,9 @@ namespace AppsInventory
                 ChestThresholds.Thresholds.Add(new GaugeThreshold(0.75f, new Color(180, 0, 0, 128)));
             }
         }
-        private void Load()
-        {
-            DataLoad();
-            LoadThresholds();
-            if (Properties.HasSection("Inventory") == false)
-            {
-                DataSave();
-            }
-        }
         string colorDefault;
         int limitDefault;
-        private void DataLoad()
+        protected override void DataLoad()
         {
             Properties.Load();
             filter = Properties.Get("Inventory", "filter", "*");
@@ -292,9 +249,10 @@ namespace AppsInventory
 
             limitDefault = Properties.GetInt("Limit", "default", 1000);
             colorDefault = Properties.Get("Color", "default", "128,128,128,255");
+            LoadThresholds();
         }
 
-        private void DataSave()
+        protected override void DataSave()
         {
             Properties.Set("Inventory", "filter", filter);
             Properties.Set("Inventory", "scale", scale);

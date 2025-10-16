@@ -17,71 +17,18 @@ using VRageMath;
 namespace AppsInventory
 {
     [MyTextSurfaceScript("Helfima_TSSFarm", "Inventory Farm")]
-    public class TSSFarm : MyTSSCommon
+    public class TSSFarm : TSSBase
     {
-        public override ScriptUpdate NeedsUpdate { get; } = ScriptUpdate.Update10;
-
-        readonly IMyTerminalBlock TerminalBlock;
-        private DataProperties Properties;
-
         private string filter = "*";
         public bool farm_plot = true;
         public bool farm_solar = true;
         public TSSFarm(Sandbox.ModAPI.Ingame.IMyTextSurface surface, IMyCubeBlock block, Vector2 size) : base(surface, block, size)
         {
-            TerminalBlock = (IMyTerminalBlock)block;
-            TerminalBlock.OnMarkForClose += BlockDeleted;
-            Properties = new DataProperties(TerminalBlock);
+            this.PropertiesSection = "Farm";
         }
 
-        public override void Dispose()
-        {
-            base.Dispose();
-            TerminalBlock.OnMarkForClose -= BlockDeleted;
-        }
-
-        void BlockDeleted(IMyEntity _)
-        {
-            Dispose();
-        }
-
-        public override void Run()
-        {
-            base.Run();
-            this.Load();
-            this.Draw();
-        }
-        private SurfaceDrawing surfaceDrawing;
         private List<FarmPlot> farmPlots = new List<FarmPlot>();
-        private void Draw()
-        {
-            if (this.surfaceDrawing == null)
-            {
-                this.surfaceDrawing = new SurfaceDrawing(Surface);
-            }
-            TerminalBlock.ClearDetailedInfo();
-            TerminalBlock.GetDetailedInfo().AppendLine($"TypeIdString: {TerminalBlock.BlockDefinition.TypeIdString}");
-            TerminalBlock.GetDetailedInfo().AppendLine($"SubtypeId: {TerminalBlock.BlockDefinition.SubtypeId}");
-            Search();
-            Style style = new Style()
-            {
-                Width = 250,
-                Height = 80,
-                Padding = new StylePadding(0),
-            };
-            using (var frame = this.surfaceDrawing.GetFrameDrawing())
-            {
-                int limit = 6;
-                int count = 0;
-                farmPlots.ForEach(delegate (FarmPlot block)
-                {
-                    Vector2 position2 = frame.Position + new Vector2(style.Width * (count / limit), style.Height * (count - (count / limit) * limit));
-                    DrawFarmPlot(frame, position2, block, style);
-                    count += 1;
-                });
-            }
-        }
-        private void Search()
+        protected override void OnSearch()
         {
             if (TerminalBlock != null)
             {
@@ -100,6 +47,23 @@ namespace AppsInventory
 
                 TerminalBlock.GetDetailedInfo().AppendLine($"plots: {farmPlots.Count}");
             }
+        }
+        protected override void OnDraw(FrameDrawing frame)
+        {
+            Style style = new Style()
+            {
+                Width = 250,
+                Height = 80,
+                Padding = new StylePadding(0),
+            };
+            int limit = 6;
+            int count = 0;
+            farmPlots.ForEach(delegate (FarmPlot block)
+            {
+                Vector2 position2 = frame.Position + new Vector2(style.Width * (count / limit), style.Height * (count - (count / limit) * limit));
+                DrawFarmPlot(frame, position2, block, style);
+                count += 1;
+            });
         }
         public void DrawFarmPlot(FrameDrawing frame, Vector2 position, FarmPlot farmPlot, Style style)
         {
@@ -217,22 +181,14 @@ namespace AppsInventory
                 });
             }
         }
-        private void Load()
-        {
-            DataLoad();
-            if (Properties.HasSection("Farm") == false)
-            {
-                DataSave();
-            }
-        }
-        private void DataLoad()
+        protected override void DataLoad()
         {
             Properties.Load();
             filter = Properties.Get("Farm", "filter", "*");
             farm_plot = Properties.GetBoolean("Farm", "farm_plot", true);
             farm_solar = Properties.GetBoolean("Farm", "farm_solar", true);
         }
-        private void DataSave()
+        protected override void DataSave()
         {
             Properties.Set("Farm", "filter", filter);
             Properties.Set("Farm", "farm_plot", farm_plot);

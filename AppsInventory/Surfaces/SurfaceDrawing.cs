@@ -58,6 +58,11 @@ namespace AppsInventory.Surfaces
         public Dictionary<string, string> Sprites_other = new Dictionary<string, string>();
 
         private bool isPrepared = false;
+        private void AddSafe(Dictionary<string, string> ditionary, string key, string value)
+        {
+            if (ditionary.ContainsKey(key)) return;
+            ditionary.Add(key, value);
+        }
         private void PrepareSprite()
         {
             if (isPrepared) return;
@@ -68,30 +73,39 @@ namespace AppsInventory.Surfaces
             {
                 if (name.Contains("/"))
                 {
-                    var words = name.Split('/');
-                    switch (words[0])
+                    try
                     {
-                        case "MyObjectBuilder_AmmoMagazine":
-                            Sprites_ammo.Add(words[1], name);
-                            break;
-                        case "MyObjectBuilder_Component":
-                            Sprites_component.Add(words[1], name);
-                            break;
-                        case "MyObjectBuilder_Ingot":
-                            Sprites_ingot.Add(words[1], name);
-                            break;
-                        case "MyObjectBuilder_Ore":
-                            Sprites_ore.Add(words[1], name);
-                            break;
-                        case "MyObjectBuilder_PhysicalGunObject":
-                            Sprites_tool.Add(words[1], name);
-                            break;
-                        case "MyObjectBuilder_SeedItem":
-                            Sprites_seed.Add(words[1], name);
-                            break;
-                        default:
-                            Sprites_other.Add(words[1], name);
-                            break;
+                        var words = name.Split('/');
+                        var type = words[0];
+                        var icon = words[1];
+                        switch (type)
+                        {
+                            case "MyObjectBuilder_AmmoMagazine":
+                                AddSafe(Sprites_ammo, icon, name);
+                                break;
+                            case "MyObjectBuilder_Component":
+                                AddSafe(Sprites_component, icon, name);
+                                break;
+                            case "MyObjectBuilder_Ingot":
+                                AddSafe(Sprites_ingot, icon, name);
+                                break;
+                            case "MyObjectBuilder_Ore":
+                                AddSafe(Sprites_ore, icon, name);
+                                break;
+                            case "MyObjectBuilder_PhysicalGunObject":
+                                AddSafe(Sprites_tool, icon, name);
+                                break;
+                            case "MyObjectBuilder_SeedItem":
+                                AddSafe(Sprites_seed, icon, name);
+                                break;
+                            default:
+                                AddSafe(Sprites_other, icon, name);
+                                break;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        VRage.Utils.MyLog.Default.WriteLine(ex);
                     }
                 }
             }

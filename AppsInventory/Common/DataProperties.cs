@@ -16,7 +16,7 @@ using Sandbox.ModAPI;
 
 namespace AppsInventory.Common
 {
-    internal class DataProperties
+    public class DataProperties
     {
         protected MyIni MyIni = new MyIni();
         protected IMyTerminalBlock terminalBlock;
