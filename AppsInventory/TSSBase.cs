@@ -7,12 +7,14 @@ using AppsInventory.Extensions;
 using AppsInventory.Surfaces;
 using Sandbox.Game.Entities.Cube;
 using Sandbox.Game.GameSystems.TextSurfaceScripts;
+using Sandbox.Game.VoiceChat;
 using Sandbox.ModAPI;
 using VRage.Game;
 using VRage.Game.GUI.TextPanel;
 using VRage.Game.ModAPI;
 using VRage.Game.ModAPI.Ingame.Utilities;
 using VRage.ModAPI;
+using VRage.Scripting;
 using VRage.Utils;
 using VRageMath;
 
@@ -48,6 +50,10 @@ namespace AppsInventory
             base.Run();
             try
             {
+                if (this.surfaceDrawing == null)
+                {
+                    this.surfaceDrawing = new SurfaceDrawing(Surface);
+                }
                 this.Load();
                 this.Draw();
             }
@@ -57,47 +63,68 @@ namespace AppsInventory
                 DrawError(ex);
             }
         }
-        private void DrawError(Exception ex)
+        private void DrawError(Exception error)
         {
-            var message = new StringBuilder();
-            message.AppendLine("App Inventory Error");
-            message.AppendLine(ex.Message);
-            message.AppendLine("You can contact modder");
-            using (var frame = this.surfaceDrawing.GetFrameDrawing())
+            try
             {
-                frame.AddSprite(new MySprite()
+                var message = new StringBuilder();
+                message.AppendLine("App Inventory Error");
+                message.AppendLine(error.Message);
+                message.AppendLine("You can contact modder");
+                using (var frame = this.surfaceDrawing.GetFrameDrawing())
                 {
-                    Type = SpriteType.TEXT,
-                    Data = message.ToString(),
-                    Alignment = TextAlignment.CENTER,
-                    FontId = MyFontEnum.White,
-                    Color = Color.Red,
-                    Position = null,
-                    Size = null,
-                    RotationOrScale = 1,
-                });
+                    frame.AddSprite(new MySprite()
+                    {
+                        Type = SpriteType.TEXT,
+                        Data = message.ToString(),
+                        Alignment = TextAlignment.CENTER,
+                        FontId = MyFontEnum.White,
+                        Color = Color.Red,
+                        Position = null,
+                        Size = null,
+                        RotationOrScale = 1,
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                VRage.Utils.MyLog.Default.WriteLine(ex);
             }
         }
         protected SurfaceDrawing surfaceDrawing;
-
+        protected string Version = "1.3";
         private void Draw()
         {
-            if (this.surfaceDrawing == null)
-            {
-                this.surfaceDrawing = new SurfaceDrawing(Surface);
-            }
             TerminalBlock.ClearDetailedInfo();
+            TerminalBlock.GetDetailedInfo().AppendLine($"Version: {Version}");
             OnSearch();
             using (var frame = this.surfaceDrawing.GetFrameDrawing())
             {
                 OnDraw(frame);
+                DrawVersion(frame);
             }
+        }
+        private void DrawVersion(FrameDrawing frame)
+        {
+            var position = new Vector2(frame.Parent.Viewport.Right-5, frame.Parent.Viewport.Bottom-12);
+            frame.AddSprite(new MySprite()
+            {
+                Type = SpriteType.TEXT,
+                Data = $"V{Version}",
+                Alignment = TextAlignment.RIGHT,
+                FontId = MyFontEnum.White,
+                Color = Color.Gray,
+                Position = position,
+                Size = null,
+                RotationOrScale = 0.4f,
+            });
         }
         protected abstract void OnSearch();
         protected abstract void OnDraw(FrameDrawing frame);
         protected string PropertiesSection = "Common";
         private void Load()
         {
+            Properties.Load();
             DataLoad();
             if (Properties.HasSection(this.PropertiesSection) == false)
             {

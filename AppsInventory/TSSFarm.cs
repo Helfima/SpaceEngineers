@@ -183,7 +183,6 @@ namespace AppsInventory
         }
         protected override void DataLoad()
         {
-            Properties.Load();
             filter = Properties.Get("Farm", "filter", "*");
             farm_plot = Properties.GetBoolean("Farm", "farm_plot", true);
             farm_solar = Properties.GetBoolean("Farm", "farm_solar", true);

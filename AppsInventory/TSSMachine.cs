@@ -302,8 +302,6 @@ namespace AppsInventory
 
         protected override void DataLoad()
         {
-            Properties.Load();
-
             filter = Properties.Get("Machine", "filter", "*");
             machine_refinery = Properties.GetBoolean("Machine", "refinery", true);
             machine_assembler = Properties.GetBoolean("Machine", "assembler", true);

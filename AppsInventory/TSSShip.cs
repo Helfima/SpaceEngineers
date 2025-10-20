@@ -125,7 +125,6 @@ namespace AppsInventory
         private bool oneLine = false;
         protected override void DataLoad()
         {
-            Properties.Load();
             this.scale = Properties.GetSingle("Ship", "scale", 1f);
             this.oneLine = Properties.GetBoolean("Ship", "one_line", true);
         }

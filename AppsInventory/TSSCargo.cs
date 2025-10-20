@@ -227,7 +227,6 @@ namespace AppsInventory
         int limitDefault;
         protected override void DataLoad()
         {
-            Properties.Load();
             filter = Properties.Get("Inventory", "filter", "*");
             scale = Properties.GetSingle("Inventory", "scale", 1f);
 

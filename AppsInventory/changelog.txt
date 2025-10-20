@@ -1,4 +1,10 @@
 ﻿---------------------------------------------------------------------------------------------------
+Version: 1.3
+  Changes:
+    - Added version on each panel
+  Bugfixes:
+    - Fixed crash when try write error
+---------------------------------------------------------------------------------------------------
 Version: 1.2
   Bugfixes:
     - Fixed error on the build of sprite list

@@ -154,7 +154,6 @@ namespace AppsInventory
         private float drills_padding = 2f;
         protected override void DataLoad()
         {
-            Properties.Load();
             this.filter = Properties.Get("Drills", "filter", "GM:Drills");
             this.drills_orientation = Properties.Get("Drills", "orientation", "z");
             this.drills_rotate = Properties.GetBoolean("Drills", "rotate", false);
